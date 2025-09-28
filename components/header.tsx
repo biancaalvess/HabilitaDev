@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Search, User, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { AuthModal } from "./auth/auth-modal"
-import { UserMenu } from "./user-menu"
-import { useAuth } from "@/lib/auth"
+import { useState } from "react";
+import { Search, User, Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { AuthModalV2 } from "./auth/auth-modal-v2";
+import { UserMenu } from "./user-menu";
+import { useAuth } from "@/lib/auth";
 
 interface HeaderProps {
-  onSearch: (query: string) => void
-  searchQuery: string
+  onSearch: (query: string) => void;
+  searchQuery: string;
 }
 
 export function Header({ onSearch, searchQuery }: HeaderProps) {
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const { user } = useAuth()
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user } = useAuth();
 
   return (
     <>
@@ -24,7 +24,9 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">TI</span>
+                <span className="text-primary-foreground font-bold text-sm">
+                  TI
+                </span>
               </div>
               <h1 className="text-xl font-semibold">TechInterview</h1>
             </div>
@@ -32,7 +34,7 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
 
           <div className="flex-1 max-w-md mx-8">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--icon-color)] h-4 w-4" />
               <Input
                 placeholder="Buscar questões..."
                 value={searchQuery}
@@ -50,7 +52,11 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
             {user ? (
               <UserMenu />
             ) : (
-              <Button variant="ghost" size="icon" onClick={() => setShowAuthModal(true)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowAuthModal(true)}
+              >
                 <User className="h-4 w-4" />
               </Button>
             )}
@@ -62,7 +68,10 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
         </div>
       </header>
 
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <AuthModalV2
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </>
-  )
+  );
 }

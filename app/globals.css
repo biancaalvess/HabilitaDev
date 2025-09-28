@@ -4,75 +4,77 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated theme to match Vercel's dark professional design */
-  --background: oklch(0.08 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.12 0 0);
+  /* Updated theme with gray-900, gray-500, stone-800 and neutral-950 colors */
+  --background: oklch(0.05 0 0); /* neutral-950 */
+  --foreground: oklch(0.98 0 0); /* Branco */
+  --card: oklch(0.2 0 0); /* gray-900 */
   --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.12 0 0);
+  --popover: oklch(0.2 0 0); /* gray-900 */
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.7 0.15 250);
+  --primary: oklch(0.5 0 0); /* gray-500 */
   --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.18 0 0);
+  --secondary: oklch(0.3 0 0); /* stone-800 */
   --secondary-foreground: oklch(0.85 0 0);
-  --muted: oklch(0.15 0 0);
+  --muted: oklch(0.2 0 0); /* gray-900 */
   --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.18 0 0);
+  --accent: oklch(0.5 0 0); /* gray-500 */
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.6 0.2 15);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.2 0 0);
-  --input: oklch(0.18 0 0);
-  --ring: oklch(0.7 0.15 250);
-  --chart-1: oklch(0.7 0.15 250);
-  --chart-2: oklch(0.65 0.2 300);
-  --chart-3: oklch(0.6 0.15 180);
-  --chart-4: oklch(0.75 0.2 60);
-  --chart-5: oklch(0.7 0.18 30);
+  --border: oklch(0.3 0 0); /* stone-800 */
+  --input: oklch(0.2 0 0); /* gray-900 */
+  --ring: oklch(0.5 0 0); /* gray-500 */
+  --chart-1: oklch(0.5 0 0); /* gray-500 */
+  --chart-2: oklch(0.3 0 0); /* stone-800 */
+  --chart-3: oklch(0.2 0 0); /* gray-900 */
+  --chart-4: oklch(0.4 0 0); /* gray-600 */
+  --chart-5: oklch(0.6 0 0); /* gray-400 */
   --radius: 0.5rem;
-  --sidebar: oklch(0.1 0 0);
+  --sidebar: oklch(0.05 0 0); /* neutral-950 */
   --sidebar-foreground: oklch(0.85 0 0);
-  --sidebar-primary: oklch(0.7 0.15 250);
+  --sidebar-primary: oklch(0.5 0 0); /* gray-500 */
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.15 0 0);
+  --sidebar-accent: oklch(0.2 0 0); /* gray-900 */
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.2 0 0);
-  --sidebar-ring: oklch(0.7 0.15 250);
+  --sidebar-border: oklch(0.3 0 0); /* stone-800 */
+  --sidebar-ring: oklch(0.5 0 0); /* gray-500 */
+  --icon-color: oklch(0.1 0 0); /* gray-950 */
 }
 
 .dark {
-  --background: oklch(0.08 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.12 0 0);
+  --background: oklch(0.05 0 0); /* neutral-950 */
+  --foreground: oklch(0.98 0 0); /* Branco */
+  --card: oklch(0.2 0 0); /* gray-900 */
   --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.12 0 0);
+  --popover: oklch(0.2 0 0); /* gray-900 */
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.7 0.15 250);
+  --primary: oklch(0.5 0 0); /* gray-500 */
   --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.18 0 0);
+  --secondary: oklch(0.3 0 0); /* stone-800 */
   --secondary-foreground: oklch(0.85 0 0);
-  --muted: oklch(0.15 0 0);
+  --muted: oklch(0.2 0 0); /* gray-900 */
   --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.18 0 0);
+  --accent: oklch(0.5 0 0); /* gray-500 */
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.6 0.2 15);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.2 0 0);
-  --input: oklch(0.18 0 0);
-  --ring: oklch(0.7 0.15 250);
-  --chart-1: oklch(0.7 0.15 250);
-  --chart-2: oklch(0.65 0.2 300);
-  --chart-3: oklch(0.6 0.15 180);
-  --chart-4: oklch(0.75 0.2 60);
-  --chart-5: oklch(0.7 0.18 30);
-  --sidebar: oklch(0.1 0 0);
+  --border: oklch(0.3 0 0); /* stone-800 */
+  --input: oklch(0.2 0 0); /* gray-900 */
+  --ring: oklch(0.5 0 0); /* gray-500 */
+  --chart-1: oklch(0.5 0 0); /* gray-500 */
+  --chart-2: oklch(0.3 0 0); /* stone-800 */
+  --chart-3: oklch(0.2 0 0); /* gray-900 */
+  --chart-4: oklch(0.4 0 0); /* gray-600 */
+  --chart-5: oklch(0.6 0 0); /* gray-400 */
+  --sidebar: oklch(0.05 0 0); /* neutral-950 */
   --sidebar-foreground: oklch(0.85 0 0);
-  --sidebar-primary: oklch(0.7 0.15 250);
+  --sidebar-primary: oklch(0.5 0 0); /* gray-500 */
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.15 0 0);
+  --sidebar-accent: oklch(0.2 0 0); /* gray-900 */
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.2 0 0);
-  --sidebar-ring: oklch(0.7 0.15 250);
+  --sidebar-border: oklch(0.3 0 0); /* stone-800 */
+  --sidebar-ring: oklch(0.5 0 0); /* gray-500 */
+  --icon-color: oklch(0.1 0 0); /* gray-950 */
 }
 
 @theme inline {
@@ -114,6 +116,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-icon: var(--icon-color);
 }
 
 @layer base {
@@ -122,5 +125,68 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Loader animations */
+  @keyframes move {
+    0% {
+      opacity: 0;
+      transform: translateX(0px) rotate(0deg);
+    }
+    20% {
+      opacity: 1;
+    }
+    40% {
+      transform: translateX(-40px) rotate(0deg);
+    }
+    50% {
+      opacity: 1;
+      transform: translateX(-50px) rotate(22deg);
+    }
+    85% {
+      opacity: 1;
+      transform: translateX(-85px) rotate(60deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-100px) rotate(65deg);
+    }
+  }
+
+  .animate-move-1 {
+    animation: move 2.8s linear infinite;
+    animation-delay: -0.4s;
+  }
+
+  .animate-move-2 {
+    animation: move 2.8s linear infinite;
+    animation-delay: -0.8s;
+  }
+
+  .animate-move-3 {
+    animation: move 2.8s linear infinite;
+    animation-delay: -1.2s;
+  }
+
+  .animate-move-4 {
+    animation: move 2.8s linear infinite;
+    animation-delay: -1.6s;
+  }
+
+  .animate-move-5 {
+    animation: move 2.8s linear infinite;
+    animation-delay: -2s;
+  }
+
+  .animate-move-6 {
+    animation: move 2.8s linear infinite;
+    animation-delay: -2.4s;
+  }
+
+  .animate-move-7 {
+    animation: move 2.8s linear infinite;
+    animation-delay: -2.8s;
   }
 }
