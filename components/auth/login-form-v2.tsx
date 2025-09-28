@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FuturisticInput } from "@/components/ui/futuristic-input";
 import { Label } from "@/components/ui/label";
 
 interface LoginFormV2Props {
@@ -55,14 +55,15 @@ export function LoginFormV2({
           >
             Username
           </Label>
-          <Input
+          <FuturisticInput
             type="text"
             name="username"
             id="username"
             placeholder="Digite seu username"
             value={formData.username}
             onChange={handleInputChange}
-            className="w-full rounded-md border border-[var(--border)] bg-[var(--card)] px-5 py-4 text-[var(--foreground)] focus:border-[var(--primary)] focus:outline-none text-base"
+            showSearchIcon={false}
+            showFilterIcon={false}
             required
           />
         </div>
@@ -74,29 +75,17 @@ export function LoginFormV2({
           >
             Password
           </Label>
-          <div className="relative">
-            <Input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              id="password"
-              placeholder="Digite sua senha"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--card)] px-5 py-4 pr-12 text-[var(--foreground)] focus:border-[var(--primary)] focus:outline-none text-base"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
-          </div>
+          <FuturisticInput
+            type={showPassword ? "text" : "password"}
+            name="password"
+            id="password"
+            placeholder="Digite sua senha"
+            value={formData.password}
+            onChange={handleInputChange}
+            showSearchIcon={false}
+            showFilterIcon={false}
+            required
+          />
           <div className="flex justify-end text-xs text-[var(--muted-foreground)] mt-2 mb-3">
             <button
               type="button"

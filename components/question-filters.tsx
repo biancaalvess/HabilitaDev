@@ -1,33 +1,43 @@
-"use client"
+"use client";
 
-import { Search, Filter, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { type QuestionFilter, CATEGORY_LABELS } from "@/lib/types"
-import { mockCompanies } from "@/lib/mock-data"
+import { Search, Filter, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FuturisticInput } from "@/components/ui/futuristic-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { type QuestionFilter, CATEGORY_LABELS } from "@/lib/types";
+import { mockCompanies } from "@/lib/mock-data";
 
 interface QuestionFiltersProps {
-  filters: QuestionFilter
-  onFilterChange: (filters: QuestionFilter) => void
-  totalQuestions: number
+  filters: QuestionFilter;
+  onFilterChange: (filters: QuestionFilter) => void;
+  totalQuestions: number;
 }
 
-export function QuestionFilters({ filters, onFilterChange, totalQuestions }: QuestionFiltersProps) {
+export function QuestionFilters({
+  filters,
+  onFilterChange,
+  totalQuestions,
+}: QuestionFiltersProps) {
   const handleFilterChange = (key: keyof QuestionFilter, value: string) => {
     onFilterChange({
       ...filters,
       [key]: value || undefined,
-    })
-  }
+    });
+  };
 
   const clearFilters = () => {
-    onFilterChange({})
-  }
+    onFilterChange({});
+  };
 
-  const activeFiltersCount = Object.values(filters).filter(Boolean).length
+  const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 
   return (
     <Card className="mb-6">
@@ -43,7 +53,12 @@ export function QuestionFilters({ filters, onFilterChange, totalQuestions }: Que
             )}
           </div>
           {activeFiltersCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="text-xs"
+            >
               <X className="h-3 w-3 mr-1" />
               Limpar
             </Button>
@@ -52,7 +67,9 @@ export function QuestionFilters({ filters, onFilterChange, totalQuestions }: Que
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Dificuldade</label>
+            <label className="text-sm font-medium text-muted-foreground">
+              Dificuldade
+            </label>
             <Select
               value={filters.difficulty || "all"}
               onValueChange={(value) => handleFilterChange("difficulty", value)}
@@ -70,8 +87,13 @@ export function QuestionFilters({ filters, onFilterChange, totalQuestions }: Que
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Categoria</label>
-            <Select value={filters.category || "all"} onValueChange={(value) => handleFilterChange("category", value)}>
+            <label className="text-sm font-medium text-muted-foreground">
+              Categoria
+            </label>
+            <Select
+              value={filters.category || "all"}
+              onValueChange={(value) => handleFilterChange("category", value)}
+            >
               <SelectTrigger className="bg-muted/50">
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
@@ -87,8 +109,13 @@ export function QuestionFilters({ filters, onFilterChange, totalQuestions }: Que
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Empresa</label>
-            <Select value={filters.company || "all"} onValueChange={(value) => handleFilterChange("company", value)}>
+            <label className="text-sm font-medium text-muted-foreground">
+              Empresa
+            </label>
+            <Select
+              value={filters.company || "all"}
+              onValueChange={(value) => handleFilterChange("company", value)}
+            >
               <SelectTrigger className="bg-muted/50">
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
@@ -104,25 +131,26 @@ export function QuestionFilters({ filters, onFilterChange, totalQuestions }: Que
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Buscar</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar questões..."
-                value={filters.search || ""}
-                onChange={(e) => handleFilterChange("search", e.target.value)}
-                className="pl-10 bg-muted/50"
-              />
-            </div>
+            <label className="text-sm font-medium text-muted-foreground">
+              Buscar
+            </label>
+            <FuturisticInput
+              placeholder="Buscar questões..."
+              value={filters.search || ""}
+              onChange={(e) => handleFilterChange("search", e.target.value)}
+              showSearchIcon={true}
+              showFilterIcon={false}
+            />
           </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            {totalQuestions} questão{totalQuestions !== 1 ? "ões" : ""} encontrada{totalQuestions !== 1 ? "s" : ""}
+            {totalQuestions} questão{totalQuestions !== 1 ? "ões" : ""}{" "}
+            encontrada{totalQuestions !== 1 ? "s" : ""}
           </p>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

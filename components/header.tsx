@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Search, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FuturisticInput } from "@/components/ui/futuristic-input";
 import { AuthModalV2 } from "./auth/auth-modal-v2";
 import { UserMenu } from "./user-menu";
 import { useAuth } from "@/lib/auth";
@@ -33,15 +33,13 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
           </div>
 
           <div className="flex-1 max-w-md mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--icon-color)] h-4 w-4" />
-              <Input
-                placeholder="Buscar questões..."
-                value={searchQuery}
-                onChange={(e) => onSearch(e.target.value)}
-                className="pl-10 bg-muted/50 border-border"
-              />
-            </div>
+            <FuturisticInput
+              placeholder="Buscar questões..."
+              value={searchQuery}
+              onChange={(e) => onSearch(e.target.value)}
+              showSearchIcon={true}
+              showFilterIcon={false}
+            />
           </div>
 
           <div className="flex items-center gap-4">
