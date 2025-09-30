@@ -12,7 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { type QuestionFilter, CATEGORY_LABELS } from "@/lib/types";
-import { mockCompanies } from "@/lib/mock-data";
 
 interface QuestionFiltersProps {
   filters: QuestionFilter;
@@ -64,7 +63,7 @@ export function QuestionFilters({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">
               Dificuldade
@@ -101,28 +100,6 @@ export function QuestionFilters({
                 {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">
-              Empresa
-            </label>
-            <Select
-              value={filters.company || "all"}
-              onValueChange={(value) => handleFilterChange("company", value)}
-            >
-              <SelectTrigger className="bg-muted/50">
-                <SelectValue placeholder="Todas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {mockCompanies.map((company) => (
-                  <SelectItem key={company} value={company}>
-                    {company}
                   </SelectItem>
                 ))}
               </SelectContent>

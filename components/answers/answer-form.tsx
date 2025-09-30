@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useAnswers } from "@/lib/answers";
+import { useAnswers } from "@/hooks/use-api";
 
 interface AnswerFormProps {
   questionId: number;
@@ -33,7 +33,7 @@ export function AnswerForm({ questionId, isOpen, onClose }: AnswerFormProps) {
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const { addAnswer, loading } = useAnswers();
+  const { addAnswer, loading } = useAnswers(questionId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

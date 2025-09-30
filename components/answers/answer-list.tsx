@@ -6,15 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useAnswers } from "@/lib/answers";
+import { useAnswers } from "@/hooks/use-api";
 
 interface AnswerListProps {
   questionId: number;
 }
 
 export function AnswerList({ questionId }: AnswerListProps) {
-  const { getAnswersForQuestion } = useAnswers();
-  const answers = getAnswersForQuestion(questionId);
+  const { answers, loading, error } = useAnswers(questionId);
   const [copiedAnswerId, setCopiedAnswerId] = useState<number | null>(null);
 
   const formatDate = (dateString: string) => {
@@ -61,6 +60,29 @@ export function AnswerList({ questionId }: AnswerListProps) {
       }
     });
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <Code className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Carregando respostas...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <Code className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <p className="text-red-400">Erro ao carregar respostas</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (answers.length === 0) {
     return (

@@ -6,7 +6,7 @@ import { QuestoesSidebar } from "@/components/questoes-sidebar";
 import { QuestionCard } from "@/components/question-card";
 import { QuestionFilters } from "@/components/question-filters";
 import { QuestionDetail } from "@/components/question-detail";
-import { mockQuestions } from "@/lib/mock-data";
+import { useQuestions } from "@/hooks/use-api";
 import type { QuestionFilter, Question } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 
@@ -22,8 +22,10 @@ export default function QuestoesPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
+  const { questions, loading, error } = useQuestions();
+
   const filteredQuestions = useMemo(() => {
-    return mockQuestions.filter((question) => {
+    return questions.filter((question) => {
       const matchesSearch =
         !searchQuery ||
         question.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -36,9 +38,6 @@ export default function QuestoesPage() {
         !filters.difficulty || question.difficulty === filters.difficulty;
       const matchesCategory =
         !filters.category || question.category === filters.category;
-      const matchesCompany =
-        !filters.company ||
-        question.company?.toLowerCase().includes(filters.company.toLowerCase());
       const matchesSidebarCategory =
         !selectedCategory || question.category === selectedCategory;
 
@@ -46,14 +45,13 @@ export default function QuestoesPage() {
         matchesSearch &&
         matchesDifficulty &&
         matchesCategory &&
-        matchesCompany &&
         matchesSidebarCategory
       );
     });
-  }, [searchQuery, filters, selectedCategory]);
+  }, [questions, searchQuery, filters, selectedCategory]);
 
   const handleViewDetails = (id: number) => {
-    const question = mockQuestions.find((q) => q.id === id);
+    const question = questions.find((q) => q.id === id);
     if (question) {
       setSelectedQuestion(question);
     }
@@ -70,6 +68,39 @@ export default function QuestoesPage() {
 
   // Combine search query with filters for the filter component
   const combinedFilters = { ...filters, search: searchQuery };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <QuestoesHeader />
+        <main className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+              <p className="text-white/80">Carregando questões...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <QuestoesHeader />
+        <main className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="text-red-400 text-6xl mb-4">⚠️</div>
+              <p className="text-red-400 text-xl mb-2">Erro ao carregar questões</p>
+              <p className="text-white/60">{error}</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (selectedQuestion) {
     return (
