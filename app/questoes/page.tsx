@@ -8,6 +8,7 @@ import { QuestionFilters } from "@/components/question-filters";
 import { QuestionDetail } from "@/components/question-detail";
 import { mockQuestions } from "@/lib/mock-data";
 import type { QuestionFilter, Question } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 export default function QuestoesPage() {
   const [searchQuery, setSearchQuery] = useState("");
