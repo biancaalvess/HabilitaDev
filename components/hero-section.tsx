@@ -20,7 +20,7 @@ interface HeroSectionProps {
 
 export default function HeroSection({ onStartTraining }: HeroSectionProps) {
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden scroll-smooth">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]" />
 
@@ -101,10 +101,14 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
 
         {/* Description */}
         <p className="text-xl md:text-2xl text-white/90 max-w-4xl mb-12 leading-relaxed">
-          Um espaço para estudantes e profissionais praticarem, errarem sem pressão e se prepararem para  {" "}
-          <span className="text-blue-300 font-semibold">entrevistas técnias</span>,
-          <span className="text-blue-300 font-semibold"> testes</span>
-          <span className="text-blue-300 font-semibold"> e desafios </span> que realmente importam.
+          Um espaço para estudantes e profissionais praticarem, errarem sem
+          pressão e se prepararem para{" "}
+          <span className="text-blue-300 font-semibold">
+            entrevistas técnias
+          </span>
+          ,<span className="text-blue-300 font-semibold"> testes</span>
+          <span className="text-blue-300 font-semibold"> e desafios </span> que
+          realmente importam.
           <br />
           <span className="text-lg text-white/70 mt-4 block">
             Prepare-se para o sucesso. Sua jornada começa hoje.
@@ -134,12 +138,17 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             Conheça mais sobre nós
           </div>
           <button
-            onClick={() =>
-              document
-                .getElementById("sobre")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
-            className="text-white/60 hover:text-white transition-colors animate-bounce"
+            onClick={() => {
+              const element = document.getElementById("sobre");
+              if (element) {
+                element.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                  inline: "nearest",
+                });
+              }
+            }}
+            className="text-white/60 hover:text-white transition-all duration-300 hover:scale-110 animate-bounce"
           >
             <ChevronDown className="h-6 w-6" />
           </button>
@@ -228,12 +237,15 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
         </div>
       </div>
 
-      {/* Floating Tech Elements */}
-      <div className="absolute top-1/4 left-10 opacity-20">
-        <div className="w-16 h-16 border border-blue-400 rounded-lg rotate-45 animate-spin-slow" />
+      {/* Floating Tech Elements - Simplified */}
+      <div className="absolute top-1/4 left-10 opacity-10">
+        <div className="w-8 h-8 border border-blue-400 rounded-lg rotate-45 animate-spin-slow" />
       </div>
-      <div className="absolute bottom-1/4 right-10 opacity-20">
-        <div className="w-12 h-12 border border-white rounded-full animate-pulse" />
+      <div className="absolute bottom-1/4 right-10 opacity-10">
+        <div className="w-6 h-6 border border-white rounded-full animate-pulse" />
+      </div>
+      <div className="absolute top-1/2 right-1/4 opacity-5">
+        <div className="w-4 h-4 bg-blue-400 rounded-full animate-ping" />
       </div>
     </div>
   );
