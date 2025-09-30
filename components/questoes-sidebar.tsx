@@ -119,24 +119,6 @@ export function QuestoesSidebar({
           </Button>
           <Button
             variant="ghost"
-            className={`w-full ${
-              isMinimized
-                ? "justify-center px-2 sm:px-3 h-10 sm:h-11"
-                : "justify-start h-8 sm:h-9 lg:h-10"
-            } text-white/80 hover:text-white hover:bg-blue-500/20 text-xs sm:text-sm`}
-            title="Todas as Questões"
-          >
-            <BookOpen
-              className={`${
-                isMinimized ? "h-4 w-4 sm:h-5 sm:w-5" : "h-3 w-3 sm:h-4 sm:w-4"
-              }`}
-            />
-            {!isMinimized && (
-              <span className="ml-2 sm:ml-3 truncate">Todas as Questões</span>
-            )}
-          </Button>
-          <Button
-            variant="ghost"
             onClick={() => (window.location.href = "/contribuir")}
             className={`w-full ${
               isMinimized

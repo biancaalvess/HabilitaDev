@@ -3,7 +3,16 @@
 import { Button } from "@/components/ui/button";
 import { WireframeHands } from "@/components/ui/wireframe-hands";
 import { TechParticles } from "@/components/ui/tech-particles";
-import { ChevronDown, Code, Database, Cpu, Network } from "lucide-react";
+import {
+  ChevronDown,
+  Code,
+  Database,
+  Cpu,
+  Network,
+  Target,
+  Users,
+  Heart,
+} from "lucide-react";
 
 interface HeroSectionProps {
   onStartTraining: () => void;
@@ -44,7 +53,13 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
 
         <div className="hidden md:flex items-center space-x-8">
           <a
-            href="#questoes"
+            href="#inicio"
+            className="text-white/80 hover:text-white transition-colors"
+          >
+            Inicio
+          </a>
+          <a
+            href="questoes"
             className="text-white/80 hover:text-white transition-colors"
           >
             Questões
@@ -54,12 +69,6 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             className="text-white/80 hover:text-white transition-colors"
           >
             Sobre
-          </a>
-          <a
-            href="#blog"
-            className="text-white/80 hover:text-white transition-colors"
-          >
-            Blog
           </a>
         </div>
         <Button
@@ -92,12 +101,10 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
 
         {/* Description */}
         <p className="text-xl md:text-2xl text-white/90 max-w-4xl mb-12 leading-relaxed">
-          Domine as entrevistas técnicas das maiores empresas de tecnologia.
-          Questões reais de empresas como{" "}
-          <span className="text-blue-300 font-semibold">Meta</span>,
-          <span className="text-blue-300 font-semibold"> Google</span>,
-          <span className="text-blue-300 font-semibold"> Amazon</span> e outras
-          gigantes tech.
+          Um espaço para estudantes e profissionais praticarem, errarem sem pressão e se prepararem para  {" "}
+          <span className="text-blue-300 font-semibold">entrevistas técnias</span>,
+          <span className="text-blue-300 font-semibold"> testes</span>
+          <span className="text-blue-300 font-semibold"> e desafios </span> que realmente importam.
           <br />
           <span className="text-lg text-white/70 mt-4 block">
             Prepare-se para o sucesso. Sua jornada começa hoje.
@@ -119,6 +126,105 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           <Cpu className="h-8 w-8 text-white" />
           <Network className="h-8 w-8 text-white" />
           <Code className="h-8 w-8 text-white" />
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="mt-12 flex flex-col items-center">
+          <div className="text-white/60 text-sm mb-2">
+            Conheça mais sobre nós
+          </div>
+          <button
+            onClick={() =>
+              document
+                .getElementById("sobre")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+            className="text-white/60 hover:text-white transition-colors animate-bounce"
+          >
+            <ChevronDown className="h-6 w-6" />
+          </button>
+        </div>
+      </div>
+
+      {/* About Section */}
+      <div id="sobre" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+              Sobre o <span className="text-blue-300">HabilitaDev</span>
+            </h2>
+            <p className="text-xl text-blue-300/80 max-w-3xl mx-auto">
+              Democratizando o acesso ao conhecimento técnico de alta qualidade
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Missão */}
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded bg-blue-500 flex items-center justify-center">
+                  <Target className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Nossa Missão</h3>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                Democratizar o acesso ao conhecimento técnico de alta qualidade,
+                oferecendo uma plataforma gratuita onde desenvolvedores podem
+                praticar e se preparar para entrevistas técnicas.
+              </p>
+            </div>
+
+            {/* Visão */}
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded bg-blue-500 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Nossa Visão</h3>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                Ser a principal plataforma de preparação técnica do Brasil,
+                conectando desenvolvedores de todos os níveis e criando uma
+                comunidade forte e colaborativa.
+              </p>
+            </div>
+
+            {/* Valores */}
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded bg-blue-500 flex items-center justify-center">
+                  <Heart className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Nossos Valores</h3>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                Acessibilidade, Qualidade, Comunidade e Inovação são os pilares
+                que guiam nossa plataforma e nossa relação com os
+                desenvolvedores.
+              </p>
+            </div>
+          </div>
+
+          {/* CTA Section */}
+          <div className="text-center mt-16">
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+              Pronto para começar sua jornada?
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => (window.location.href = "/questoes")}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25"
+              >
+                Começar a Praticar
+              </button>
+              <button
+                onClick={() => (window.location.href = "/contribuir")}
+                className="bg-transparent border-2 border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300"
+              >
+                Contribuir
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
