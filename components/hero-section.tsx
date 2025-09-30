@@ -45,13 +45,8 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-6">
-        <div className="flex items-center space-x-2">
-          <Code className="h-8 w-8 text-white" />
-          <span className="text-2xl font-bold text-white">HabilitaDev</span>
-        </div>
-
-        <div className="hidden md:flex items-center space-x-8">
+      <nav className="relative z-10 flex items-center justify-center px-6 py-6">
+        <div className="flex items-center space-x-8">
           <a
             href="#inicio"
             className="text-white/80 hover:text-white transition-colors"
@@ -71,12 +66,6 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             Sobre
           </a>
         </div>
-        <Button
-          onClick={onStartTraining}
-          className="bg-white text-slate-900 hover:bg-white/90 font-semibold"
-        >
-          Começar Agora
-        </Button>
       </nav>
 
       {/* Main Content */}
@@ -90,9 +79,9 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
 
         {/* Main Title */}
         <h1 className="text-6xl md:text-8xl font-bold text-white mb-6 leading-tight">
-          <span className="block">TECH</span>
+          <span className="block">HABILITA</span>
           <span className="block text-4xl md:text-6xl text-blue-300 mt-2">
-            INTERVIEWS
+            DEV
           </span>
         </h1>
 
@@ -121,7 +110,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           size="lg"
           className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto font-semibold shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
         >
-          COMEÇAR TREINAMENTO
+          VAMOS COMEÇAR
         </Button>
 
         {/* Tech Icons */}
