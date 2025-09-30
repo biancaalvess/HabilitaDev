@@ -25,7 +25,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://github.com"
+                href="https://github.com/biancaalvess"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-blue-400 transition-colors"
@@ -34,7 +34,7 @@ export function Footer() {
                 <Github className="h-5 w-5" />
               </a>
               <a
-                href="https://linkedin.com"
+                href="https://www.linkedin.com/in/bianca-alvess/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-blue-400 transition-colors"
@@ -43,7 +43,7 @@ export function Footer() {
                 <Linkedin className="h-5 w-5" />
               </a>
               <a
-                href="mailto:contato@habilitadev.com"
+                href="mailto:bianca.alvessdasilva@gmail.com"
                 className="text-white/60 hover:text-blue-400 transition-colors"
                 aria-label="Email"
               >
@@ -138,7 +138,7 @@ export function Footer() {
               © {currentYear} HabilitaDev. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-2 text-white/60 text-sm">
-              <span>Feito por</span>
+              <span>Desenvolvido por</span>
               <a
                 href="https://www.linkedin.com/in/bianca-alvess/"
                 target="_blank"
