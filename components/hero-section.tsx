@@ -62,7 +62,6 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             Blog
           </a>
         </div>
-
         <Button
           onClick={onStartTraining}
           className="bg-white text-slate-900 hover:bg-white/90 font-semibold"
@@ -107,7 +106,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
 
         {/* CTA Button */}
         <Button
-          onClick={onStartTraining}
+          onClick={() => (window.location.href = "/#questoes")}
           size="lg"
           className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto font-semibold shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
         >
@@ -122,7 +121,6 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           <Code className="h-8 w-8 text-white" />
         </div>
       </div>
-
 
       {/* Floating Tech Elements */}
       <div className="absolute top-1/4 left-10 opacity-20">

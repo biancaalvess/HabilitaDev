@@ -1,8 +1,7 @@
 "use client";
 
-import { Search, Filter, X } from "lucide-react";
+import { Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FuturisticInput } from "@/components/ui/futuristic-input";
 import {
   Select,
   SelectContent,
@@ -134,12 +133,12 @@ export function QuestionFilters({
             <label className="text-sm font-medium text-muted-foreground">
               Buscar
             </label>
-            <FuturisticInput
+            <input
+              type="text"
               placeholder="Buscar questões..."
               value={filters.search || ""}
               onChange={(e) => handleFilterChange("search", e.target.value)}
-              showSearchIcon={true}
-              showFilterIcon={false}
+              className="w-full px-3 py-2 bg-muted/50 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
         </div>
