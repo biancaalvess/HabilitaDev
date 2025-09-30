@@ -66,11 +66,11 @@ const StyledWrapper = styled.div`
   .container {
     background: linear-gradient(
       135deg,
-      #0f0f23 0%,
-      #1a1a2e 25%,
-      #16213e 50%,
-      #0f3460 75%,
-      #533483 100%
+      #181c21 0%,
+      #232526 25%,
+      #414345 50%,
+      #2d1b69 75%,
+      #8b5cf6 100%
     );
     width: 100%;
     height: 100%;
@@ -87,25 +87,30 @@ const StyledWrapper = styled.div`
     overflow: hidden;
     background: radial-gradient(
         circle at 20% 80%,
-        rgba(120, 119, 198, 0.3) 0%,
+        rgba(139, 92, 246, 0.4) 0%,
         transparent 50%
       ),
       radial-gradient(
         circle at 80% 20%,
-        rgba(255, 119, 198, 0.3) 0%,
+        rgba(236, 72, 153, 0.4) 0%,
         transparent 50%
       ),
       radial-gradient(
         circle at 40% 40%,
-        rgba(120, 219, 255, 0.2) 0%,
+        rgba(59, 130, 246, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 60% 60%,
+        rgba(168, 85, 247, 0.2) 0%,
         transparent 50%
       ),
       repeating-linear-gradient(
         45deg,
         transparent 0px,
         transparent 2px,
-        rgba(255, 255, 255, 0.03) 2px,
-        rgba(255, 255, 255, 0.03) 4px
+        rgba(255, 255, 255, 0.05) 2px,
+        rgba(255, 255, 255, 0.05) 4px
       );
     position: relative;
   }
@@ -135,10 +140,11 @@ const StyledWrapper = styled.div`
     border-radius: 50%;
     background: linear-gradient(
       45deg,
-      rgba(255, 255, 255, 0.1),
-      rgba(255, 255, 255, 0.05)
+      rgba(139, 92, 246, 0.3),
+      rgba(236, 72, 153, 0.2)
     );
     animation: float 15s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
   }
 
   .shape:nth-child(1) {
