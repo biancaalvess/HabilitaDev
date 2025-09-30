@@ -9,7 +9,7 @@ import { FeedbackProvider } from "@/lib/feedback"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "TechInterview - Plataforma de Treinamento para Entrevistas Técnicas",
+  title: "HabilitaDev - Plataforma de Treinamento para Entrevistas Técnicas",
   description: "Treine para entrevistas técnicas com questões reais de empresas como Itaú, Meta, X (Twitter) e outras.",
   generator: "v0.app",
 }

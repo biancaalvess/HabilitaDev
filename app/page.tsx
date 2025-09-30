@@ -1,17 +1,20 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
 import { QuestionCard } from "@/components/question-card";
 import { QuestionFilters } from "@/components/question-filters";
 import { QuestionDetail } from "@/components/question-detail";
 import HeroSection from "@/components/hero-section";
+import { AboutSection } from "@/components/about-section";
 import { mockQuestions } from "@/lib/mock-data";
 import type { QuestionFilter, Question } from "@/lib/types";
 
 export default function HomePage() {
   const [showLanding, setShowLanding] = useState(true);
+  const [showAbout, setShowAbout] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<QuestionFilter>({});
   const [selectedCategory, setSelectedCategory] = useState<
@@ -21,6 +24,25 @@ export default function HomePage() {
     null
   );
   const [showFeedback, setShowFeedback] = useState(false);
+
+  // Detectar scroll para mostrar seção "Sobre"
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+
+      // Mostrar seção "Sobre" quando o usuário rolar 100px
+      if (scrollY > 100) {
+        setShowAbout(true);
+      }
+    };
+
+    // Verificar scroll inicial
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const filteredQuestions = useMemo(() => {
     return mockQuestions.filter((question) => {
@@ -73,7 +95,14 @@ export default function HomePage() {
 
   // Show landing page first
   if (showLanding) {
-    return <HeroSection onStartTraining={() => setShowLanding(false)} />;
+    return (
+      <div className="min-h-screen">
+        <HeroSection onStartTraining={() => setShowLanding(false)} />
+        {showAbout && (
+          <AboutSection onStartTraining={() => setShowLanding(false)} />
+        )}
+      </div>
+    );
   }
 
   if (selectedQuestion) {
