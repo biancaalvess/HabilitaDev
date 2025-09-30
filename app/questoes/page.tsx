@@ -93,7 +93,9 @@ export default function QuestoesPage() {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="text-red-400 text-6xl mb-4">⚠️</div>
-              <p className="text-red-400 text-xl mb-2">Erro ao carregar questões</p>
+              <p className="text-red-400 text-xl mb-2">
+                Erro ao carregar questões
+              </p>
               <p className="text-white/60">{error}</p>
             </div>
           </div>

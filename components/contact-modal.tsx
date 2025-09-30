@@ -134,11 +134,11 @@ Enviado através do HabilitaDev
         <Card className="border-0 shadow-none bg-slate-800/50 backdrop-blur-sm relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
-          
+
           {/* Floating Elements */}
           <div className="absolute top-4 right-4 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60" />
           <div className="absolute bottom-4 left-4 w-1 h-1 bg-white rounded-full animate-ping opacity-40" />
-          
+
           <CardContent className="p-0 relative z-10">
             {success ? (
               <div className="p-8 text-center">
@@ -155,8 +155,13 @@ Enviado através do HabilitaDev
             ) : (
               <form onSubmit={handleSubmit} className="p-8 space-y-6">
                 {error && (
-                  <Alert variant="destructive" className="border-red-500/20 bg-red-500/10">
-                    <AlertDescription className="text-red-400">{error}</AlertDescription>
+                  <Alert
+                    variant="destructive"
+                    className="border-red-500/20 bg-red-500/10"
+                  >
+                    <AlertDescription className="text-red-400">
+                      {error}
+                    </AlertDescription>
                   </Alert>
                 )}
 
@@ -204,8 +209,8 @@ Enviado através do HabilitaDev
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-600">
                       {Object.entries(contactTypes).map(([key, label]) => (
-                        <SelectItem 
-                          key={key} 
+                        <SelectItem
+                          key={key}
                           value={key}
                           className="text-white hover:bg-slate-700 focus:bg-slate-700"
                         >
