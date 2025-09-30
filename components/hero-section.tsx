@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { WireframeHands } from "@/components/ui/wireframe-hands";
 import { TechParticles } from "@/components/ui/tech-particles";
+import { Footer } from "@/components/footer";
 import {
   ChevronDown,
   Code,
@@ -208,20 +209,24 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           </div>
 
           {/* CTA Section */}
-          <div className="text-center mt-16">
+          <div className="text-center mt-16" id="cta-section">
             <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6">
               Vamos começar sua jornada?
             </h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/questoes">
-                <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25">
+              <Link href="/questoes" className="inline-block">
+                <Button
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 w-full sm:w-auto"
+                  size="lg"
+                >
                   Começar a Praticar
                 </Button>
               </Link>
-              <Link href="/contribuir">
+              <Link href="/contribuir" className="inline-block">
                 <Button
                   variant="outline"
-                  className="bg-transparent border-2 border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300"
+                  className="bg-transparent border-2 border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 w-full sm:w-auto"
+                  size="lg"
                 >
                   Contribuir
                 </Button>
@@ -241,6 +246,9 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       <div className="absolute top-1/2 right-1/4 opacity-5">
         <div className="w-4 h-4 bg-blue-400 rounded-full animate-ping" />
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
