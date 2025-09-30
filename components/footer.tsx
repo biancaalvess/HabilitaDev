@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Github, Linkedin, Mail } from "lucide-react";
+import { Github, Linkedin, Mail, Instagram } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -43,6 +43,15 @@ export function Footer() {
                 <Linkedin className="h-5 w-5" />
               </a>
               <a
+                href="https://www.instagram.com/biancaa.tsx/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/60 hover:text-blue-400 transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
                 href="mailto:bianca.alvessdasilva@gmail.com"
                 className="text-white/60 hover:text-blue-400 transition-colors"
                 aria-label="Email"
@@ -80,14 +89,7 @@ export function Footer() {
                   Sobre
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/admin"
-                  className="text-white/70 hover:text-blue-400 transition-colors text-sm"
-                >
-                  Admin
-                </Link>
-              </li>
+              <li></li>
             </ul>
           </div>
 
