@@ -35,6 +35,24 @@ export interface Feedback {
   created_at: string
 }
 
+export interface Comment {
+  id: number
+  question_id: number
+  author_name: string
+  comment_type: "correction" | "suggestion"
+  content: string
+  created_at: string
+}
+
+export interface Answer {
+  id: number
+  question_id: number
+  author_name: string
+  content: string
+  created_at: string
+  is_solution: boolean
+}
+
 export const DIFFICULTY_COLORS = {
   easy: "bg-green-500/10 text-green-400 border-green-500/20",
   medium: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",

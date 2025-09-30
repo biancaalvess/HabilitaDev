@@ -1,23 +1,38 @@
-"use client"
+"use client";
 
-import { ArrowLeft, Clock, Building2, Tag, MessageSquare, Copy, Check } from "lucide-react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { FeedbackForm } from "./feedback/feedback-form"
-import { FeedbackList } from "./feedback/feedback-list"
-import { type Question, DIFFICULTY_COLORS, CATEGORY_LABELS } from "@/lib/types"
+import {
+  ArrowLeft,
+  Clock,
+  Building2,
+  Tag,
+  MessageSquare,
+  Copy,
+  Check,
+  Code,
+} from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { FeedbackForm } from "./feedback/feedback-form";
+import { FeedbackList } from "./feedback/feedback-list";
+import { AnswerForm } from "./answers/answer-form";
+import { AnswerList } from "./answers/answer-list";
+import { CommentForm } from "./comments/comment-form";
+import { CommentList } from "./comments/comment-list";
+import { type Question, DIFFICULTY_COLORS, CATEGORY_LABELS } from "@/lib/types";
 
 interface QuestionDetailProps {
-  question: Question
-  onBack: () => void
+  question: Question;
+  onBack: () => void;
 }
 
 export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
-  const [copied, setCopied] = useState(false)
-  const [showFeedbackForm, setShowFeedbackForm] = useState(false)
+  const [copied, setCopied] = useState(false);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [showAnswerForm, setShowAnswerForm] = useState(false);
+  const [showCommentForm, setShowCommentForm] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -26,18 +41,18 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(question.answer)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(question.answer);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err)
+      console.error("Failed to copy:", err);
     }
-  }
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -49,7 +64,12 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
 
         <div className="flex items-start justify-between gap-4 mb-4">
           <h1 className="text-3xl font-bold text-balance">{question.title}</h1>
-          <Badge variant="outline" className={`${DIFFICULTY_COLORS[question.difficulty]} capitalize shrink-0`}>
+          <Badge
+            variant="outline"
+            className={`${
+              DIFFICULTY_COLORS[question.difficulty]
+            } capitalize shrink-0`}
+          >
             {question.difficulty}
           </Badge>
         </div>
@@ -84,7 +104,9 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
           </CardHeader>
           <CardContent>
             <div className="prose prose-invert max-w-none">
-              <p className="text-foreground leading-relaxed whitespace-pre-wrap">{question.description}</p>
+              <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                {question.description}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -97,14 +119,20 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
                 Solução
               </CardTitle>
               <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                {copied ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-2" />
+                )}
                 {copied ? "Copiado!" : "Copiar"}
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="bg-muted/50 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-              <pre className="whitespace-pre-wrap text-foreground">{question.answer}</pre>
+              <pre className="whitespace-pre-wrap text-foreground">
+                {question.answer}
+              </pre>
             </div>
           </CardContent>
         </Card>
@@ -128,17 +156,49 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
 
         <Separator />
 
-        <FeedbackList questionId={question.id} />
+        <AnswerList questionId={question.id} />
+
+        <div className="flex justify-center gap-3">
+          <Button
+            onClick={() => setShowAnswerForm(true)}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Code className="h-4 w-4 mr-2" />
+            Responder Questão
+          </Button>
+          <Button onClick={() => setShowCommentForm(true)} variant="outline">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Comentar
+          </Button>
+        </div>
+
+        <Separator />
+
+        <CommentList questionId={question.id} />
 
         <div className="flex justify-center">
-          <Button onClick={() => setShowFeedbackForm(true)} className="bg-primary hover:bg-primary/90">
+          <Button onClick={() => setShowFeedbackForm(true)} variant="outline">
             <MessageSquare className="h-4 w-4 mr-2" />
             Enviar Feedback
           </Button>
         </div>
       </div>
 
-      <FeedbackForm questionId={question.id} isOpen={showFeedbackForm} onClose={() => setShowFeedbackForm(false)} />
+      <AnswerForm
+        questionId={question.id}
+        isOpen={showAnswerForm}
+        onClose={() => setShowAnswerForm(false)}
+      />
+      <CommentForm
+        questionId={question.id}
+        isOpen={showCommentForm}
+        onClose={() => setShowCommentForm(false)}
+      />
+      <FeedbackForm
+        questionId={question.id}
+        isOpen={showFeedbackForm}
+        onClose={() => setShowFeedbackForm(false)}
+      />
     </div>
-  )
+  );
 }

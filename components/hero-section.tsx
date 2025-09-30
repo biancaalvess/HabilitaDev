@@ -35,8 +35,8 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       </div>
 
       {/* Tech Particles */}
-      <div className="absolute inset-0 opacity-20">
-        <TechParticles count={25} />
+      <div className="absolute inset-0 opacity-10">
+        <TechParticles count={15} />
       </div>
 
       {/* Wireframe Hands */}

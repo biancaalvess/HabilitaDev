@@ -47,10 +47,10 @@ export function TechParticles({
     const createParticle = (): Particle => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
       size: Math.random() * 1.5 + 0.5,
-      opacity: Math.random() * 0.3 + 0.1,
+      opacity: Math.random() * 0.15 + 0.05,
       color: colors[Math.floor(Math.random() * colors.length)],
       life: 0,
       maxLife: Math.random() * 300 + 200,

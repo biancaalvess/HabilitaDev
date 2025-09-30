@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { Clock, Building2, Tag, MessageSquare } from "lucide-react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { type Question, DIFFICULTY_COLORS, CATEGORY_LABELS } from "@/lib/types"
+import { Clock, Building2, Tag, MessageSquare } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { type Question, DIFFICULTY_COLORS, CATEGORY_LABELS } from "@/lib/types";
 
 interface QuestionCardProps {
-  question: Question
-  onViewDetails: (id: number) => void
+  question: Question;
+  onViewDetails: (id: number) => void;
 }
 
 export function QuestionCard({ question, onViewDetails }: QuestionCardProps) {
@@ -17,8 +17,8 @@ export function QuestionCard({ question, onViewDetails }: QuestionCardProps) {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    })
-  }
+    });
+  };
 
   return (
     <Card className="group hover:bg-accent/50 transition-colors cursor-pointer border-border/50">
@@ -27,14 +27,21 @@ export function QuestionCard({ question, onViewDetails }: QuestionCardProps) {
           <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
             {question.title}
           </h3>
-          <Badge variant="outline" className={`${DIFFICULTY_COLORS[question.difficulty]} shrink-0 capitalize`}>
+          <Badge
+            variant="outline"
+            className={`${
+              DIFFICULTY_COLORS[question.difficulty]
+            } shrink-0 capitalize`}
+          >
             {question.difficulty}
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="pt-0">
-        <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{question.description}</p>
+        <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
+          {question.description}
+        </p>
 
         <div className="flex flex-wrap gap-2 mb-4">
           <Badge variant="secondary" className="text-xs">
@@ -62,16 +69,26 @@ export function QuestionCard({ question, onViewDetails }: QuestionCardProps) {
             </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onViewDetails(question.id)}
-            className="text-primary hover:text-primary-foreground hover:bg-primary"
-          >
-            Ver detalhes →
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onViewDetails(question.id)}
+              className="text-primary hover:text-primary-foreground hover:bg-primary"
+            >
+              Responder
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onViewDetails(question.id)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Ver detalhes →
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
