@@ -4,12 +4,9 @@ import {
   Home,
   BookOpen,
   User,
-  HelpCircle,
-  Settings,
   Code,
   Database,
   Cpu,
-  Network,
   Globe,
   Server,
   Wrench,
@@ -107,24 +104,6 @@ export function QuestoesSidebar({
               );
             })}
           </div>
-        </div>
-
-        {/* Bottom Navigation */}
-        <div className="space-y-2 mt-auto">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-white/70 hover:text-white hover:bg-blue-500/20"
-          >
-            <HelpCircle className="h-4 w-4 mr-3" />
-            Ajuda
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-white/70 hover:text-white hover:bg-blue-500/20"
-          >
-            <Settings className="h-4 w-4 mr-3" />
-            Configurações
-          </Button>
         </div>
       </div>
     </div>

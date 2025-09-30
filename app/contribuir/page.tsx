@@ -16,7 +16,20 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Send, Code } from "lucide-react";
+import { Send, Code } from "lucide-react";
+
+const CATEGORIAS = [
+  { id: "algoritmos", name: "Algoritmos" },
+  { id: "estruturas-de-dados", name: "Estruturas de Dados" },
+  { id: "design-sistema", name: "Design de Sistema" },
+  { id: "bancos-dados", name: "Bancos de Dados" },
+  { id: "frontend", name: "Frontend" },
+  { id: "backend", name: "Backend" },
+  { id: "devops", name: "DevOps" },
+  { id: "mobile", name: "Mobile" },
+  { id: "seguranca", name: "Segurança" },
+  { id: "ia-ml", name: "IA/ML" },
+];
 
 export default function ContribuirPage() {
   const [formData, setFormData] = useState({
@@ -25,9 +38,11 @@ export default function ContribuirPage() {
     questao: "",
     resposta: "",
     nivel: "",
+    categoria: "",
     fonte: "",
     referencia: "",
     isOriginal: false,
+    isAI: false,
   });
 
   const [selectedCategory, setSelectedCategory] = useState<
@@ -43,15 +58,23 @@ export default function ContribuirPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validação básica
-    if (!formData.nome || !formData.questao || !formData.resposta || !formData.nivel) {
+    if (
+      !formData.nome ||
+      !formData.questao ||
+      !formData.resposta ||
+      !formData.nivel ||
+      !formData.categoria
+    ) {
       alert("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
-    if (!formData.isOriginal && !formData.referencia) {
-      alert("Por favor, forneça a referência da questão ou marque como original.");
+    if (!formData.isOriginal && !formData.isAI && !formData.referencia) {
+      alert(
+        "Por favor, forneça a referência da questão, marque como original ou como criada por IA."
+      );
       return;
     }
 
@@ -61,17 +84,19 @@ export default function ContribuirPage() {
         ...formData,
         id: Date.now(), // ID temporário
         createdAt: new Date().toISOString(),
-        status: 'pending' // Status de aprovação
+        status: "pending", // Status de aprovação
       };
 
       // Simular delay de envio
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       console.log("Questão enviada:", questionData);
-      
+
       // Feedback de sucesso
-      alert("Questão enviada com sucesso! Obrigado pela contribuição. Ela será revisada antes de ser publicada.");
-      
+      alert(
+        "Questão enviada com sucesso! Obrigado pela contribuição. Ela será revisada antes de ser publicada."
+      );
+
       // Limpar formulário
       setFormData({
         nome: "",
@@ -79,11 +104,12 @@ export default function ContribuirPage() {
         questao: "",
         resposta: "",
         nivel: "",
+        categoria: "",
         fonte: "",
         referencia: "",
-        isOriginal: false
+        isOriginal: false,
+        isAI: false,
       });
-      
     } catch (error) {
       console.error("Erro ao enviar questão:", error);
       alert("Erro ao enviar questão. Tente novamente.");
@@ -114,28 +140,25 @@ export default function ContribuirPage() {
             <div className="max-w-4xl mx-auto">
               {/* Header */}
               <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <Button
-                    variant="ghost"
-                    onClick={() => window.history.back()}
-                    className="text-white/80 hover:text-white hover:bg-blue-500/20"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Voltar
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded bg-blue-500 flex items-center justify-center">
-                      <Code className="h-5 w-5 text-white" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-white">
-                      Contribuir com Questão
-                    </h1>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-8 w-8 rounded bg-blue-500 flex items-center justify-center">
+                    <Code className="h-5 w-5 text-white" />
                   </div>
+                  <h1 className="text-3xl font-bold text-white">
+                    Contribuir com Questão
+                  </h1>
                 </div>
-                <p className="text-blue-300/80 text-lg">
+                <p className="text-blue-300/80 text-lg mb-4">
                   Ajude a comunidade compartilhando suas questões técnicas e
                   soluções.
                 </p>
+                <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4">
+                  <p className="text-blue-200 text-sm">
+                    <strong>Importante:</strong> Sua questão será analisada pela
+                    nossa equipe antes de ser publicada. Isso garante a
+                    qualidade e relevância do conteúdo para toda a comunidade.
+                  </p>
+                </div>
               </div>
 
               {/* Form */}
@@ -215,7 +238,7 @@ export default function ContribuirPage() {
                       />
                     </div>
 
-                    {/* Nível e Fonte */}
+                    {/* Nível e Categoria */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="nivel" className="text-white">
@@ -238,40 +261,81 @@ export default function ContribuirPage() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="fonte" className="text-white">
-                          Fonte da Questão
+                        <Label htmlFor="categoria" className="text-white">
+                          Categoria *
                         </Label>
-                        <Input
-                          id="fonte"
-                          value={formData.fonte}
-                          onChange={(e) =>
-                            handleInputChange("fonte", e.target.value)
+                        <Select
+                          value={formData.categoria}
+                          onValueChange={(value) =>
+                            handleInputChange("categoria", value)
                           }
-                          placeholder="Ex: LeetCode, HackerRank, etc."
-                          className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/60"
-                        />
+                        >
+                          <SelectTrigger className="bg-slate-700/50 border-blue-400/30 text-white">
+                            <SelectValue placeholder="Selecione a categoria" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CATEGORIAS.map((categoria) => (
+                              <SelectItem
+                                key={categoria.id}
+                                value={categoria.id}
+                              >
+                                {categoria.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
-                    {/* Checkbox para questão original */}
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="isOriginal"
-                        checked={formData.isOriginal}
-                        onCheckedChange={(checked) =>
-                          handleInputChange("isOriginal", checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="isOriginal"
-                        className="text-white text-sm"
-                      >
-                        Esta é uma questão original criada por você
+                    {/* Fonte */}
+                    <div className="space-y-2">
+                      <Label htmlFor="fonte" className="text-white">
+                        Fonte da Questão
                       </Label>
+                      <Input
+                        id="fonte"
+                        value={formData.fonte}
+                        onChange={(e) =>
+                          handleInputChange("fonte", e.target.value)
+                        }
+                        placeholder="Ex: LeetCode, HackerRank, etc."
+                        className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/60"
+                      />
                     </div>
 
-                    {/* Referência (se não for original) */}
-                    {!formData.isOriginal && (
+                    {/* Checkboxes para tipo de questão */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="isOriginal"
+                          checked={formData.isOriginal}
+                          onCheckedChange={(checked) =>
+                            handleInputChange("isOriginal", checked as boolean)
+                          }
+                        />
+                        <Label
+                          htmlFor="isOriginal"
+                          className="text-white text-sm"
+                        >
+                          Esta é uma questão original criada por você
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="isAI"
+                          checked={formData.isAI}
+                          onCheckedChange={(checked) =>
+                            handleInputChange("isAI", checked as boolean)
+                          }
+                        />
+                        <Label htmlFor="isAI" className="text-white text-sm">
+                          Esta questão foi criada por IA (ChatGPT, Claude, etc.)
+                        </Label>
+                      </div>
+                    </div>
+
+                    {/* Referência (se não for original nem IA) */}
+                    {!formData.isOriginal && !formData.isAI && (
                       <div className="space-y-2">
                         <Label htmlFor="referencia" className="text-white">
                           Referência/Link *
@@ -284,7 +348,7 @@ export default function ContribuirPage() {
                           }
                           placeholder="Link para a fonte original da questão"
                           className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/60"
-                          required={!formData.isOriginal}
+                          required={!formData.isOriginal && !formData.isAI}
                         />
                       </div>
                     )}
