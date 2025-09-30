@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { WireframeHands } from "@/components/ui/wireframe-hands";
 import { TechParticles } from "@/components/ui/tech-particles";
@@ -105,13 +106,14 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
         </p>
 
         {/* CTA Button */}
-        <Button
-          onClick={() => (window.location.href = "/#questoes")}
-          size="lg"
-          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto font-semibold shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
-        >
-          VAMOS COMEÇAR
-        </Button>
+        <Link href="/questoes">
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto font-semibold shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
+          >
+            VAMOS COMEÇAR
+          </Button>
+        </Link>
 
         {/* Tech Icons */}
         <div className="mt-16 flex items-center space-x-8 opacity-60">
@@ -208,21 +210,22 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           {/* CTA Section */}
           <div className="text-center mt-16">
             <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6">
-              Vamos para começar sua jornada?
+              Vamos começar sua jornada?
             </h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => (window.location.href = "/questoes")}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25"
-              >
-                Começar a Praticar
-              </button>
-              <button
-                onClick={() => (window.location.href = "/contribuir")}
-                className="bg-transparent border-2 border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300"
-              >
-                Contribuir
-              </button>
+              <Link href="/questoes">
+                <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25">
+                  Começar a Praticar
+                </Button>
+              </Link>
+              <Link href="/contribuir">
+                <Button
+                  variant="outline"
+                  className="bg-transparent border-2 border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300"
+                >
+                  Contribuir
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
