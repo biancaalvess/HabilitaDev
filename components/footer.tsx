@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Github, Linkedin, Mail, Instagram } from "lucide-react";
+import { Github, Linkedin, Mail, Instagram, MessageSquare } from "lucide-react";
+import { ContactModal } from "@/components/contact-modal";
+import { useState } from "react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [showContactModal, setShowContactModal] = useState(false);
 
   return (
     <footer className="bg-slate-900/95 backdrop-blur-sm border-t border-blue-400/20">
@@ -89,7 +92,15 @@ export function Footer() {
                   Sobre
                 </Link>
               </li>
-              <li></li>
+              <li>
+                <button
+                  onClick={() => setShowContactModal(true)}
+                  className="text-white/70 hover:text-blue-400 transition-colors text-sm flex items-center gap-1"
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  Contato
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -153,6 +164,12 @@ export function Footer() {
           </div>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      <ContactModal 
+        isOpen={showContactModal} 
+        onClose={() => setShowContactModal(false)} 
+      />
     </footer>
   );
 }
