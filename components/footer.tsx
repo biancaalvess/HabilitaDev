@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Github, Linkedin, Mail, Heart } from "lucide-react";
+import { Github, Linkedin, Mail } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -19,8 +19,9 @@ export function Footer() {
               <span className="text-xl font-bold text-white">HabilitaDev</span>
             </div>
             <p className="text-white/70 text-sm leading-relaxed mb-4 max-w-md">
-              Democratizando o acesso ao conhecimento técnico de alta qualidade. 
-              Prepare-se para entrevistas técnicas com questões reais de grandes empresas.
+              Democratizando o acesso ao conhecimento técnico de alta qualidade.
+              Prepare-se para entrevistas técnicas com questões reais de grandes
+              empresas.
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -137,9 +138,15 @@ export function Footer() {
               © {currentYear} HabilitaDev. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-2 text-white/60 text-sm">
-              <span>Feito com</span>
-              <Heart className="h-4 w-4 text-red-400 fill-current" />
-              <span>para a comunidade</span>
+              <span>Feito por</span>
+              <a
+                href="https://www.linkedin.com/in/bianca-alvess/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
+              >
+                Bianca Alves
+              </a>
             </div>
           </div>
         </div>
