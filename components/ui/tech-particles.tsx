@@ -9,9 +9,11 @@ interface TechParticlesProps {
 
 export function TechParticles({
   className = "",
-  count = 50,
+  count = 30,
 }: TechParticlesProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>();
+  const particlesRef = useRef<any[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -20,11 +22,12 @@ export function TechParticles({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    let isAnimating = true;
+
     const resizeCanvas = () => {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio;
-      canvas.height = rect.height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      canvas.width = rect.width;
+      canvas.height = rect.height;
     };
 
     interface Particle {
@@ -35,80 +38,81 @@ export function TechParticles({
       size: number;
       opacity: number;
       color: string;
+      life: number;
+      maxLife: number;
     }
 
-    const particles: Particle[] = [];
-    const colors = ["#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"];
+    const colors = ["#3b82f6", "#60a5fa", "#93c5fd"];
 
     const createParticle = (): Particle => ({
-      x: (Math.random() * canvas.width) / window.devicePixelRatio,
-      y: (Math.random() * canvas.height) / window.devicePixelRatio,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-      size: Math.random() * 2 + 1,
-      opacity: Math.random() * 0.5 + 0.2,
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      size: Math.random() * 1.5 + 0.5,
+      opacity: Math.random() * 0.3 + 0.1,
       color: colors[Math.floor(Math.random() * colors.length)],
+      life: 0,
+      maxLife: Math.random() * 300 + 200,
     });
 
     // Initialize particles
+    particlesRef.current = [];
     for (let i = 0; i < count; i++) {
-      particles.push(createParticle());
+      particlesRef.current.push(createParticle());
     }
 
     const animate = () => {
+      if (!isAnimating) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      particles.forEach((particle, index) => {
+      particlesRef.current.forEach((particle, index) => {
         // Update position
         particle.x += particle.vx;
         particle.y += particle.vy;
+        particle.life++;
+
+        // Fade out over time
+        const lifeRatio = particle.life / particle.maxLife;
+        particle.opacity = (1 - lifeRatio) * 0.3;
 
         // Wrap around screen
-        if (particle.x < 0) particle.x = canvas.width / window.devicePixelRatio;
-        if (particle.x > canvas.width / window.devicePixelRatio) particle.x = 0;
-        if (particle.y < 0)
-          particle.y = canvas.height / window.devicePixelRatio;
-        if (particle.y > canvas.height / window.devicePixelRatio)
-          particle.y = 0;
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        if (particle.y > canvas.height) particle.y = 0;
 
-        // Draw particle
-        ctx.save();
-        ctx.globalAlpha = particle.opacity;
-        ctx.fillStyle = particle.color;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        // Reset particle if it's too old
+        if (particle.life > particle.maxLife) {
+          particlesRef.current[index] = createParticle();
+          return;
+        }
 
-        // Draw connections to nearby particles
-        particles.slice(index + 1).forEach((otherParticle) => {
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 100) {
-            ctx.save();
-            ctx.globalAlpha = ((100 - distance) / 100) * 0.1;
-            ctx.strokeStyle = particle.color;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.stroke();
-            ctx.restore();
-          }
-        });
+        // Draw particle only if visible
+        if (particle.opacity > 0.01) {
+          ctx.save();
+          ctx.globalAlpha = particle.opacity;
+          ctx.fillStyle = particle.color;
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
       });
 
-      requestAnimationFrame(animate);
+      animationRef.current = requestAnimationFrame(animate);
     };
 
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
-
     animate();
 
     return () => {
+      isAnimating = false;
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       window.removeEventListener("resize", resizeCanvas);
     };
   }, [count]);

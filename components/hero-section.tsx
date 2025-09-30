@@ -35,8 +35,8 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       </div>
 
       {/* Tech Particles */}
-      <div className="absolute inset-0">
-        <TechParticles count={80} />
+      <div className="absolute inset-0 opacity-20">
+        <TechParticles count={25} />
       </div>
 
       {/* Wireframe Hands */}
@@ -177,9 +177,10 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
                 <h3 className="text-xl font-bold text-white">Nossa Missão</h3>
               </div>
               <p className="text-white/80 leading-relaxed">
-                Democratizar o acesso ao conhecimento técnico de alta qualidade,
-                oferecendo uma plataforma gratuita onde desenvolvedores podem
-                praticar e se preparar para entrevistas técnicas.
+                Criar um espaço acessível onde estudantes e profissionais possam
+                praticar entrevistas técnicas, testes e desafios de tecnologia,
+                aprendendo com os erros sem pressão e ganhando confiança para
+                conquistar novas oportunidades.
               </p>
             </div>
 
@@ -192,9 +193,9 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
                 <h3 className="text-xl font-bold text-white">Nossa Visão</h3>
               </div>
               <p className="text-white/80 leading-relaxed">
-                Ser a principal plataforma de preparação técnica do Brasil,
-                conectando desenvolvedores de todos os níveis e criando uma
-                comunidade forte e colaborativa.
+                Criar um espaço acessível para prática e preparação técnica,
+                onde pessoas de diferentes níveis e áreas da tecnologia possam
+                aprender juntas, ganhar confiança e crescer em comunidade.
               </p>
             </div>
 
@@ -207,9 +208,10 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
                 <h3 className="text-xl font-bold text-white">Nossos Valores</h3>
               </div>
               <p className="text-white/80 leading-relaxed">
-                Acessibilidade, Qualidade, Comunidade e Inovação são os pilares
-                que guiam nossa plataforma e nossa relação com os
-                desenvolvedores.
+                Acessibilidade, Comunidade, Qualidade e Evolução Contínua.
+                Acreditamos que qualquer pessoa pode se desenvolver quando
+                encontra um ambiente de apoio, com prática realista, feedbacks
+                construtivos e espaço para crescer.
               </p>
             </div>
           </div>
