@@ -48,6 +48,7 @@ export default function ContribuirPage() {
   const [selectedCategory, setSelectedCategory] = useState<
     string | undefined
   >();
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -131,6 +132,8 @@ export default function ContribuirPage() {
         <QuestoesSidebar
           selectedCategory={selectedCategory}
           onCategorySelect={setSelectedCategory}
+          isMinimized={isSidebarMinimized}
+          onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
         />
 
         <div className="flex-1 flex flex-col">

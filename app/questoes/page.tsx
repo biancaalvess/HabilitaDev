@@ -19,6 +19,7 @@ export default function QuestoesPage() {
     null
   );
   const [showFeedback, setShowFeedback] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
   const filteredQuestions = useMemo(() => {
     return mockQuestions.filter((question) => {
@@ -95,6 +96,8 @@ export default function QuestoesPage() {
         <QuestoesSidebar
           selectedCategory={selectedCategory}
           onCategorySelect={setSelectedCategory}
+          isMinimized={isSidebarMinimized}
+          onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
         />
 
         <div className="flex-1 flex flex-col">
