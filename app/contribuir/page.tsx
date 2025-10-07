@@ -77,23 +77,30 @@ export default function ContribuirPage() {
     }
 
     try {
-      // Simular envio para API (substitua pela sua lógica real)
+      // Enviar para API real
+      const { apiService } = await import("@/lib/api");
+      
       const questionData = {
-        ...formData,
-        id: Date.now(), // ID temporário
-        createdAt: new Date().toISOString(),
-        status: "pending", // Status de aprovação
+        title: formData.questao,
+        description: formData.questao,
+        answer: formData.resposta,
+        difficulty: formData.nivel as any,
+        category: formData.categoria as any,
+        company: formData.fonte,
+        tags: formData.referencia ? [formData.referencia] : [],
+        approved: false
       };
 
-      // Simular delay de envio
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await apiService.createQuestion(questionData);
 
-      console.log("Questão enviada:", questionData);
-
-      // Feedback de sucesso
-      alert(
-        "Questão enviada com sucesso! Obrigado pela contribuição. Ela será revisada antes de ser publicada."
-      );
+      if (result.success) {
+        // Feedback de sucesso
+        alert(
+          "Questão enviada com sucesso! Obrigado pela contribuição. Ela será revisada antes de ser publicada."
+        );
+      } else {
+        alert("Erro ao enviar questão. Tente novamente.");
+      }
 
       // Limpar formulário
       setFormData({

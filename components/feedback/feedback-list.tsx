@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   MessageSquare,
   Clock,
@@ -42,8 +43,26 @@ const statusLabels = {
 };
 
 export function FeedbackList({ questionId }: FeedbackListProps) {
-  // Mock feedbacks - em produção, implementar API real
-  const feedbacks: any[] = [];
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeedbacks = async () => {
+      try {
+        setLoading(true);
+        const { apiService } = await import("@/lib/api");
+        const response = await apiService.getFeedback(questionId);
+        setFeedbacks(response.data || []);
+      } catch (error) {
+        console.error("Error fetching feedbacks:", error);
+        setFeedbacks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeedbacks();
+  }, [questionId]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {

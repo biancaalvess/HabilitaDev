@@ -1,104 +1,132 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { MessageSquare, Send, Loader2, User, AlertCircle, Lightbulb } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import type React from "react";
+import { useState } from "react";
+import {
+  MessageSquare,
+  Send,
+  Loader2,
+  User,
+  AlertCircle,
+  Lightbulb,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 // import { useComments } from "@/lib/comments" // Removido - implementação simplificada
-import type { Comment } from "@/lib/types"
+import type { Comment } from "@/lib/types";
 
 interface CommentFormProps {
-  questionId: number
-  isOpen: boolean
-  onClose: () => void
+  questionId: number;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const commentTypeLabels = {
   correction: "Correção",
   suggestion: "Sugestão",
-}
+};
 
 const commentTypeDescriptions = {
   correction: "Corrigir um erro na questão ou resposta",
   suggestion: "Sugerir melhorias na questão ou resposta",
-}
+};
 
 const commentTypeIcons = {
   correction: AlertCircle,
   suggestion: Lightbulb,
-}
+};
 
 export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
-  const [authorName, setAuthorName] = useState("")
-  const [commentType, setCommentType] = useState<Comment["comment_type"] | "">("")
-  const [content, setContent] = useState("")
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [authorName, setAuthorName] = useState("");
+  const [commentType, setCommentType] = useState<Comment["comment_type"] | "">(
+    ""
+  );
+  const [content, setContent] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
     if (!authorName.trim() || !commentType || !content.trim()) {
-      setError("Por favor, preencha todos os campos.")
-      return
+      setError("Por favor, preencha todos os campos.");
+      return;
     }
 
     if (authorName.trim().length < 2) {
-      setError("O nome deve ter pelo menos 2 caracteres.")
-      return
+      setError("O nome deve ter pelo menos 2 caracteres.");
+      return;
     }
 
     if (content.trim().length < 10) {
-      setError("O comentário deve ter pelo menos 10 caracteres.")
-      return
+      setError("O comentário deve ter pelo menos 10 caracteres.");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
-      // Simular envio de comentário (em produção, implementar API real)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const { apiService } = await import("@/lib/api");
       
-      console.log('Comentário enviado:', {
-        questionId,
-        authorName: authorName.trim(),
-        commentType,
+      const result = await apiService.createComment(questionId, {
+        author_name: authorName.trim(),
+        comment_type: commentType as any,
         content: content.trim()
-      })
-      
-      setSuccess(true)
-      setContent("")
-      setAuthorName("")
-      setCommentType("")
-      setTimeout(() => {
-        setSuccess(false)
-        onClose()
-      }, 2000)
+      });
+
+      if (result.success) {
+        setSuccess(true);
+        setContent("");
+        setAuthorName("");
+        setCommentType("");
+        setTimeout(() => {
+          setSuccess(false);
+          onClose();
+        }, 2000);
+      } else {
+        setError("Erro ao enviar comentário. Tente novamente.");
+      }
     } catch (err) {
-      setError("Erro ao enviar comentário. Tente novamente.")
+      setError("Erro ao enviar comentário. Tente novamente.");
+      console.error("Error sending comment:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleClose = () => {
     if (!loading) {
-      setContent("")
-      setAuthorName("")
-      setCommentType("")
-      setError("")
-      setSuccess(false)
-      onClose()
+      setContent("");
+      setAuthorName("");
+      setCommentType("");
+      setError("");
+      setSuccess(false);
+      onClose();
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -113,7 +141,8 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
         <Card className="border-0 shadow-none">
           <CardHeader className="px-0 pb-4">
             <CardDescription>
-              Compartilhe sua correção ou sugestão para ajudar a melhorar esta questão.
+              Compartilhe sua correção ou sugestão para ajudar a melhorar esta
+              questão.
             </CardDescription>
           </CardHeader>
           <CardContent className="px-0">
@@ -150,7 +179,9 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
                   <Label htmlFor="commentType">Tipo de Comentário</Label>
                   <Select
                     value={commentType}
-                    onValueChange={(value) => setCommentType(value as Comment["comment_type"])}
+                    onValueChange={(value) =>
+                      setCommentType(value as Comment["comment_type"])
+                    }
                     disabled={loading}
                   >
                     <SelectTrigger className="bg-muted/50">
@@ -158,7 +189,10 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(commentTypeLabels).map(([key, label]) => {
-                        const Icon = commentTypeIcons[key as keyof typeof commentTypeIcons]
+                        const Icon =
+                          commentTypeIcons[
+                            key as keyof typeof commentTypeIcons
+                          ];
                         return (
                           <SelectItem key={key} value={key}>
                             <div className="flex items-center gap-2">
@@ -166,12 +200,16 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
                               <div>
                                 <div className="font-medium">{label}</div>
                                 <div className="text-xs text-muted-foreground">
-                                  {commentTypeDescriptions[key as keyof typeof commentTypeDescriptions]}
+                                  {
+                                    commentTypeDescriptions[
+                                      key as keyof typeof commentTypeDescriptions
+                                    ]
+                                  }
                                 </div>
                               </div>
                             </div>
                           </SelectItem>
-                        )
+                        );
                       })}
                     </SelectContent>
                   </Select>
@@ -188,14 +226,29 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
                     disabled={loading}
                     className="bg-muted/50 resize-none"
                   />
-                  <div className="text-xs text-muted-foreground text-right">{content.length}/500 caracteres</div>
+                  <div className="text-xs text-muted-foreground text-right">
+                    {content.length}/500 caracteres
+                  </div>
                 </div>
 
                 <div className="flex gap-3 justify-end pt-2">
-                  <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleClose}
+                    disabled={loading}
+                  >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={loading || !authorName.trim() || !commentType || !content.trim()}>
+                  <Button
+                    type="submit"
+                    disabled={
+                      loading ||
+                      !authorName.trim() ||
+                      !commentType ||
+                      !content.trim()
+                    }
+                  >
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -215,5 +268,5 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
         </Card>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

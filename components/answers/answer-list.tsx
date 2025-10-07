@@ -13,11 +13,30 @@ interface AnswerListProps {
 }
 
 export function AnswerList({ questionId }: AnswerListProps) {
-  // Mock answers - em produção, implementar API real
-  const answers: any[] = [];
-  const loading = false;
-  const error = null;
+  const [answers, setAnswers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [copiedAnswerId, setCopiedAnswerId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchAnswers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { apiService } = await import("@/lib/api");
+        const response = await apiService.getAnswers(questionId);
+        setAnswers(response.data || []);
+      } catch (error) {
+        console.error("Error fetching answers:", error);
+        setError("Erro ao carregar respostas");
+        setAnswers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnswers();
+  }, [questionId]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {

@@ -83,25 +83,29 @@ export function FeedbackForm({
 
     setLoading(true);
     try {
-      // Simular envio de feedback (em produção, implementar API real)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      console.log("Feedback enviado:", {
-        questionId,
-        feedbackType,
+      const { apiService } = await import("@/lib/api");
+      
+      const result = await apiService.createFeedback(questionId, {
+        feedback_type: feedbackType as any,
         content: content.trim(),
-        userId: user?.id,
+        status: 'pending' as any,
+        user_id: user?.id
       });
 
-      setSuccess(true);
-      setContent("");
-      setFeedbackType("");
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 2000);
+      if (result.success) {
+        setSuccess(true);
+        setContent("");
+        setFeedbackType("");
+        setTimeout(() => {
+          setSuccess(false);
+          onClose();
+        }, 2000);
+      } else {
+        setError("Erro ao enviar feedback. Tente novamente.");
+      }
     } catch (err) {
       setError("Erro ao enviar feedback. Tente novamente.");
+      console.error("Error sending feedback:", err);
     } finally {
       setLoading(false);
     }

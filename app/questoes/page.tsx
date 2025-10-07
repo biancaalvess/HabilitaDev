@@ -22,7 +22,7 @@ export default function QuestoesPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
-  const { questions, loading, error, isUsingMockData } = useQuestions();
+  const { questions, loading, error } = useQuestions();
 
   const filteredQuestions = useMemo(() => {
     // Verificar se questions é um array válido

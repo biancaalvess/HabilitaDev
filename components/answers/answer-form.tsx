@@ -56,24 +56,28 @@ export function AnswerForm({ questionId, isOpen, onClose }: AnswerFormProps) {
 
     setLoading(true);
     try {
-      // Simular envio de resposta (em produção, implementar API real)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { apiService } = await import("@/lib/api");
       
-      console.log('Resposta enviada:', {
-        questionId,
-        authorName: authorName.trim(),
-        content: content.trim()
+      const result = await apiService.createAnswer(questionId, {
+        author_name: authorName.trim(),
+        content: content.trim(),
+        is_solution: false
       });
-      
-      setSuccess(true);
-      setContent("");
-      setAuthorName("");
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 2000);
+
+      if (result.success) {
+        setSuccess(true);
+        setContent("");
+        setAuthorName("");
+        setTimeout(() => {
+          setSuccess(false);
+          onClose();
+        }, 2000);
+      } else {
+        setError("Erro ao enviar resposta. Tente novamente.");
+      }
     } catch (err) {
       setError("Erro ao enviar resposta. Tente novamente.");
+      console.error("Error sending answer:", err);
     } finally {
       setLoading(false);
     }
