@@ -19,16 +19,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Send, Code } from "lucide-react";
 
 const CATEGORIAS = [
-  { id: "algoritmos", name: "Algoritmos" },
-  { id: "estruturas-de-dados", name: "Estruturas de Dados" },
-  { id: "design-sistema", name: "Design de Sistema" },
-  { id: "bancos-dados", name: "Bancos de Dados" },
+  { id: "algorithms", name: "Algoritmos" },
+  { id: "data_structures", name: "Estruturas de Dados" },
+  { id: "system_design", name: "Design de Sistema" },
+  { id: "databases", name: "Bancos de Dados" },
   { id: "frontend", name: "Frontend" },
   { id: "backend", name: "Backend" },
   { id: "devops", name: "DevOps" },
-  { id: "mobile", name: "Mobile" },
-  { id: "seguranca", name: "Segurança" },
-  { id: "ia-ml", name: "IA/ML" },
 ];
 
 export default function ContribuirPage() {
