@@ -90,11 +90,11 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
     setLoading(true);
     try {
       const { apiService } = await import("@/lib/api");
-      
+
       const result = await apiService.createComment(questionId, {
         author_name: authorName.trim(),
         comment_type: commentType as any,
-        content: content.trim()
+        content: content.trim(),
       });
 
       if (result.success) {

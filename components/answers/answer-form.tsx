@@ -57,11 +57,11 @@ export function AnswerForm({ questionId, isOpen, onClose }: AnswerFormProps) {
     setLoading(true);
     try {
       const { apiService } = await import("@/lib/api");
-      
+
       const result = await apiService.createAnswer(questionId, {
         author_name: authorName.trim(),
         content: content.trim(),
-        is_solution: false
+        is_solution: false,
       });
 
       if (result.success) {

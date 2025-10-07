@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://habilitadev-backend.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export interface ApiResponse<T> {
   data: T;
@@ -89,15 +89,15 @@ class ApiService {
 
   // Questions endpoints
   async getQuestions(): Promise<ApiResponse<Question[]>> {
-    return this.request<Question[]>('/api/v1/questions');
+    return this.request<Question[]>('/api/proxy/questions');
   }
 
   async getQuestion(id: number): Promise<ApiResponse<Question>> {
-    return this.request<Question>(`/api/v1/questions/${id}`);
+    return this.request<Question>(`/api/proxy/questions/${id}`);
   }
 
   async createQuestion(question: Omit<Question, 'id' | 'created_at'>): Promise<ApiResponse<Question>> {
-    return this.request<Question>('/api/v1/questions', {
+    return this.request<Question>('/api/proxy/questions', {
       method: 'POST',
       body: JSON.stringify(question),
     });
@@ -105,11 +105,11 @@ class ApiService {
 
   // Answers endpoints
   async getAnswers(questionId: number): Promise<ApiResponse<Answer[]>> {
-    return this.request<Answer[]>(`/api/v1/questions/${questionId}/answers`);
+    return this.request<Answer[]>(`/api/proxy/questions/${questionId}/answers`);
   }
 
   async createAnswer(questionId: number, answer: Omit<Answer, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Answer>> {
-    return this.request<Answer>(`/api/v1/questions/${questionId}/answers`, {
+    return this.request<Answer>(`/api/proxy/questions/${questionId}/answers`, {
       method: 'POST',
       body: JSON.stringify(answer),
     });
@@ -117,11 +117,11 @@ class ApiService {
 
   // Comments endpoints
   async getComments(questionId: number): Promise<ApiResponse<Comment[]>> {
-    return this.request<Comment[]>(`/api/v1/questions/${questionId}/comments`);
+    return this.request<Comment[]>(`/api/proxy/questions/${questionId}/comments`);
   }
 
   async createComment(questionId: number, comment: Omit<Comment, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Comment>> {
-    return this.request<Comment>(`/api/v1/questions/${questionId}/comments`, {
+    return this.request<Comment>(`/api/proxy/questions/${questionId}/comments`, {
       method: 'POST',
       body: JSON.stringify(comment),
     });
@@ -129,11 +129,11 @@ class ApiService {
 
   // Feedback endpoints
   async getFeedback(questionId: number): Promise<ApiResponse<Feedback[]>> {
-    return this.request<Feedback[]>(`/api/v1/questions/${questionId}/feedback`);
+    return this.request<Feedback[]>(`/api/proxy/questions/${questionId}/feedback`);
   }
 
   async createFeedback(questionId: number, feedback: Omit<Feedback, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Feedback>> {
-    return this.request<Feedback>(`/api/v1/questions/${questionId}/feedback`, {
+    return this.request<Feedback>(`/api/proxy/questions/${questionId}/feedback`, {
       method: 'POST',
       body: JSON.stringify(feedback),
     });

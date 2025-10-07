@@ -84,12 +84,12 @@ export function FeedbackForm({
     setLoading(true);
     try {
       const { apiService } = await import("@/lib/api");
-      
+
       const result = await apiService.createFeedback(questionId, {
         feedback_type: feedbackType as any,
         content: content.trim(),
-        status: 'pending' as any,
-        user_id: user?.id
+        status: "pending" as any,
+        user_id: user?.id,
       });
 
       if (result.success) {

@@ -9,6 +9,7 @@ import { QuestionDetail } from "@/components/question-detail";
 import { useQuestions } from "@/hooks/use-api";
 import type { QuestionFilter, Question } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { ApiTest } from "@/components/api-test";
 
 export default function QuestoesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -153,17 +154,9 @@ export default function QuestoesPage() {
                 grandes techs.
               </p>
 
-              {isUsingMockData && (
-                <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                    <p className="text-amber-300 text-sm">
-                      <strong>Modo Demonstração:</strong> Usando dados de
-                      exemplo. A API do backend não está disponível no momento.
-                    </p>
-                  </div>
-                </div>
-              )}
+              <div className="mt-4">
+                <ApiTest />
+              </div>
             </div>
 
             <QuestionFilters

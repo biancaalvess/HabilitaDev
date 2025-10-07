@@ -79,7 +79,7 @@ export default function ContribuirPage() {
     try {
       // Enviar para API real
       const { apiService } = await import("@/lib/api");
-      
+
       const questionData = {
         title: formData.questao,
         description: formData.questao,
@@ -88,7 +88,7 @@ export default function ContribuirPage() {
         category: formData.categoria as any,
         company: formData.fonte,
         tags: formData.referencia ? [formData.referencia] : [],
-        approved: false
+        approved: false,
       };
 
       const result = await apiService.createQuestion(questionData);
