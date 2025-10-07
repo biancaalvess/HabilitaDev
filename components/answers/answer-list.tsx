@@ -6,14 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useAnswers } from "@/hooks/use-api";
+// import { useAnswers } from "@/hooks/use-api"; // Removido - implementação simplificada
 
 interface AnswerListProps {
   questionId: number;
 }
 
 export function AnswerList({ questionId }: AnswerListProps) {
-  const { answers, loading, error } = useAnswers(questionId);
+  // Mock answers - em produção, implementar API real
+  const answers: any[] = [];
+  const loading = false;
+  const error = null;
   const [copiedAnswerId, setCopiedAnswerId] = useState<number | null>(null);
 
   const formatDate = (dateString: string) => {

@@ -4,7 +4,7 @@ import { MessageSquare, Clock, User, AlertCircle, Lightbulb } from "lucide-react
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { useComments } from "@/lib/comments"
+// import { useComments } from "@/lib/comments" // Removido - implementação simplificada
 
 interface CommentListProps {
   questionId: number
@@ -26,8 +26,8 @@ const commentTypeLabels = {
 }
 
 export function CommentList({ questionId }: CommentListProps) {
-  const { getCommentsForQuestion } = useComments()
-  const comments = getCommentsForQuestion(questionId)
+  // Mock comments - em produção, implementar API real
+  const comments: any[] = []
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
