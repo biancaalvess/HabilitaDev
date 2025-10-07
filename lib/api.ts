@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://habilitadev-backend.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export interface ApiResponse<T> {
   data: T;
@@ -89,7 +89,7 @@ class ApiService {
 
   // Questions endpoints
   async getQuestions(): Promise<ApiResponse<Question[]>> {
-    return this.request<Question[]>('/questions');
+    return this.request<Question[]>('/api/questions');
   }
 
   async getQuestion(id: number): Promise<ApiResponse<Question>> {

@@ -1,29 +1,26 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth"
-import { AdminSidebar } from "@/components/admin/admin-sidebar"
-import { AdminStats } from "@/components/admin/admin-stats"
-import { QuestionsTable } from "@/components/admin/questions-table"
-import { FeedbackManagement } from "@/components/admin/feedback-management"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { AuthModal } from "@/components/auth/auth-modal"
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminStats } from "@/components/admin/admin-stats";
+import { QuestionsTable } from "@/components/admin/questions-table";
+import { FeedbackManagement } from "@/components/admin/feedback-management";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { AuthModal } from "@/components/auth/auth-modal";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState("dashboard")
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const { user } = useAuth()
-
-  // Check if user is admin (in a real app, this would be a proper role check)
-  const isAdmin = user?.email === "admin@techinterview.com"
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     if (!user) {
-      setShowAuthModal(true)
+      setShowAuthModal(true);
     }
-  }, [user])
+  }, [user]);
 
   if (!user) {
     return (
@@ -41,9 +38,12 @@ export default function AdminPage() {
             </Button>
           </CardContent>
         </Card>
-        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
       </div>
-    )
+    );
   }
 
   if (!isAdmin) {
@@ -55,15 +55,20 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <Alert variant="destructive">
-              <AlertDescription>Você não tem permissão para acessar o painel administrativo.</AlertDescription>
+              <AlertDescription>
+                Você não tem permissão para acessar o painel administrativo.
+              </AlertDescription>
             </Alert>
-            <Button onClick={() => (window.location.href = "/")} className="w-full mt-4">
+            <Button
+              onClick={() => (window.location.href = "/")}
+              className="w-full mt-4"
+            >
               Voltar ao Site
             </Button>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   const renderContent = () => {
@@ -72,8 +77,12 @@ export default function AdminPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-balance mb-2">Dashboard</h2>
-              <p className="text-muted-foreground">Visão geral da plataforma TechInterview</p>
+              <h2 className="text-3xl font-bold text-balance mb-2">
+                Dashboard
+              </h2>
+              <p className="text-muted-foreground">
+                Visão geral da plataforma TechInterview
+              </p>
             </div>
             <AdminStats />
             <div className="grid gap-6 md:grid-cols-2">
@@ -106,7 +115,9 @@ export default function AdminPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
                       <span>Questões por categoria</span>
-                      <span className="text-muted-foreground">Algoritmos: 3</span>
+                      <span className="text-muted-foreground">
+                        Algoritmos: 3
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span>Empresas mais populares</span>
@@ -121,64 +132,84 @@ export default function AdminPage() {
               </Card>
             </div>
           </div>
-        )
+        );
       case "questions":
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-balance mb-2">Gerenciar Questões</h2>
-              <p className="text-muted-foreground">Aprovar, editar e organizar questões da plataforma</p>
+              <h2 className="text-3xl font-bold text-balance mb-2">
+                Gerenciar Questões
+              </h2>
+              <p className="text-muted-foreground">
+                Aprovar, editar e organizar questões da plataforma
+              </p>
             </div>
             <QuestionsTable />
           </div>
-        )
+        );
       case "feedbacks":
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-balance mb-2">Gerenciar Feedbacks</h2>
-              <p className="text-muted-foreground">Revisar e responder feedbacks da comunidade</p>
+              <h2 className="text-3xl font-bold text-balance mb-2">
+                Gerenciar Feedbacks
+              </h2>
+              <p className="text-muted-foreground">
+                Revisar e responder feedbacks da comunidade
+              </p>
             </div>
             <FeedbackManagement />
           </div>
-        )
+        );
       case "users":
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-balance mb-2">Gerenciar Usuários</h2>
-              <p className="text-muted-foreground">Administrar contas de usuários e permissões</p>
+              <h2 className="text-3xl font-bold text-balance mb-2">
+                Gerenciar Usuários
+              </h2>
+              <p className="text-muted-foreground">
+                Administrar contas de usuários e permissões
+              </p>
             </div>
             <Card>
               <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">Funcionalidade em desenvolvimento</p>
+                <p className="text-muted-foreground">
+                  Funcionalidade em desenvolvimento
+                </p>
               </CardContent>
             </Card>
           </div>
-        )
+        );
       case "settings":
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-balance mb-2">Configurações</h2>
-              <p className="text-muted-foreground">Configurações gerais da plataforma</p>
+              <h2 className="text-3xl font-bold text-balance mb-2">
+                Configurações
+              </h2>
+              <p className="text-muted-foreground">
+                Configurações gerais da plataforma
+              </p>
             </div>
             <Card>
               <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">Funcionalidade em desenvolvimento</p>
+                <p className="text-muted-foreground">
+                  Funcionalidade em desenvolvimento
+                </p>
               </CardContent>
             </Card>
           </div>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
       <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="flex-1 p-6">{renderContent()}</main>
     </div>
-  )
+  );
 }

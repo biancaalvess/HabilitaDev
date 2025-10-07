@@ -1,13 +1,12 @@
-"use client"
+import { NextRequest, NextResponse } from 'next/server';
+import type { Question } from '@/lib/types';
 
-import type { Question } from "./types"
-
-export const mockQuestions: Question[] = [
+// Simulando um banco de dados em memória (em produção, use um banco real)
+let questions: Question[] = [
   {
     id: 1,
     title: "Implementar Binary Search",
-    description:
-      "Implemente uma função de busca binária em uma lista ordenada. A função deve retornar o índice do elemento procurado ou -1 se não encontrado.",
+    description: "Implemente uma função de busca binária em uma lista ordenada. A função deve retornar o índice do elemento procurado ou -1 se não encontrado.",
     answer: `def binary_search(arr, target):
     left, right = 0, len(arr) - 1
     
@@ -31,8 +30,7 @@ export const mockQuestions: Question[] = [
   {
     id: 2,
     title: "Design de Sistema - Cache Distribuído",
-    description:
-      "Como você projetaria um sistema de cache distribuído como o Redis? Considere aspectos como sharding, replicação, consistência e tolerância a falhas.",
+    description: "Como você projetaria um sistema de cache distribuído como o Redis? Considere aspectos como sharding, replicação, consistência e tolerância a falhas.",
     answer: `Componentes principais:
 1. **Sharding**: Distribuir dados usando hash consistente
 2. **Replicação**: Master-slave para alta disponibilidade
@@ -49,8 +47,7 @@ export const mockQuestions: Question[] = [
   {
     id: 3,
     title: "Otimização de Query SQL",
-    description:
-      "Dada uma query SQL lenta que busca usuários com mais de 100 pedidos no último mês, como você otimizaria a performance?",
+    description: "Dada uma query SQL lenta que busca usuários com mais de 100 pedidos no último mês, como você otimizaria a performance?",
     answer: `Estratégias de otimização:
 1. **Índices**: Criar índice composto em (user_id, created_at)
 2. **Particionamento**: Particionar tabela de pedidos por data
@@ -67,8 +64,7 @@ export const mockQuestions: Question[] = [
   {
     id: 4,
     title: "Implementar Debounce Hook",
-    description:
-      "Crie um hook React customizado que implemente debounce para otimizar chamadas de API em campos de busca.",
+    description: "Crie um hook React customizado que implemente debounce para otimizar chamadas de API em campos de busca.",
     answer: `import { useState, useEffect } from 'react';
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -162,17 +158,65 @@ function useDebounce<T>(value: T, delay: number): T {
     created_at: "2024-01-10T16:30:00Z",
     approved: true,
   },
-]
+];
 
-export const mockCompanies = [
-  "Itaú",
-  "Meta",
-  "X (Twitter)",
-  "Nubank",
-  "Stone",
-  "iFood",
-  "Google",
-  "Amazon",
-  "Microsoft",
-  "Netflix",
-]
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const difficulty = searchParams.get('difficulty');
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    let filteredQuestions = [...questions];
+
+    // Aplicar filtros
+    if (difficulty) {
+      filteredQuestions = filteredQuestions.filter(q => q.difficulty === difficulty);
+    }
+
+    if (category) {
+      filteredQuestions = filteredQuestions.filter(q => q.category === category);
+    }
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredQuestions = filteredQuestions.filter(q => 
+        q.title.toLowerCase().includes(searchLower) ||
+        q.description.toLowerCase().includes(searchLower) ||
+        q.company?.toLowerCase().includes(searchLower) ||
+        q.tags?.some(tag => tag.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Aplicar paginação
+    const paginatedQuestions = filteredQuestions.slice(offset, offset + limit);
+
+    return NextResponse.json({
+      success: true,
+      data: paginatedQuestions,
+      total: filteredQuestions.length,
+      offset,
+      limit,
+    });
+
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    return NextResponse.json(
+      { success: false, error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}

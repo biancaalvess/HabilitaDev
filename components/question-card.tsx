@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Clock, Building2, Tag, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,10 @@ interface QuestionCardProps {
   onViewDetails: (id: number) => void;
 }
 
-export function QuestionCard({ question, onViewDetails }: QuestionCardProps) {
+export const QuestionCard = memo(function QuestionCard({
+  question,
+  onViewDetails,
+}: QuestionCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -91,4 +95,4 @@ export function QuestionCard({ question, onViewDetails }: QuestionCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

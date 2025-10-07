@@ -1,44 +1,53 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useAuth } from "@/lib/auth"
+import { useState } from "react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/lib/auth";
+import { loginSchema, type LoginInput } from "@/lib/validations";
 
 interface LoginFormProps {
-  onSuccess: () => void
-  onSwitchToRegister: () => void
+  onSuccess: () => void;
+  onSwitchToRegister: () => void;
 }
 
 export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
-  const { login, loading } = useAuth()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const { login, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
     if (!email || !password) {
-      setError("Por favor, preencha todos os campos.")
-      return
+      setError("Por favor, preencha todos os campos.");
+      return;
     }
 
-    const success = await login(email, password)
-    if (success) {
-      onSuccess()
+    const result = await login(email, password);
+    if (result.success) {
+      onSuccess();
     } else {
-      setError("Email ou senha incorretos.")
+      setError(result.error || "Email ou senha incorretos.");
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -87,7 +96,11 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={loading}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -105,18 +118,21 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">Não tem uma conta? </span>
-            <Button variant="link" className="p-0 h-auto" onClick={onSwitchToRegister}>
+            <Button
+              variant="link"
+              className="p-0 h-auto"
+              onClick={onSwitchToRegister}
+            >
               Criar conta
             </Button>
           </div>
 
           <div className="text-center text-xs text-muted-foreground">
-            <p>Contas de teste:</p>
-            <p>admin@techinterview.com / admin123</p>
-            <p>dev@example.com / dev123</p>
+            <p>Conta de teste:</p>
+            <p>admin@habilitadev.com / password</p>
           </div>
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

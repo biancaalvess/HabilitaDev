@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Home,
   BookOpen,
@@ -25,10 +26,10 @@ interface QuestoesSidebarProps {
 
 const categories = [
   { id: "all", name: "Todas", icon: BookOpen },
-  { id: "algoritmos", name: "Algoritmos", icon: Code },
-  { id: "estruturas-de-dados", name: "Estruturas de Dados", icon: Database },
-  { id: "design-sistema", name: "Design de Sistema", icon: Cpu },
-  { id: "bancos-dados", name: "Bancos de Dados", icon: Database },
+  { id: "algorithms", name: "Algoritmos", icon: Code },
+  { id: "data_structures", name: "Estruturas de Dados", icon: Database },
+  { id: "system_design", name: "Design de Sistema", icon: Cpu },
+  { id: "databases", name: "Bancos de Dados", icon: Database },
   { id: "frontend", name: "Frontend", icon: Globe },
   { id: "backend", name: "Backend", icon: Server },
   { id: "devops", name: "DevOps", icon: Wrench },
@@ -40,6 +41,7 @@ export function QuestoesSidebar({
   isMinimized = false,
   onToggleMinimize,
 }: QuestoesSidebarProps) {
+  const router = useRouter();
   return (
     <div
       className={`${
@@ -100,7 +102,7 @@ export function QuestoesSidebar({
         >
           <Button
             variant="ghost"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => router.push("/")}
             className={`w-full ${
               isMinimized
                 ? "justify-center px-2 sm:px-3 h-10 sm:h-11"
@@ -119,7 +121,7 @@ export function QuestoesSidebar({
           </Button>
           <Button
             variant="ghost"
-            onClick={() => (window.location.href = "/contribuir")}
+            onClick={() => router.push("/contribuir")}
             className={`w-full ${
               isMinimized
                 ? "justify-center px-2 sm:px-3 h-10 sm:h-11"

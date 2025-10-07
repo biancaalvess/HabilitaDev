@@ -1,120 +1,190 @@
-"use client"
+"use client";
 
-import { useState, useEffect, createContext, useContext, type ReactNode } from "react"
+import {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
 
 export interface User {
-  id: number
-  username: string
-  email: string
-  created_at: string
+  id: number;
+  username: string;
+  email: string;
+  created_at: string;
+  role?: "user" | "admin";
 }
 
 interface AuthContextType {
-  user: User | null
-  login: (email: string, password: string) => Promise<boolean>
-  register: (username: string, email: string, password: string) => Promise<boolean>
-  logout: () => void
-  loading: boolean
+  user: User | null;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    username: string,
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
+  loading: boolean;
+  isAdmin: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-// Mock users for demonstration
-const mockUsers: (User & { password: string })[] = [
-  {
-    id: 1,
-    username: "admin",
-    email: "admin@techinterview.com",
-    password: "admin123",
-    created_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: 2,
-    username: "developer",
-    email: "dev@example.com",
-    password: "dev123",
-    created_at: "2024-01-02T00:00:00Z",
-  },
-]
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     // Check for stored user session
-    const storedUser = localStorage.getItem("techinterview_user")
-    if (storedUser) {
+    const storedToken = localStorage.getItem("habilitadev_token");
+    if (storedToken) {
       try {
-        setUser(JSON.parse(storedUser))
+        // Verify token with backend
+        verifyToken(storedToken);
       } catch (error) {
-        console.error("Error parsing stored user:", error)
-        localStorage.removeItem("techinterview_user")
+        console.error("Error verifying token:", error);
+        localStorage.removeItem("habilitadev_token");
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
-    setLoading(false)
-  }, [])
+  }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setLoading(true)
+  const verifyToken = async (token: string) => {
+    try {
+      const response = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    const foundUser = mockUsers.find((u) => u.email === email && u.password === password)
-
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser
-      setUser(userWithoutPassword)
-      localStorage.setItem("techinterview_user", JSON.stringify(userWithoutPassword))
-      setLoading(false)
-      return true
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData.user);
+      } else {
+        localStorage.removeItem("habilitadev_token");
+      }
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      localStorage.removeItem("habilitadev_token");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setLoading(false)
-    return false
-  }
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
 
-  const register = async (username: string, email: string, password: string): Promise<boolean> => {
-    setLoading(true)
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+      const data = await response.json();
 
-    // Check if user already exists
-    const existingUser = mockUsers.find((u) => u.email === email || u.username === username)
-    if (existingUser) {
-      setLoading(false)
-      return false
+      if (response.ok && data.success) {
+        setUser(data.user);
+        localStorage.setItem("habilitadev_token", data.token);
+        setLoading(false);
+        return { success: true };
+      } else {
+        setLoading(false);
+        return { success: false, error: data.error || "Erro no login" };
+      }
+    } catch (error) {
+      setLoading(false);
+      return { success: false, error: "Erro de conexão" };
     }
+  };
 
-    // Create new user
-    const newUser: User = {
-      id: mockUsers.length + 1,
-      username,
-      email,
-      created_at: new Date().toISOString(),
+  const register = async (
+    username: string,
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setUser(data.user);
+        localStorage.setItem("habilitadev_token", data.token);
+        setLoading(false);
+        return { success: true };
+      } else {
+        setLoading(false);
+        return { success: false, error: data.error || "Erro no registro" };
+      }
+    } catch (error) {
+      setLoading(false);
+      return { success: false, error: "Erro de conexão" };
     }
+  };
 
-    mockUsers.push({ ...newUser, password })
-    setUser(newUser)
-    localStorage.setItem("techinterview_user", JSON.stringify(newUser))
-    setLoading(false)
-    return true
-  }
+  const logout = async () => {
+    try {
+      const token = localStorage.getItem("habilitadev_token");
+      if (token) {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("habilitadev_token");
+    }
+  };
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem("techinterview_user")
-  }
-
-  return <AuthContext.Provider value={{ user, login, register, logout, loading }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        loading,
+        isAdmin,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }

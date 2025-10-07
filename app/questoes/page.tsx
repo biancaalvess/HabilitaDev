@@ -22,9 +22,14 @@ export default function QuestoesPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
-  const { questions, loading, error } = useQuestions();
+  const { questions, loading, error, isUsingMockData } = useQuestions();
 
   const filteredQuestions = useMemo(() => {
+    // Verificar se questions é um array válido
+    if (!Array.isArray(questions)) {
+      return [];
+    }
+
     return questions.filter((question) => {
       const matchesSearch =
         !searchQuery ||
@@ -63,7 +68,6 @@ export default function QuestoesPage() {
 
   const handleFeedback = () => {
     setShowFeedback(true);
-    console.log("[v0] Opening feedback modal");
   };
 
   // Combine search query with filters for the filter component
@@ -148,6 +152,18 @@ export default function QuestoesPage() {
                 Questões reais de empresas como Itaú, Meta, X (Twitter) e outras
                 grandes techs.
               </p>
+
+              {isUsingMockData && (
+                <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                    <p className="text-amber-300 text-sm">
+                      <strong>Modo Demonstração:</strong> Usando dados de
+                      exemplo. A API do backend não está disponível no momento.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <QuestionFilters

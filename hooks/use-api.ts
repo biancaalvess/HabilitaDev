@@ -8,16 +8,23 @@ export function useQuestions() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUsingMockData, setIsUsingMockData] = useState(false);
 
   const fetchQuestions = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await apiService.getQuestions();
-      setQuestions(response.data);
+      
+      // Garantir que response.data é um array
+      const questionsData = Array.isArray(response.data) ? response.data : [];
+      setQuestions(questionsData);
+      setIsUsingMockData(false); // Sempre usando API real agora
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar questões');
       console.error('Error fetching questions:', err);
+      // Em caso de erro, garantir que questions seja um array vazio
+      setQuestions([]);
     } finally {
       setLoading(false);
     }
@@ -27,7 +34,7 @@ export function useQuestions() {
     fetchQuestions();
   }, []);
 
-  return { questions, loading, error, refetch: fetchQuestions };
+  return { questions, loading, error, isUsingMockData, refetch: fetchQuestions };
 }
 
 // Hook para uma questão específica
