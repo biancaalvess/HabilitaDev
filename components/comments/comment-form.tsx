@@ -33,6 +33,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 // import { useComments } from "@/lib/comments" // Removido - implementação simplificada
 import type { Comment } from "@/lib/types";
@@ -136,15 +137,12 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
             <MessageSquare className="h-5 w-5" />
             Deixar Comentário
           </DialogTitle>
+          <DialogDescription>
+            Compartilhe sua correção ou sugestão para ajudar a melhorar esta questão.
+          </DialogDescription>
         </DialogHeader>
 
         <Card className="border-0 shadow-none">
-          <CardHeader className="px-0 pb-4">
-            <CardDescription>
-              Compartilhe sua correção ou sugestão para ajudar a melhorar esta
-              questão.
-            </CardDescription>
-          </CardHeader>
           <CardContent className="px-0">
             {success ? (
               <Alert className="border-green-500/20 bg-green-500/10">
