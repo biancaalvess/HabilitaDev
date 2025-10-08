@@ -28,17 +28,53 @@ export function AnswerValidation({
   const [isValidating, setIsValidating] = useState(true);
 
   useEffect(() => {
-    // Simular validação (em um sistema real, isso seria feito no backend)
+    // Validação usando IA ou backend
     const validateAnswer = async () => {
       setIsValidating(true);
 
-      // Simular delay de validação
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      try {
+        console.log('[AnswerValidation] Enviando para validação por IA/backend');
+        
+        const response = await fetch(`/api/proxy/questions/1/validate-answer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_answer: userAnswer,
+            correct_answer: correctAnswer,
+            question_context: 'Questão sobre algoritmos de ordenação'
+          }),
+        });
 
-      const result = validateUserAnswer(userAnswer, correctAnswer);
-      setValidationResult(result);
-      setIsValidating(false);
-      onValidationComplete(result.isCorrect);
+        if (response.ok) {
+          const result = await response.json();
+          console.log('[AnswerValidation] Resultado recebido:', result);
+          
+          if (result.success) {
+            setValidationResult(result.data);
+            setIsValidating(false);
+            onValidationComplete(result.data.is_correct);
+            return;
+          }
+        }
+        
+        // Fallback para validação local se a API falhar
+        console.log('[AnswerValidation] API falhou, usando validação local');
+        const localResult = validateUserAnswer(userAnswer, correctAnswer);
+        setValidationResult(localResult);
+        setIsValidating(false);
+        onValidationComplete(localResult.isCorrect);
+        
+      } catch (error) {
+        console.error('[AnswerValidation] Erro na validação:', error);
+        
+        // Fallback para validação local
+        const localResult = validateUserAnswer(userAnswer, correctAnswer);
+        setValidationResult(localResult);
+        setIsValidating(false);
+        onValidationComplete(localResult.isCorrect);
+      }
     };
 
     validateAnswer();
@@ -51,11 +87,11 @@ export function AnswerValidation({
           <div className="flex items-center justify-center gap-3 mb-4">
             <Clock className="h-6 w-6 text-blue-500 animate-spin" />
             <span className="text-lg font-medium text-blue-500">
-              Validando sua resposta...
+              🤖 IA Analisando sua resposta...
             </span>
           </div>
           <p className="text-muted-foreground">
-            Analisando sua solução e comparando com a resposta esperada.
+            Nossa inteligência artificial está analisando sua solução e comparando com a resposta esperada.
           </p>
         </CardContent>
       </Card>
@@ -74,24 +110,30 @@ export function AnswerValidation({
           : "border-red-500 bg-red-50 dark:bg-red-900/20"
       }`}
     >
-      <CardHeader className={`${
-        isCorrect ? "bg-green-100 dark:bg-green-900/30" : "bg-red-100 dark:bg-red-900/30"
-      }`}>
+      <CardHeader
+        className={`${
+          isCorrect
+            ? "bg-green-100 dark:bg-green-900/30"
+            : "bg-red-100 dark:bg-red-900/30"
+        }`}
+      >
         <div className="flex items-center justify-between">
           <CardTitle
             className={`flex items-center gap-3 text-2xl font-bold ${
-              isCorrect ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"
+              isCorrect
+                ? "text-green-700 dark:text-green-300"
+                : "text-red-700 dark:text-red-300"
             }`}
           >
             {isCorrect ? (
               <>
-                <CheckCircle className="h-8 w-8 text-green-600" />
-                ✅ RESPOSTA CORRETA!
+                <CheckCircle className="h-8 w-8 text-green-600" />✅ RESPOSTA
+                CORRETA!
               </>
             ) : (
               <>
-                <XCircle className="h-8 w-8 text-red-600" />
-                ❌ RESPOSTA INCORRETA
+                <XCircle className="h-8 w-8 text-red-600" />❌ RESPOSTA
+                INCORRETA
               </>
             )}
           </CardTitle>
@@ -116,9 +158,17 @@ export function AnswerValidation({
               : "border-red-600 bg-red-100 dark:bg-red-800/50"
           }`}
         >
-          <AlertCircle className={`h-5 w-5 ${isCorrect ? "text-green-600" : "text-red-600"}`} />
+          <AlertCircle
+            className={`h-5 w-5 ${
+              isCorrect ? "text-green-600" : "text-red-600"
+            }`}
+          />
           <AlertDescription
-            className={`text-base font-medium ${isCorrect ? "text-green-800 dark:text-green-200" : "text-red-800 dark:text-red-200"}`}
+            className={`text-base font-medium ${
+              isCorrect
+                ? "text-green-800 dark:text-green-200"
+                : "text-red-800 dark:text-red-200"
+            }`}
           >
             {feedback}
           </AlertDescription>
@@ -131,7 +181,10 @@ export function AnswerValidation({
             </h4>
             <ul className="space-y-2">
               {details.map((detail, index) => (
-                <li key={index} className="text-base flex items-start gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <li
+                  key={index}
+                  className="text-base flex items-start gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800"
+                >
                   <span className="text-lg">{detail}</span>
                 </li>
               ))}
@@ -139,12 +192,32 @@ export function AnswerValidation({
           </div>
         )}
 
-        <div className={`pt-4 border-t-2 ${isCorrect ? "border-green-200" : "border-red-200"}`}>
-          <p className={`text-lg font-medium ${isCorrect ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"}`}>
+        <div
+          className={`pt-4 border-t-2 ${
+            isCorrect ? "border-green-200" : "border-red-200"
+          }`}
+        >
+          <p
+            className={`text-lg font-medium ${
+              isCorrect
+                ? "text-green-700 dark:text-green-300"
+                : "text-red-700 dark:text-red-300"
+            }`}
+          >
             {isCorrect
               ? "🎉 PARABÉNS! Sua resposta está CORRETA! Você demonstrou domínio do conceito. A solução oficial está disponível abaixo."
               : "💪 NÃO DESISTA! Sua resposta precisa de ajustes. Estude a solução oficial abaixo e tente novamente."}
           </p>
+          {validationResult && 'validation_method' in validationResult && (
+            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <span className="inline-flex items-center gap-1">
+                {validationResult.validation_method === 'ai' && '🤖 Validado por IA'}
+                {validationResult.validation_method === 'backend' && '⚙️ Validado pelo Backend'}
+                {validationResult.validation_method === 'local_fallback' && '🔧 Validação Local'}
+                {validationResult.validation_method === 'emergency_fallback' && '🚨 Modo Emergência'}
+              </span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -161,7 +234,7 @@ function validateUserAnswer(userAnswer: string, correctAnswer: string) {
     algorithm: false,
     complexity: false,
     concept: false,
-    explanation: false
+    explanation: false,
   };
 
   let score = 0;
@@ -182,7 +255,9 @@ function validateUserAnswer(userAnswer: string, correctAnswer: string) {
     score += 35;
     details.push("✅ Algoritmo eficiente: Heapsort identificado");
   } else {
-    details.push("❌ Algoritmo: Não especificou um algoritmo de ordenação eficiente");
+    details.push(
+      "❌ Algoritmo: Não especificou um algoritmo de ordenação eficiente"
+    );
   }
 
   // 2. VERIFICAR COMPLEXIDADE TEMPORAL (Critério obrigatório - 30 pontos)
@@ -203,7 +278,9 @@ function validateUserAnswer(userAnswer: string, correctAnswer: string) {
   if (userLower.includes("pivô") || userLower.includes("particiona")) {
     requiredElements.concept = true;
     score += 20;
-    details.push("✅ Conceito: Explicou o funcionamento com pivô/particionamento");
+    details.push(
+      "✅ Conceito: Explicou o funcionamento com pivô/particionamento"
+    );
   } else if (userLower.includes("divisão") && userLower.includes("conquista")) {
     requiredElements.concept = true;
     score += 15;
@@ -219,25 +296,38 @@ function validateUserAnswer(userAnswer: string, correctAnswer: string) {
     details.push("✅ Explicação: Resposta detalhada e bem estruturada");
   } else if (userAnswer.length > 50) {
     score += 5;
-    details.push("⚠️ Explicação: Resposta adequada, mas pode ser mais detalhada");
+    details.push(
+      "⚠️ Explicação: Resposta adequada, mas pode ser mais detalhada"
+    );
   } else {
-    details.push("❌ Explicação: Resposta muito breve, precisa de mais detalhes");
+    details.push(
+      "❌ Explicação: Resposta muito breve, precisa de mais detalhes"
+    );
   }
 
   // DETERMINAR SE ESTÁ CORRETO
   // Para estar correto, deve ter: algoritmo + complexidade + conceito básico
-  const isCorrect = requiredElements.algorithm && requiredElements.complexity && requiredElements.concept;
+  const isCorrect =
+    requiredElements.algorithm &&
+    requiredElements.complexity &&
+    requiredElements.concept;
 
   // FEEDBACK ESPECÍFICO BASEADO NA CORREÇÃO
   if (isCorrect) {
-    feedback = "🎉 RESPOSTA CORRETA! Você demonstrou compreensão completa do algoritmo de ordenação, incluindo sua complexidade e funcionamento.";
+    feedback =
+      "🎉 RESPOSTA CORRETA! Você demonstrou compreensão completa do algoritmo de ordenação, incluindo sua complexidade e funcionamento.";
   } else {
     const missingElements = [];
-    if (!requiredElements.algorithm) missingElements.push("especificar o algoritmo");
-    if (!requiredElements.complexity) missingElements.push("mencionar a complexidade");
-    if (!requiredElements.concept) missingElements.push("explicar como funciona");
-    
-    feedback = `❌ RESPOSTA INCORRETA. Sua resposta está incompleta. Faltou: ${missingElements.join(", ")}.`;
+    if (!requiredElements.algorithm)
+      missingElements.push("especificar o algoritmo");
+    if (!requiredElements.complexity)
+      missingElements.push("mencionar a complexidade");
+    if (!requiredElements.concept)
+      missingElements.push("explicar como funciona");
+
+    feedback = `❌ RESPOSTA INCORRETA. Sua resposta está incompleta. Faltou: ${missingElements.join(
+      ", "
+    )}.`;
   }
 
   // Adicionar pontuação final
