@@ -60,9 +60,9 @@ export async function POST(
     }
 
     // Fallback: usar backend tradicional
-    console.log(`[AI VALIDATION] Tentando backend tradicional: ${BACKEND_URL}/api/v1/questions/${params.id}/validate-answer`);
+    console.log(`[AI VALIDATION] Tentando backend tradicional: ${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`);
     
-    const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/validate-answer`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
