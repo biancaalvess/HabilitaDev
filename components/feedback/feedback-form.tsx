@@ -123,22 +123,21 @@ export function FeedbackForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+      <DialogContent className="w-full max-w-lg mx-auto">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
+            <div className="p-2 rounded-lg bg-green-500/10">
+              <MessageSquare className="h-5 w-5 text-green-500" />
+            </div>
             Enviar Feedback
           </DialogTitle>
+          <DialogDescription className="text-base leading-relaxed">
+            Ajude-nos a melhorar esta questão com seu feedback. Sua contribuição é valiosa para a comunidade.
+          </DialogDescription>
         </DialogHeader>
 
         <Card className="border-0 shadow-none">
-          <CardHeader className="px-0 pb-4">
-            <CardDescription>
-              Ajude-nos a melhorar esta questão com seu feedback. Sua
-              contribuição é valiosa para a comunidade.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-0">
+          <CardContent className="px-0 pt-4">
             {success ? (
               <Alert className="border-green-500/20 bg-green-500/10">
                 <AlertDescription className="text-green-400">
@@ -146,23 +145,25 @@ export function FeedbackForm({
                 </AlertDescription>
               </Alert>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
+                  <Alert variant="destructive" className="border-red-500/20 bg-red-500/10">
+                    <AlertDescription className="text-red-400 font-medium">{error}</AlertDescription>
                   </Alert>
                 )}
 
                 {!user && (
-                  <Alert>
-                    <AlertDescription>
+                  <Alert className="border-amber-500/20 bg-amber-500/10">
+                    <AlertDescription className="text-amber-400 font-medium">
                       Você precisa estar logado para enviar feedback.
                     </AlertDescription>
                   </Alert>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="feedbackType">Tipo de Feedback</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="feedbackType" className="text-sm font-medium text-foreground">
+                    Tipo de Feedback
+                  </Label>
                   <Select
                     value={feedbackType}
                     onValueChange={(value) =>
@@ -170,21 +171,26 @@ export function FeedbackForm({
                     }
                     disabled={loading || !user}
                   >
-                    <SelectTrigger className="bg-muted/50">
+                    <SelectTrigger className="h-12 bg-muted/50 border-muted-foreground/20 focus:border-green-500 focus:ring-green-500/20 transition-colors">
                       <SelectValue placeholder="Selecione o tipo..." />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(feedbackTypeLabels).map(
                         ([key, label]) => (
-                          <SelectItem key={key} value={key}>
-                            <div>
-                              <div className="font-medium">{label}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {
-                                  feedbackTypeDescriptions[
-                                    key as keyof typeof feedbackTypeDescriptions
-                                  ]
-                                }
+                          <SelectItem key={key} value={key} className="py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="p-1.5 rounded-md bg-green-500/10">
+                                <MessageSquare className="h-4 w-4 text-green-500" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm">{label}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {
+                                    feedbackTypeDescriptions[
+                                      key as keyof typeof feedbackTypeDescriptions
+                                    ]
+                                  }
+                                </div>
                               </div>
                             </div>
                           </SelectItem>
@@ -194,28 +200,33 @@ export function FeedbackForm({
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="content">Conteúdo</Label>
-                  <Textarea
-                    id="content"
-                    placeholder="Descreva seu feedback detalhadamente..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    rows={4}
-                    disabled={loading || !user}
-                    className="bg-muted/50 resize-none"
-                  />
-                  <div className="text-xs text-muted-foreground text-right">
-                    {content.length}/500 caracteres
+                <div className="space-y-3">
+                  <Label htmlFor="content" className="text-sm font-medium text-foreground">
+                    Conteúdo
+                  </Label>
+                  <div className="relative">
+                    <Textarea
+                      id="content"
+                      placeholder="Descreva seu feedback detalhadamente..."
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      rows={5}
+                      disabled={loading || !user}
+                      className="min-h-[120px] bg-muted/50 border-muted-foreground/20 focus:border-green-500 focus:ring-green-500/20 transition-colors resize-none"
+                    />
+                    <div className="absolute bottom-3 right-3 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
+                      {content.length}/500 caracteres
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-3 justify-end pt-2">
+                <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleClose}
                     disabled={loading}
+                    className="w-full sm:w-auto h-11"
                   >
                     Cancelar
                   </Button>
@@ -224,6 +235,7 @@ export function FeedbackForm({
                     disabled={
                       loading || !user || !feedbackType || !content.trim()
                     }
+                    className="w-full sm:w-auto h-11 bg-green-500 hover:bg-green-600 text-white"
                   >
                     {loading ? (
                       <>
