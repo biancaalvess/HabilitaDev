@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
 
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
+export type ToastType = "success" | "error" | "warning" | "info";
 
 interface Toast {
   id: string;
@@ -17,12 +17,15 @@ interface ToastNotificationProps {
   onClose: (id: string) => void;
 }
 
-const ToastNotification: React.FC<ToastNotificationProps> = ({ toast, onClose }) => {
+const ToastNotification: React.FC<ToastNotificationProps> = ({
+  toast,
+  onClose,
+}) => {
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     const duration = toast.duration || 5000;
-    
+
     const exitTimer = setTimeout(() => {
       setIsExiting(true);
     }, duration - 300);
@@ -45,17 +48,20 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({ toast, onClose })
   };
 
   const colors = {
-    success: 'bg-green-50 border-green-500 text-green-900 dark:bg-green-900/20 dark:text-green-100',
-    error: 'bg-red-50 border-red-500 text-red-900 dark:bg-red-900/20 dark:text-red-100',
-    warning: 'bg-yellow-50 border-yellow-500 text-yellow-900 dark:bg-yellow-900/20 dark:text-yellow-100',
-    info: 'bg-blue-50 border-blue-500 text-blue-900 dark:bg-blue-900/20 dark:text-blue-100',
+    success:
+      "bg-green-50 border-green-500 text-green-900 dark:bg-green-900/20 dark:text-green-100",
+    error:
+      "bg-red-50 border-red-500 text-red-900 dark:bg-red-900/20 dark:text-red-100",
+    warning:
+      "bg-yellow-50 border-yellow-500 text-yellow-900 dark:bg-yellow-900/20 dark:text-yellow-100",
+    info: "bg-blue-50 border-blue-500 text-blue-900 dark:bg-blue-900/20 dark:text-blue-100",
   };
 
   const iconColors = {
-    success: 'text-green-600 dark:text-green-400',
-    error: 'text-red-600 dark:text-red-400',
-    warning: 'text-yellow-600 dark:text-yellow-400',
-    info: 'text-blue-600 dark:text-blue-400',
+    success: "text-green-600 dark:text-green-400",
+    error: "text-red-600 dark:text-red-400",
+    warning: "text-yellow-600 dark:text-yellow-400",
+    info: "text-blue-600 dark:text-blue-400",
   };
 
   return (
@@ -66,9 +72,7 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({ toast, onClose })
         transition-all duration-300 ease-in-out
         ${colors[toast.type]}
         ${
-          isExiting
-            ? 'translate-x-full opacity-0'
-            : 'translate-x-0 opacity-100'
+          isExiting ? "translate-x-full opacity-0" : "translate-x-0 opacity-100"
         }
       `}
       role="alert"
@@ -77,11 +81,9 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({ toast, onClose })
       <div className={`flex-shrink-0 ${iconColors[toast.type]}`}>
         {icons[toast.type]}
       </div>
-      
-      <div className="flex-1 text-sm font-medium">
-        {toast.message}
-      </div>
-      
+
+      <div className="flex-1 text-sm font-medium">{toast.message}</div>
+
       <button
         onClick={() => {
           setIsExiting(true);
@@ -97,4 +99,3 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({ toast, onClose })
 };
 
 export default ToastNotification;
-

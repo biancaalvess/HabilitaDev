@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
-import ToastNotification from './toast-notification';
-import type { ToastType } from './toast-notification';
+import React from "react";
+import ToastNotification from "./toast-notification";
+import type { ToastType } from "./toast-notification";
 
 interface Toast {
   id: string;
@@ -14,21 +14,27 @@ interface Toast {
 interface ToastContainerProps {
   toasts: Toast[];
   onClose: (id: string) => void;
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
+  position?:
+    | "top-right"
+    | "top-left"
+    | "bottom-right"
+    | "bottom-left"
+    | "top-center"
+    | "bottom-center";
 }
 
 const ToastContainer: React.FC<ToastContainerProps> = ({
   toasts,
   onClose,
-  position = 'top-right',
+  position = "top-right",
 }) => {
   const positionClasses = {
-    'top-right': 'top-4 right-4',
-    'top-left': 'top-4 left-4',
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-    'top-center': 'top-4 left-1/2 -translate-x-1/2',
-    'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+    "top-right": "top-4 right-4",
+    "top-left": "top-4 left-4",
+    "bottom-right": "bottom-4 right-4",
+    "bottom-left": "bottom-4 left-4",
+    "top-center": "top-4 left-1/2 -translate-x-1/2",
+    "bottom-center": "bottom-4 left-1/2 -translate-x-1/2",
   };
 
   if (toasts.length === 0) return null;
@@ -49,4 +55,3 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
 };
 
 export default ToastContainer;
-
