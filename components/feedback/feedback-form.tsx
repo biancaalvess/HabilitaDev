@@ -1,25 +1,9 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
+import styled from "styled-components";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
@@ -137,125 +121,326 @@ export function FeedbackForm({
           </DialogDescription>
         </DialogHeader>
 
-        <Card className="border-0 shadow-none">
-          <CardContent className="px-0 pt-4">
-            {success ? (
-              <Alert className="border-green-500/20 bg-green-500/10">
-                <AlertDescription className="text-green-400">
-                  Feedback enviado com sucesso! Obrigado pela contribuição.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <Alert variant="destructive" className="border-red-500/20 bg-red-500/10">
-                    <AlertDescription className="text-red-400 font-medium">{error}</AlertDescription>
-                  </Alert>
-                )}
+        <StyledWrapper>
+          {success ? (
+            <Alert className="border-green-500/20 bg-green-500/10">
+              <AlertDescription className="text-green-400">
+                Feedback enviado com sucesso! Obrigado pela contribuição.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <form className="form" onSubmit={handleSubmit}>
+              {error && (
+                <Alert variant="destructive" className="border-red-500/20 bg-red-500/10 mb-4">
+                  <AlertDescription className="text-red-400 font-medium">{error}</AlertDescription>
+                </Alert>
+              )}
 
-                {!user && (
-                  <Alert className="border-amber-500/20 bg-amber-500/10">
-                    <AlertDescription className="text-amber-400 font-medium">
-                      Você precisa estar logado para enviar feedback.
-                    </AlertDescription>
-                  </Alert>
-                )}
+              {!user && (
+                <Alert className="border-amber-500/20 bg-amber-500/10 mb-4">
+                  <AlertDescription className="text-amber-400 font-medium">
+                    Você precisa estar logado para enviar feedback.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-                <div className="space-y-3">
-                  <Label htmlFor="feedbackType" className="text-sm font-medium text-foreground">
-                    Tipo de Feedback
-                  </Label>
-                  <Select
-                    value={feedbackType}
-                    onValueChange={(value) =>
-                      setFeedbackType(value as Feedback["feedback_type"])
-                    }
-                    disabled={loading || !user}
-                  >
-                    <SelectTrigger className="h-12 bg-muted/50 border-muted-foreground/20 focus:border-green-500 focus:ring-green-500/20 transition-colors">
-                      <SelectValue placeholder="Selecione o tipo..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(feedbackTypeLabels).map(
-                        ([key, label]) => (
-                          <SelectItem key={key} value={key} className="py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="p-1.5 rounded-md bg-green-500/10">
-                                <MessageSquare className="h-4 w-4 text-green-500" />
-                              </div>
-                              <div>
-                                <div className="font-medium text-sm">{label}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {
-                                    feedbackTypeDescriptions[
-                                      key as keyof typeof feedbackTypeDescriptions
-                                    ]
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                          </SelectItem>
-                        )
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <p className="title">Enviar Feedback</p>
+              <p className="message">Ajude-nos a melhorar esta questão com seu feedback. Sua contribuição é valiosa para a comunidade.</p>
 
-                <div className="space-y-3">
-                  <Label htmlFor="content" className="text-sm font-medium text-foreground">
-                    Conteúdo
-                  </Label>
-                  <div className="relative">
-                    <Textarea
-                      id="content"
-                      placeholder="Descreva seu feedback detalhadamente..."
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      rows={5}
-                      disabled={loading || !user}
-                      className="min-h-[120px] bg-muted/50 border-muted-foreground/20 focus:border-green-500 focus:ring-green-500/20 transition-colors resize-none"
-                    />
-                    <div className="absolute bottom-3 right-3 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
-                      {content.length}/500 caracteres
-                    </div>
-                  </div>
-                </div>
+              <div className="select-wrapper">
+                <select
+                  value={feedbackType}
+                  onChange={(e) => setFeedbackType(e.target.value as Feedback["feedback_type"])}
+                  disabled={loading || !user}
+                  className="select-input"
+                  required
+                >
+                  <option value="">Selecione o tipo...</option>
+                  {Object.entries(feedbackTypeLabels).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label} - {feedbackTypeDescriptions[key as keyof typeof feedbackTypeDescriptions]}
+                    </option>
+                  ))}
+                </select>
+                <span className="select-label">Tipo de Feedback</span>
+              </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleClose}
-                    disabled={loading}
-                    className="w-full sm:w-auto h-11"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={
-                      loading || !user || !feedbackType || !content.trim()
-                    }
-                    className="w-full sm:w-auto h-11 bg-green-500 hover:bg-green-600 text-white"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Enviar
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            )}
-          </CardContent>
-        </Card>
+              <label>
+                <textarea
+                  required
+                  placeholder=" "
+                  className="input textarea"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  disabled={loading || !user}
+                  rows={4}
+                />
+                <span>Conteúdo</span>
+                <div className="char-count">{content.length}/500 caracteres</div>
+              </label>
+
+              <div className="button-group">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={handleClose}
+                  disabled={loading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="submit"
+                  disabled={
+                    loading || !user || !feedbackType || !content.trim()
+                  }
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Enviar
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+        </StyledWrapper>
       </DialogContent>
     </Dialog>
   );
 }
+
+const StyledWrapper = styled.div`
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 100%;
+    background-color: transparent;
+    padding: 0;
+    border-radius: 20px;
+    position: relative;
+  }
+
+  .title {
+    font-size: 28px;
+    color: #10b981;
+    font-weight: 600;
+    letter-spacing: -1px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding-left: 30px;
+    margin: 0 0 10px 0;
+  }
+
+  .title::before,.title::after {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    left: 0px;
+    background-color: #10b981;
+  }
+
+  .title::before {
+    width: 18px;
+    height: 18px;
+    background-color: #10b981;
+  }
+
+  .title::after {
+    width: 18px;
+    height: 18px;
+    animation: pulse 1s linear infinite;
+  }
+
+  .message {
+    color: rgba(88, 87, 87, 0.822);
+    font-size: 14px;
+    margin: 0 0 15px 0;
+  }
+
+  .form label {
+    position: relative;
+  }
+
+  .form label .input {
+    width: 100%;
+    padding: 10px 10px 20px 10px;
+    outline: 0;
+    border: 1px solid rgba(105, 105, 105, 0.397);
+    border-radius: 10px;
+    background-color: #fff;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+  }
+
+  .form label .input:focus {
+    border-color: #10b981;
+  }
+
+  .form label .textarea {
+    resize: none;
+    min-height: 100px;
+  }
+
+  .form label .input + span {
+    position: absolute;
+    left: 10px;
+    top: 15px;
+    color: grey;
+    font-size: 0.9em;
+    cursor: text;
+    transition: 0.3s ease;
+    pointer-events: none;
+  }
+
+  .form label .input:placeholder-shown + span {
+    top: 15px;
+    font-size: 0.9em;
+  }
+
+  .form label .input:focus + span,.form label .input:valid + span {
+    top: 30px;
+    font-size: 0.7em;
+    font-weight: 600;
+    color: #10b981;
+  }
+
+  .form label .input:valid + span {
+    color: #10b981;
+  }
+
+  .char-count {
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    font-size: 0.7em;
+    color: grey;
+    pointer-events: none;
+  }
+
+  .select-wrapper {
+    position: relative;
+  }
+
+  .select-input {
+    width: 100%;
+    padding: 10px 10px 20px 10px;
+    outline: 0;
+    border: 1px solid rgba(105, 105, 105, 0.397);
+    border-radius: 10px;
+    background-color: #fff;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    cursor: pointer;
+  }
+
+  .select-input:focus {
+    border-color: #10b981;
+  }
+
+  .select-label {
+    position: absolute;
+    left: 10px;
+    top: 15px;
+    color: grey;
+    font-size: 0.9em;
+    cursor: text;
+    transition: 0.3s ease;
+    pointer-events: none;
+  }
+
+  .select-input:focus + .select-label,
+  .select-input:valid + .select-label {
+    top: 30px;
+    font-size: 0.7em;
+    font-weight: 600;
+    color: #10b981;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .submit {
+    border: none;
+    outline: none;
+    background-color: #10b981;
+    padding: 12px 20px;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .submit:hover:not(:disabled) {
+    background-color: #059669;
+  }
+
+  .submit:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .cancel-btn {
+    border: 1px solid rgba(105, 105, 105, 0.397);
+    outline: none;
+    background-color: transparent;
+    padding: 12px 20px;
+    border-radius: 10px;
+    color: #374151;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+  }
+
+  .cancel-btn:hover:not(:disabled) {
+    background-color: #f3f4f6;
+    border-color: #6b7280;
+  }
+
+  .cancel-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  @keyframes pulse {
+    from {
+      transform: scale(0.9);
+      opacity: 1;
+    }
+
+    to {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .button-group {
+      flex-direction: column;
+    }
+    
+    .submit, .cancel-btn {
+      width: 100%;
+    }
+  }
+`;
