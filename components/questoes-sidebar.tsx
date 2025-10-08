@@ -14,6 +14,7 @@ import {
   Wrench,
   ChevronLeft,
   ChevronRight,
+  Terminal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +27,7 @@ interface QuestoesSidebarProps {
 
 const categories = [
   { id: "all", name: "Todas", icon: BookOpen },
-  { id: "algorithms", name: "Algoritmos", icon: Code },
+  { id: "algorithms", name: "Algoritmos", icon: Terminal },
   { id: "data_structures", name: "Estruturas de Dados", icon: Database },
   { id: "system_design", name: "Design de Sistema", icon: Cpu },
   { id: "databases", name: "Bancos de Dados", icon: Database },
@@ -60,7 +61,7 @@ export function QuestoesSidebar({
           {!isMinimized && (
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 rounded bg-blue-500 flex items-center justify-center">
-                <Code className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white" />
+                <Terminal className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white" />
               </div>
               <span className="text-sm sm:text-lg lg:text-xl font-bold text-white truncate">
                 HabilitaDev
@@ -69,7 +70,7 @@ export function QuestoesSidebar({
           )}
           {isMinimized && (
             <div className="h-8 w-8 sm:h-9 sm:w-9 lg:h-10 lg:w-10 rounded bg-blue-500 flex items-center justify-center">
-              <Code className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-white" />
+              <Terminal className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-white" />
             </div>
           )}
           {!isMinimized && (
