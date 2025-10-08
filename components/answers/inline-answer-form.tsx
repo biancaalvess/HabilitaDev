@@ -9,14 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AnswerValidation } from "./answer-validation";
 
 interface InlineAnswerFormProps {
   questionId: number;
+  correctAnswer?: string;
   onSuccess?: () => void;
 }
 
 export function InlineAnswerForm({
   questionId,
+  correctAnswer,
   onSuccess,
 }: InlineAnswerFormProps) {
   const [authorName, setAuthorName] = useState("");
@@ -25,6 +28,8 @@ export function InlineAnswerForm({
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [boardType, setBoardType] = useState<"normal" | "code">("normal");
+  const [showValidation, setShowValidation] = useState(false);
+  const [userAnswer, setUserAnswer] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,15 +61,11 @@ export function InlineAnswerForm({
       });
 
       if (result.success) {
-        setSuccess(true);
+        setUserAnswer(content.trim());
+        setShowValidation(true);
         setContent("");
         setAuthorName("");
-        if (onSuccess) {
-          onSuccess();
-        }
-        setTimeout(() => {
-          setSuccess(false);
-        }, 3000);
+        // Não chamar onSuccess imediatamente, aguardar validação
       } else {
         setError("Erro ao enviar resposta. Tente novamente.");
       }
@@ -75,6 +76,27 @@ export function InlineAnswerForm({
       setLoading(false);
     }
   };
+
+  const handleValidationComplete = (isCorrect: boolean) => {
+    if (onSuccess) {
+      onSuccess();
+    }
+    // Manter a validação visível por um tempo antes de mostrar a solução
+    setTimeout(() => {
+      setShowValidation(false);
+      setSuccess(true);
+    }, 3000);
+  };
+
+  if (showValidation && correctAnswer) {
+    return (
+      <AnswerValidation
+        userAnswer={userAnswer}
+        correctAnswer={correctAnswer}
+        onValidationComplete={handleValidationComplete}
+      />
+    );
+  }
 
   if (success) {
     return (
