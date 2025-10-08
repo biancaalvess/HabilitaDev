@@ -92,19 +92,16 @@ export async function POST(
       });
     }
 
-    // Fallback final: validação local
-    console.log('[AI VALIDATION] Usando validação local como fallback');
-    const localValidation = validateAnswerLocally(body.user_answer, body.correct_answer);
-
+    // Fallback final: Erro - IA e Backend indisponíveis
+    console.error('[AI VALIDATION] Todos os serviços de validação estão indisponíveis');
+    
     return NextResponse.json({
-      success: true,
-      data: {
-        ...localValidation,
-        validation_method: 'local_fallback'
-      },
-      message: 'Validação realizada localmente (modo demonstração)'
+      success: false,
+      error: 'Serviços de validação indisponíveis',
+      message: 'Não foi possível validar a resposta. IA e Backend estão offline.',
+      details: 'Por favor, tente novamente mais tarde ou entre em contato com o suporte.'
     }, {
-      status: 200,
+      status: 503,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -115,18 +112,13 @@ export async function POST(
   } catch (error) {
     console.error('[AI VALIDATION] Erro geral:', error);
     
-    // Fallback de emergência
-    const localValidation = validateAnswerLocally('', '');
-    
     return NextResponse.json({
-      success: true,
-      data: {
-        ...localValidation,
-        validation_method: 'emergency_fallback'
-      },
-      message: 'Validação realizada localmente (modo emergência)'
+      success: false,
+      error: 'Erro ao processar validação',
+      message: error instanceof Error ? error.message : 'Erro desconhecido',
+      details: 'Todos os serviços de validação estão indisponíveis. Tente novamente mais tarde.'
     }, {
-      status: 200,
+      status: 503,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -147,98 +139,6 @@ export async function OPTIONS(request: NextRequest) {
   });
 }
 
-// Validação local como fallback
-function validateAnswerLocally(userAnswer: string, correctAnswer: string) {
-  const userLower = userAnswer.toLowerCase();
-
-  // Critérios obrigatórios para uma resposta correta
-  const requiredElements = {
-    algorithm: false,
-    complexity: false,
-    concept: false,
-    explanation: false,
-  };
-
-  let score = 0;
-  let details: string[] = [];
-  let feedback = '';
-
-  // 1. VERIFICAR ALGORITMO ESPECÍFICO (Critério principal - 40 pontos)
-  if (userLower.includes('quicksort')) {
-    requiredElements.algorithm = true;
-    score += 40;
-    details.push('✅ Algoritmo correto: Quicksort identificado');
-  } else if (userLower.includes('mergesort')) {
-    requiredElements.algorithm = true;
-    score += 35;
-    details.push('✅ Algoritmo eficiente: Mergesort identificado');
-  } else if (userLower.includes('heapsort')) {
-    requiredElements.algorithm = true;
-    score += 35;
-    details.push('✅ Algoritmo eficiente: Heapsort identificado');
-  } else {
-    details.push('❌ Algoritmo: Não especificou um algoritmo de ordenação eficiente');
-  }
-
-  // 2. VERIFICAR COMPLEXIDADE TEMPORAL (Critério obrigatório - 30 pontos)
-  if (userLower.includes('o(n log n)') || userLower.includes('o(n²)')) {
-    requiredElements.complexity = true;
-    score += 30;
-    if (userLower.includes('o(n log n)')) {
-      details.push('✅ Complexidade: O(n log n) mencionada corretamente');
-    }
-    if (userLower.includes('o(n²)')) {
-      details.push('✅ Complexidade: O(n²) no pior caso mencionada');
-    }
-  } else {
-    details.push('❌ Complexidade: Não mencionou a complexidade temporal');
-  }
-
-  // 3. VERIFICAR CONCEITO DE DIVISÃO E CONQUISTA (Critério importante - 20 pontos)
-  if (userLower.includes('pivô') || userLower.includes('particiona')) {
-    requiredElements.concept = true;
-    score += 20;
-    details.push('✅ Conceito: Explicou o funcionamento com pivô/particionamento');
-  } else if (userLower.includes('divisão') && userLower.includes('conquista')) {
-    requiredElements.concept = true;
-    score += 15;
-    details.push('✅ Conceito: Mencionou divisão e conquista');
-  } else {
-    details.push('❌ Conceito: Não explicou como o algoritmo funciona');
-  }
-
-  // 4. VERIFICAR QUALIDADE DA EXPLICAÇÃO (Critério complementar - 10 pontos)
-  if (userAnswer.length > 100) {
-    requiredElements.explanation = true;
-    score += 10;
-    details.push('✅ Explicação: Resposta detalhada e bem estruturada');
-  } else if (userAnswer.length > 50) {
-    score += 5;
-    details.push('⚠️ Explicação: Resposta adequada, mas pode ser mais detalhada');
-  } else {
-    details.push('❌ Explicação: Resposta muito breve, precisa de mais detalhes');
-  }
-
-  // DETERMINAR SE ESTÁ CORRETO
-  const isCorrect = requiredElements.algorithm && requiredElements.complexity && requiredElements.concept;
-
-  // FEEDBACK ESPECÍFICO BASEADO NA CORREÇÃO
-  if (isCorrect) {
-    feedback = '🎉 RESPOSTA CORRETA! Você demonstrou compreensão completa do algoritmo de ordenação, incluindo sua complexidade e funcionamento.';
-  } else {
-    const missingElements = [];
-    if (!requiredElements.algorithm) missingElements.push('especificar o algoritmo');
-    if (!requiredElements.complexity) missingElements.push('mencionar a complexidade');
-    if (!requiredElements.concept) missingElements.push('explicar como funciona');
-
-    feedback = `❌ RESPOSTA INCORRETA. Sua resposta está incompleta. Faltou: ${missingElements.join(', ')}.`;
-  }
-
-  return {
-    is_correct: isCorrect,
-    score: Math.min(score, 100),
-    feedback: feedback,
-    details: details,
-  };
-}
+// Removido: Função validateAnswerLocally() - 100% validação por IA ou Backend real
+// Sistema agora retorna erro 503 quando IA e Backend estão indisponíveis
 

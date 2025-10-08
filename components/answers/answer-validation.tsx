@@ -69,20 +69,28 @@ export function AnswerValidation({
           }
         }
 
-        // Fallback para validação local se a API falhar
-        console.log("[AnswerValidation] API falhou, usando validação local");
-        const localResult = validateUserAnswer(userAnswer, correctAnswer);
-        setValidationResult(localResult);
+        // Mostrar erro se a API falhar
+        console.error("[AnswerValidation] API falhou - Não há dados mock");
+        setValidationResult({
+          isCorrect: false,
+          score: 0,
+          feedback: '❌ Não foi possível validar sua resposta. O serviço de validação está indisponível. Por favor, tente novamente mais tarde.',
+          details: ['⚠️ Backend offline', '⚠️ IA offline', '❌ Validação não disponível']
+        });
         setIsValidating(false);
-        onValidationComplete(localResult.isCorrect);
+        onValidationComplete(false);
       } catch (error) {
         console.error("[AnswerValidation] Erro na validação:", error);
 
-        // Fallback para validação local
-        const localResult = validateUserAnswer(userAnswer, correctAnswer);
-        setValidationResult(localResult);
+        // Mostrar erro - sem fallback local
+        setValidationResult({
+          isCorrect: false,
+          score: 0,
+          feedback: '❌ Erro ao conectar com o serviço de validação. Por favor, verifique sua conexão e tente novamente.',
+          details: ['⚠️ Erro de conexão', '❌ Validação não disponível']
+        });
         setIsValidating(false);
-        onValidationComplete(localResult.isCorrect);
+        onValidationComplete(false);
       }
     };
 
@@ -238,119 +246,5 @@ export function AnswerValidation({
   );
 }
 
-// Função de validação simulada
-function validateUserAnswer(userAnswer: string, correctAnswer: string) {
-  const userLower = userAnswer.toLowerCase();
-  const correctLower = correctAnswer.toLowerCase();
-
-  // Critérios obrigatórios para uma resposta correta
-  const requiredElements = {
-    algorithm: false,
-    complexity: false,
-    concept: false,
-    explanation: false,
-  };
-
-  let score = 0;
-  let details: string[] = [];
-  let feedback = "";
-
-  // 1. VERIFICAR ALGORITMO ESPECÍFICO (Critério principal - 40 pontos)
-  if (userLower.includes("quicksort")) {
-    requiredElements.algorithm = true;
-    score += 40;
-    details.push("✅ Algoritmo correto: Quicksort identificado");
-  } else if (userLower.includes("mergesort")) {
-    requiredElements.algorithm = true;
-    score += 35;
-    details.push("✅ Algoritmo eficiente: Mergesort identificado");
-  } else if (userLower.includes("heapsort")) {
-    requiredElements.algorithm = true;
-    score += 35;
-    details.push("✅ Algoritmo eficiente: Heapsort identificado");
-  } else {
-    details.push(
-      "❌ Algoritmo: Não especificou um algoritmo de ordenação eficiente"
-    );
-  }
-
-  // 2. VERIFICAR COMPLEXIDADE TEMPORAL (Critério obrigatório - 30 pontos)
-  if (userLower.includes("o(n log n)") || userLower.includes("o(n²)")) {
-    requiredElements.complexity = true;
-    score += 30;
-    if (userLower.includes("o(n log n)")) {
-      details.push("✅ Complexidade: O(n log n) mencionada corretamente");
-    }
-    if (userLower.includes("o(n²)")) {
-      details.push("✅ Complexidade: O(n²) no pior caso mencionada");
-    }
-  } else {
-    details.push("❌ Complexidade: Não mencionou a complexidade temporal");
-  }
-
-  // 3. VERIFICAR CONCEITO DE DIVISÃO E CONQUISTA (Critério importante - 20 pontos)
-  if (userLower.includes("pivô") || userLower.includes("particiona")) {
-    requiredElements.concept = true;
-    score += 20;
-    details.push(
-      "✅ Conceito: Explicou o funcionamento com pivô/particionamento"
-    );
-  } else if (userLower.includes("divisão") && userLower.includes("conquista")) {
-    requiredElements.concept = true;
-    score += 15;
-    details.push("✅ Conceito: Mencionou divisão e conquista");
-  } else {
-    details.push("❌ Conceito: Não explicou como o algoritmo funciona");
-  }
-
-  // 4. VERIFICAR QUALIDADE DA EXPLICAÇÃO (Critério complementar - 10 pontos)
-  if (userAnswer.length > 100) {
-    requiredElements.explanation = true;
-    score += 10;
-    details.push("✅ Explicação: Resposta detalhada e bem estruturada");
-  } else if (userAnswer.length > 50) {
-    score += 5;
-    details.push(
-      "⚠️ Explicação: Resposta adequada, mas pode ser mais detalhada"
-    );
-  } else {
-    details.push(
-      "❌ Explicação: Resposta muito breve, precisa de mais detalhes"
-    );
-  }
-
-  // DETERMINAR SE ESTÁ CORRETO
-  // Para estar correto, deve ter: algoritmo + complexidade + conceito básico
-  const isCorrect =
-    requiredElements.algorithm &&
-    requiredElements.complexity &&
-    requiredElements.concept;
-
-  // FEEDBACK ESPECÍFICO BASEADO NA CORREÇÃO
-  if (isCorrect) {
-    feedback =
-      "🎉 RESPOSTA CORRETA! Você demonstrou compreensão completa do algoritmo de ordenação, incluindo sua complexidade e funcionamento.";
-  } else {
-    const missingElements = [];
-    if (!requiredElements.algorithm)
-      missingElements.push("especificar o algoritmo");
-    if (!requiredElements.complexity)
-      missingElements.push("mencionar a complexidade");
-    if (!requiredElements.concept)
-      missingElements.push("explicar como funciona");
-
-    feedback = `❌ RESPOSTA INCORRETA. Sua resposta está incompleta. Faltou: ${missingElements.join(
-      ", "
-    )}.`;
-  }
-
-  // Adicionar pontuação final
-  details.push(`\n📊 Pontuação final: ${score}/100 pontos`);
-
-  return {
-    isCorrect,
-    score: Math.min(score, 100),
-    feedback,
-    details,
-  };
-}
+// Removido: Função validateUserAnswer() - 100% validação por IA ou Backend real
+// Sistema agora mostra erro quando serviços estão indisponíveis
