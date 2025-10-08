@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// ✅ CORREÇÃO: Usar backend direto em vez do proxy
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export interface ApiResponse<T> {
   data: T;
@@ -73,73 +74,77 @@ class ApiService {
     };
 
     try {
+      console.log('🔍 Fetching from:', url); // Debug para ver URL exata
       const response = await fetch(url, config);
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error:', response.status, errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('✅ API Response:', data); // Debug para ver resposta
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error('❌ API request failed:', error);
       throw error;
     }
   }
 
-  // Questions endpoints
+  // Questions endpoints - ✅ CORRIGIDO: Usando backend direto
   async getQuestions(): Promise<ApiResponse<Question[]>> {
-    return this.request<Question[]>('/api/proxy/questions');
+    return this.request<Question[]>('/questions/');
   }
 
   async getQuestion(id: number): Promise<ApiResponse<Question>> {
-    return this.request<Question>(`/api/proxy/questions/${id}`);
+    return this.request<Question>(`/questions/${id}`);
   }
 
   async createQuestion(question: Omit<Question, 'id' | 'created_at'>): Promise<ApiResponse<Question>> {
-    return this.request<Question>('/api/proxy/questions', {
+    return this.request<Question>('/questions/', {
       method: 'POST',
       body: JSON.stringify(question),
     });
   }
 
-  // Answers endpoints
+  // Answers endpoints - ✅ CORRIGIDO: Usando backend direto
   async getAnswers(questionId: number): Promise<ApiResponse<Answer[]>> {
-    return this.request<Answer[]>(`/api/proxy/questions/${questionId}/answers`);
+    return this.request<Answer[]>(`/questions/${questionId}/answers`);
   }
 
   async createAnswer(questionId: number, answer: Omit<Answer, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Answer>> {
-    return this.request<Answer>(`/api/proxy/questions/${questionId}/answers`, {
+    return this.request<Answer>(`/questions/${questionId}/answers`, {
       method: 'POST',
       body: JSON.stringify(answer),
     });
   }
 
-  // Comments endpoints
+  // Comments endpoints - ✅ CORRIGIDO: Usando backend direto
   async getComments(questionId: number): Promise<ApiResponse<Comment[]>> {
-    return this.request<Comment[]>(`/api/proxy/questions/${questionId}/comments`);
+    return this.request<Comment[]>(`/questions/${questionId}/comments`);
   }
 
   async createComment(questionId: number, comment: Omit<Comment, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Comment>> {
-    return this.request<Comment>(`/api/proxy/questions/${questionId}/comments`, {
+    return this.request<Comment>(`/questions/${questionId}/comments`, {
       method: 'POST',
       body: JSON.stringify(comment),
     });
   }
 
-  // Feedback endpoints
+  // Feedback endpoints - ✅ CORRIGIDO: Usando backend direto
   async getFeedback(questionId: number): Promise<ApiResponse<Feedback[]>> {
-    return this.request<Feedback[]>(`/api/proxy/questions/${questionId}/feedback`);
+    return this.request<Feedback[]>(`/questions/${questionId}/feedback`);
   }
 
   async createFeedback(questionId: number, feedback: Omit<Feedback, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Feedback>> {
-    return this.request<Feedback>(`/api/proxy/questions/${questionId}/feedback`, {
+    return this.request<Feedback>(`/questions/${questionId}/feedback`, {
       method: 'POST',
       body: JSON.stringify(feedback),
     });
   }
 
-  // Health check
+  // Health check - ✅ CORRIGIDO: Usando backend direto
   async healthCheck(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
     return this.request<{ status: string; timestamp: string }>('/health');
   }
