@@ -26,6 +26,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import type { Feedback } from "@/lib/types";
