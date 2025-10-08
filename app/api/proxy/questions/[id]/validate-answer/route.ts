@@ -28,6 +28,7 @@ export async function POST(
           correct_answer: body.correct_answer || '',
           question_context: body.question_context || ''
         }),
+        signal: AbortSignal.timeout(30000), // Timeout de 30 segundos para IA
       });
 
       if (aiResponse.ok) {
@@ -67,6 +68,7 @@ export async function POST(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
     });
 
     if (response.ok) {
@@ -239,3 +241,4 @@ function validateAnswerLocally(userAnswer: string, correctAnswer: string) {
     details: details,
   };
 }
+

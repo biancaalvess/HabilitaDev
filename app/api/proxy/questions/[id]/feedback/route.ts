@@ -20,6 +20,7 @@ export async function POST(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
     });
 
     console.log(`[FEEDBACK POST] Response status: ${response.status}`);
@@ -110,6 +111,7 @@ export async function GET(
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
     });
 
     if (!response.ok) {

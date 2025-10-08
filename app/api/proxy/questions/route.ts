@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://habilitadev-backend.onrender.com';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
     });
 
     console.log('Backend response status:', response.status);
@@ -151,6 +152,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
     });
 
     if (!response.ok) {

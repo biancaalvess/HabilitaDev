@@ -9,14 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AnswerValidationProps {
+  questionId: number;
   userAnswer: string;
   correctAnswer: string;
+  questionContext?: string;
   onValidationComplete: (isCorrect: boolean) => void;
 }
 
 export function AnswerValidation({
+  questionId,
   userAnswer,
   correctAnswer,
+  questionContext = "Questão de entrevista técnica",
   onValidationComplete,
 }: AnswerValidationProps) {
   const [validationResult, setValidationResult] = useState<{
@@ -37,17 +41,21 @@ export function AnswerValidation({
           "[AnswerValidation] Enviando para validação por IA/backend"
         );
 
-        const response = await fetch(`/api/proxy/questions/1/validate-answer`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            user_answer: userAnswer,
-            correct_answer: correctAnswer,
-            question_context: "Questão sobre algoritmos de ordenação",
-          }),
-        });
+        const response = await fetch(
+          `/api/proxy/questions/${questionId}/validate-answer`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              user_answer: userAnswer,
+              correct_answer: correctAnswer,
+              question_context: questionContext,
+            }),
+            signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
+          }
+        );
 
         if (response.ok) {
           const result = await response.json();

@@ -14,12 +14,14 @@ import { AnswerValidation } from "./answer-validation";
 interface InlineAnswerFormProps {
   questionId: number;
   correctAnswer?: string;
+  questionContext?: string;
   onSuccess?: () => void;
 }
 
 export function InlineAnswerForm({
   questionId,
   correctAnswer,
+  questionContext,
   onSuccess,
 }: InlineAnswerFormProps) {
   const [authorName, setAuthorName] = useState("");
@@ -91,8 +93,10 @@ export function InlineAnswerForm({
   if (showValidation && correctAnswer) {
     return (
       <AnswerValidation
+        questionId={questionId}
         userAnswer={userAnswer}
         correctAnswer={correctAnswer}
+        questionContext={questionContext}
         onValidationComplete={handleValidationComplete}
       />
     );
