@@ -51,11 +51,6 @@ export function FeedbackForm({
     e.preventDefault();
     setError("");
 
-    if (!user) {
-      setError("Você precisa estar logado para enviar feedback.");
-      return;
-    }
-
     if (!feedbackType || !content.trim()) {
       setError("Por favor, preencha todos os campos.");
       return;
@@ -74,7 +69,7 @@ export function FeedbackForm({
         feedback_type: feedbackType as any,
         content: content.trim(),
         status: "pending" as any,
-        user_id: user?.id,
+        user_id: user?.id || null, // Permite feedback anônimo
       });
 
       if (result.success) {
@@ -136,14 +131,6 @@ export function FeedbackForm({
                 </Alert>
               )}
 
-              {!user && (
-                <Alert className="border-amber-500/20 bg-amber-500/10 mb-4">
-                  <AlertDescription className="text-amber-400 font-medium">
-                    Você precisa estar logado para enviar feedback.
-                  </AlertDescription>
-                </Alert>
-              )}
-
               <p className="title">Enviar Feedback</p>
               <p className="message">Ajude-nos a melhorar esta questão com seu feedback. Sua contribuição é valiosa para a comunidade.</p>
 
@@ -151,7 +138,7 @@ export function FeedbackForm({
                 <select
                   value={feedbackType}
                   onChange={(e) => setFeedbackType(e.target.value as Feedback["feedback_type"])}
-                  disabled={loading || !user}
+                  disabled={loading}
                   className="select-input"
                   required
                 >
@@ -172,7 +159,7 @@ export function FeedbackForm({
                   className="input textarea"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  disabled={loading || !user}
+                  disabled={loading}
                   rows={4}
                 />
                 <span>Conteúdo</span>
@@ -192,7 +179,7 @@ export function FeedbackForm({
                   type="submit"
                   className="submit"
                   disabled={
-                    loading || !user || !feedbackType || !content.trim()
+                    loading || !feedbackType || !content.trim()
                   }
                 >
                   {loading ? (
