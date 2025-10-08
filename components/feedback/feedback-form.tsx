@@ -112,7 +112,8 @@ export function FeedbackForm({
             Enviar Feedback
           </DialogTitle>
           <DialogDescription className="text-base leading-relaxed">
-            Ajude-nos a melhorar esta questão com seu feedback. Sua contribuição é valiosa para a comunidade.
+            Ajude-nos a melhorar esta questão com seu feedback. Sua contribuição
+            é valiosa para a comunidade.
           </DialogDescription>
         </DialogHeader>
 
@@ -126,18 +127,28 @@ export function FeedbackForm({
           ) : (
             <form className="form" onSubmit={handleSubmit}>
               {error && (
-                <Alert variant="destructive" className="border-red-500/20 bg-red-500/10 mb-4">
-                  <AlertDescription className="text-red-400 font-medium">{error}</AlertDescription>
+                <Alert
+                  variant="destructive"
+                  className="border-red-500/20 bg-red-500/10 mb-4"
+                >
+                  <AlertDescription className="text-red-400 font-medium">
+                    {error}
+                  </AlertDescription>
                 </Alert>
               )}
 
               <p className="title">Enviar Feedback</p>
-              <p className="message">Ajude-nos a melhorar esta questão com seu feedback. Sua contribuição é valiosa para a comunidade.</p>
+              <p className="message">
+                Ajude-nos a melhorar esta questão com seu feedback. Sua
+                contribuição é valiosa para a comunidade.
+              </p>
 
               <div className="select-wrapper">
                 <select
                   value={feedbackType}
-                  onChange={(e) => setFeedbackType(e.target.value as Feedback["feedback_type"])}
+                  onChange={(e) =>
+                    setFeedbackType(e.target.value as Feedback["feedback_type"])
+                  }
                   disabled={loading}
                   className="select-input"
                   required
@@ -145,7 +156,12 @@ export function FeedbackForm({
                   <option value="">Selecione o tipo...</option>
                   {Object.entries(feedbackTypeLabels).map(([key, label]) => (
                     <option key={key} value={key}>
-                      {label} - {feedbackTypeDescriptions[key as keyof typeof feedbackTypeDescriptions]}
+                      {label} -{" "}
+                      {
+                        feedbackTypeDescriptions[
+                          key as keyof typeof feedbackTypeDescriptions
+                        ]
+                      }
                     </option>
                   ))}
                 </select>
@@ -163,7 +179,9 @@ export function FeedbackForm({
                   rows={4}
                 />
                 <span>Conteúdo</span>
-                <div className="char-count">{content.length}/500 caracteres</div>
+                <div className="char-count">
+                  {content.length}/500 caracteres
+                </div>
               </label>
 
               <div className="button-group">
@@ -178,9 +196,7 @@ export function FeedbackForm({
                 <button
                   type="submit"
                   className="submit"
-                  disabled={
-                    loading || !feedbackType || !content.trim()
-                  }
+                  disabled={loading || !feedbackType || !content.trim()}
                 >
                   {loading ? (
                     <>
@@ -227,7 +243,8 @@ const StyledWrapper = styled.div`
     margin: 0 0 10px 0;
   }
 
-  .title::before,.title::after {
+  .title::before,
+  .title::after {
     position: absolute;
     content: "";
     height: 16px;
@@ -295,7 +312,8 @@ const StyledWrapper = styled.div`
     font-size: 0.9em;
   }
 
-  .form label .input:focus + span,.form label .input:valid + span {
+  .form label .input:focus + span,
+  .form label .input:valid + span {
     top: 30px;
     font-size: 0.7em;
     font-weight: 600;
@@ -425,8 +443,9 @@ const StyledWrapper = styled.div`
     .button-group {
       flex-direction: column;
     }
-    
-    .submit, .cancel-btn {
+
+    .submit,
+    .cancel-btn {
       width: 100%;
     }
   }
