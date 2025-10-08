@@ -33,24 +33,26 @@ export function AnswerValidation({
       setIsValidating(true);
 
       try {
-        console.log('[AnswerValidation] Enviando para validação por IA/backend');
-        
+        console.log(
+          "[AnswerValidation] Enviando para validação por IA/backend"
+        );
+
         const response = await fetch(`/api/proxy/questions/1/validate-answer`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             user_answer: userAnswer,
             correct_answer: correctAnswer,
-            question_context: 'Questão sobre algoritmos de ordenação'
+            question_context: "Questão sobre algoritmos de ordenação",
           }),
         });
 
         if (response.ok) {
           const result = await response.json();
-          console.log('[AnswerValidation] Resultado recebido:', result);
-          
+          console.log("[AnswerValidation] Resultado recebido:", result);
+
           if (result.success) {
             setValidationResult(result.data);
             setIsValidating(false);
@@ -58,17 +60,16 @@ export function AnswerValidation({
             return;
           }
         }
-        
+
         // Fallback para validação local se a API falhar
-        console.log('[AnswerValidation] API falhou, usando validação local');
+        console.log("[AnswerValidation] API falhou, usando validação local");
         const localResult = validateUserAnswer(userAnswer, correctAnswer);
         setValidationResult(localResult);
         setIsValidating(false);
         onValidationComplete(localResult.isCorrect);
-        
       } catch (error) {
-        console.error('[AnswerValidation] Erro na validação:', error);
-        
+        console.error("[AnswerValidation] Erro na validação:", error);
+
         // Fallback para validação local
         const localResult = validateUserAnswer(userAnswer, correctAnswer);
         setValidationResult(localResult);
@@ -91,7 +92,8 @@ export function AnswerValidation({
             </span>
           </div>
           <p className="text-muted-foreground">
-            Nossa inteligência artificial está analisando sua solução e comparando com a resposta esperada.
+            Nossa inteligência artificial está analisando sua solução e
+            comparando com a resposta esperada.
           </p>
         </CardContent>
       </Card>
@@ -208,13 +210,17 @@ export function AnswerValidation({
               ? "🎉 PARABÉNS! Sua resposta está CORRETA! Você demonstrou domínio do conceito. A solução oficial está disponível abaixo."
               : "💪 NÃO DESISTA! Sua resposta precisa de ajustes. Estude a solução oficial abaixo e tente novamente."}
           </p>
-          {validationResult && 'validation_method' in validationResult && (
+          {validationResult && "validation_method" in validationResult && (
             <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               <span className="inline-flex items-center gap-1">
-                {validationResult.validation_method === 'ai' && '🤖 Validado por IA'}
-                {validationResult.validation_method === 'backend' && '⚙️ Validado pelo Backend'}
-                {validationResult.validation_method === 'local_fallback' && '🔧 Validação Local'}
-                {validationResult.validation_method === 'emergency_fallback' && '🚨 Modo Emergência'}
+                {validationResult.validation_method === "ai" &&
+                  "🤖 Validado por IA"}
+                {validationResult.validation_method === "backend" &&
+                  "⚙️ Validado pelo Backend"}
+                {validationResult.validation_method === "local_fallback" &&
+                  "🔧 Validação Local"}
+                {validationResult.validation_method === "emergency_fallback" &&
+                  "🚨 Modo Emergência"}
               </span>
             </div>
           )}
