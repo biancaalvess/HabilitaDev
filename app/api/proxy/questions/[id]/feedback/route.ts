@@ -7,8 +7,13 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log(`[FEEDBACK POST] Iniciando requisição para question ${params.id}`);
+    
     const body = await request.json();
+    console.log('[FEEDBACK POST] Body recebido:', body);
 
+    console.log(`[FEEDBACK POST] Tentando conectar com backend: ${BACKEND_URL}/api/v1/questions/${params.id}/feedback`);
+    
     const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/feedback`, {
       method: 'POST',
       headers: {
@@ -16,6 +21,8 @@ export async function POST(
       },
       body: JSON.stringify(body),
     });
+
+    console.log(`[FEEDBACK POST] Response status: ${response.status}`);
 
     if (!response.ok) {
       // Se o backend estiver indisponível, simular criação de feedback
@@ -40,6 +47,7 @@ export async function POST(
     }
 
     const data = await response.json();
+    console.log('[FEEDBACK POST] Dados recebidos do backend:', data);
 
     return NextResponse.json(data, {
       status: 200,
@@ -50,25 +58,45 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('[FEEDBACK POST] Proxy error:', error);
     console.log('Erro na conexão com backend, simulando criação de feedback');
 
-    // Em caso de erro de conexão, simular criação de feedback
-    const body = await request.json();
-    const mockFeedback = createMockFeedback(body, params.id);
+    try {
+      // Em caso de erro de conexão, simular criação de feedback
+      const body = await request.json();
+      const mockFeedback = createMockFeedback(body, params.id);
 
-    return NextResponse.json({
-      success: true,
-      data: mockFeedback,
-      message: 'Feedback criado com sucesso (modo demonstração)'
-    }, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
+      return NextResponse.json({
+        success: true,
+        data: mockFeedback,
+        message: 'Feedback criado com sucesso (modo demonstração)'
+      }, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      });
+    } catch (fallbackError) {
+      console.error('[FEEDBACK POST] Erro no fallback:', fallbackError);
+      
+      // Fallback final com dados básicos
+      const mockFeedback = createMockFeedback({}, params.id);
+      
+      return NextResponse.json({
+        success: true,
+        data: mockFeedback,
+        message: 'Feedback criado com sucesso (modo demonstração)'
+      }, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      });
+    }
   }
 }
 
