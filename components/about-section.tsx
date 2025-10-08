@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Code, Target, Users, Trophy, ArrowRight } from "lucide-react";
+import { Target, Users, Trophy, ArrowRight } from "lucide-react";
+import Image from "next/image";
 
 interface AboutSectionProps {
   onStartTraining: () => void;
@@ -65,9 +66,13 @@ export function AboutSection({ onStartTraining }: AboutSectionProps) {
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <Code className="h-4 w-4 text-white" />
-                  </div>
+                  <Image
+                    src="/icon.png"
+                    alt="HabilitaDev"
+                    width={32}
+                    height={32}
+                    className="rounded-full flex-shrink-0 mt-1"
+                  />
                   <div>
                     <h4 className="text-lg font-semibold text-white mb-2">
                       Questões Reais

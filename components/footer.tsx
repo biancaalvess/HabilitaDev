@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Github, Linkedin, Mail, Instagram, MessageSquare } from "lucide-react";
 import { ContactModal } from "@/components/contact-modal";
 import { useState } from "react";
+import Image from "next/image";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -16,9 +17,13 @@ export function Footer() {
           {/* Logo e Descrição */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">H</span>
-              </div>
+              <Image
+                src="/icon.png"
+                alt="HabilitaDev"
+                width={32}
+                height={32}
+                className="rounded-lg"
+              />
               <span className="text-xl font-bold text-white">HabilitaDev</span>
             </div>
             <p className="text-white/70 text-sm leading-relaxed mb-4 max-w-md">

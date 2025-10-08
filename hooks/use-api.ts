@@ -15,9 +15,16 @@ export function useQuestions() {
       setError(null);
       const response = await apiService.getQuestions();
       
-      // Garantir que response.data é um array
-      const questionsData = Array.isArray(response.data) ? response.data : [];
-      setQuestions(questionsData);
+      // Verificar se a resposta foi bem-sucedida
+      if (response.success) {
+        // Garantir que response.data é um array
+        const questionsData = Array.isArray(response.data) ? response.data : [];
+        setQuestions(questionsData);
+      } else {
+        // Se não foi bem-sucedida, definir mensagem de erro personalizada
+        setError(response.message || 'Erro ao carregar questões');
+        setQuestions([]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar questões');
       console.error('Error fetching questions:', err);

@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { FeedbackForm } from "./feedback/feedback-form";
 import { FeedbackList } from "./feedback/feedback-list";
-import { AnswerForm } from "./answers/answer-form";
+import { InlineAnswerForm } from "./answers/inline-answer-form";
 import { AnswerList } from "./answers/answer-list";
 import { CommentForm } from "./comments/comment-form";
 import { CommentList } from "./comments/comment-list";
@@ -31,8 +31,8 @@ interface QuestionDetailProps {
 export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
   const [copied, setCopied] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-  const [showAnswerForm, setShowAnswerForm] = useState(false);
   const [showCommentForm, setShowCommentForm] = useState(false);
+  const [userHasAnswered, setUserHasAnswered] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -111,31 +111,38 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Check className="h-5 w-5" />
-                Solução
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                {copied ? (
-                  <Check className="h-4 w-4 mr-2" />
-                ) : (
-                  <Copy className="h-4 w-4 mr-2" />
-                )}
-                {copied ? "Copiado!" : "Copiar"}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-muted/50 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-              <pre className="whitespace-pre-wrap text-foreground">
-                {question.answer}
-              </pre>
-            </div>
-          </CardContent>
-        </Card>
+        {userHasAnswered ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Check className="h-5 w-5" />
+                  Solução
+                </CardTitle>
+                <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                  {copied ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Copy className="h-4 w-4 mr-2" />
+                  )}
+                  {copied ? "Copiado!" : "Copiar"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted/50 rounded-lg p-4 font-mono text-sm overflow-x-auto">
+                <pre className="whitespace-pre-wrap text-foreground">
+                  {question.answer}
+                </pre>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <InlineAnswerForm
+            questionId={question.id}
+            onSuccess={() => setUserHasAnswered(true)}
+          />
+        )}
 
         {question.tags && question.tags.length > 0 && (
           <Card>
@@ -159,13 +166,6 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
         <AnswerList questionId={question.id} />
 
         <div className="flex justify-center gap-3">
-          <Button
-            onClick={() => setShowAnswerForm(true)}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Code className="h-4 w-4 mr-2" />
-            Responder Questão
-          </Button>
           <Button onClick={() => setShowCommentForm(true)} variant="outline">
             <MessageSquare className="h-4 w-4 mr-2" />
             Comentar
@@ -184,11 +184,6 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
         </div>
       </div>
 
-      <AnswerForm
-        questionId={question.id}
-        isOpen={showAnswerForm}
-        onClose={() => setShowAnswerForm(false)}
-      />
       <CommentForm
         questionId={question.id}
         isOpen={showCommentForm}

@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     
     const url = `${BACKEND_URL}/api/v1/questions${queryString ? `?${queryString}` : ''}`;
     
+    console.log('Fetching from:', url);
+    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -16,11 +18,34 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    console.log('Backend response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`Backend responded with status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Backend error response:', errorText);
+      
+      // Se o backend estiver em manutenção, retornar mensagem informativa
+      if (response.status === 503 || response.status === 502) {
+        return NextResponse.json({
+          success: false,
+          error: 'API temporariamente indisponível',
+          message: 'O HabilitaDev está em manutenção. Em breve retornaremos com novidades!',
+          data: []
+        }, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        });
+      }
+      
+      throw new Error(`Backend responded with status: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('Backend response data:', data);
     
     return NextResponse.json(data, {
       status: 200,
@@ -35,7 +60,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Failed to fetch questions',
+        error: error instanceof Error ? error.message : 'Failed to fetch questions',
         data: []
       },
       { status: 500 }

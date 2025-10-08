@@ -9,7 +9,6 @@ import { QuestionDetail } from "@/components/question-detail";
 import { useQuestions } from "@/hooks/use-api";
 import type { QuestionFilter, Question } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ApiTest } from "@/components/api-test";
 
 export default function QuestoesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,12 +95,42 @@ export default function QuestoesPage() {
         <QuestoesHeader />
         <main className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="text-red-400 text-6xl mb-4">⚠️</div>
-              <p className="text-red-400 text-xl mb-2">
-                Erro ao carregar questões
+            <div className="text-center max-w-2xl">
+              <div className="mb-4 flex justify-center">
+                <img
+                  src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeTE5cmV3aTV2bmRkYzFua2cwamg3cHNxc2NqeTlocGs0NHYyMTd3MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/IKsO37j6PoslBVHSG3/giphy.gif"
+                  alt="Manutenção"
+                  className="w-32 h-32 object-contain"
+                  style={{
+                    filter: "none",
+                    mixBlendMode: "normal",
+                  }}
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4">
+                {error.includes("manutenção") || error.includes("indisponível")
+                  ? "API em Manutenção"
+                  : "Erro ao carregar questões"}
+              </h2>
+              <p className="text-white/60 mb-6 text-lg leading-relaxed">
+                {error.includes("manutenção") || error.includes("indisponível")
+                  ? "O HabilitaDev está temporariamente em manutenção. Em breve retornaremos com novidades!"
+                  : error}
               </p>
-              <p className="text-white/60">{error}</p>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                >
+                  Tentar novamente
+                </Button>
+                <Button
+                  onClick={() => (window.location.href = "/")}
+                  variant="ghost"
+                >
+                  Voltar ao início
+                </Button>
+              </div>
             </div>
           </div>
         </main>
@@ -153,10 +182,6 @@ export default function QuestoesPage() {
                 Questões reais de empresas como Itaú, Meta, X (Twitter) e outras
                 grandes techs.
               </p>
-
-              <div className="mt-4">
-                <ApiTest />
-              </div>
             </div>
 
             <QuestionFilters

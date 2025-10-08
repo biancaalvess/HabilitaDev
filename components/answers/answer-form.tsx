@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
-import { Code, Send, Loader2, User } from "lucide-react";
+import { Code, Send, Loader2, User, FileText, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,14 +26,21 @@ interface AnswerFormProps {
   questionId: number;
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function AnswerForm({ questionId, isOpen, onClose }: AnswerFormProps) {
+export function AnswerForm({
+  questionId,
+  isOpen,
+  onClose,
+  onSuccess,
+}: AnswerFormProps) {
   const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [boardType, setBoardType] = useState<"normal" | "code">("normal");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +75,9 @@ export function AnswerForm({ questionId, isOpen, onClose }: AnswerFormProps) {
         setSuccess(true);
         setContent("");
         setAuthorName("");
+        if (onSuccess) {
+          onSuccess();
+        }
         setTimeout(() => {
           setSuccess(false);
           onClose();
@@ -89,26 +99,54 @@ export function AnswerForm({ questionId, isOpen, onClose }: AnswerFormProps) {
       setAuthorName("");
       setError("");
       setSuccess(false);
+      setBoardType("normal");
       onClose();
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Code className="h-5 w-5" />
+      <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-6">
+          <DialogTitle className="flex items-center gap-3 text-2xl">
+            <Code className="h-6 w-6" />
             Responder Questão
           </DialogTitle>
         </DialogHeader>
 
         <Card className="border-0 shadow-none">
-          <CardHeader className="px-0 pb-4">
-            <CardDescription>
+          <CardHeader className="px-0 pb-6">
+            <CardDescription className="text-base leading-relaxed">
               Compartilhe sua solução para esta questão. Use código, explicações
               detalhadas ou qualquer abordagem que considere relevante.
             </CardDescription>
+
+            {/* Seletor de Tipo de Lousa */}
+            <div className="mt-4">
+              <Label className="text-sm font-medium mb-3 block">
+                Escolha o tipo de lousa:
+              </Label>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant={boardType === "normal" ? "default" : "outline"}
+                  onClick={() => setBoardType("normal")}
+                  className="flex items-center gap-2 px-4 py-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Lousa Normal
+                </Button>
+                <Button
+                  type="button"
+                  variant={boardType === "code" ? "default" : "outline"}
+                  onClick={() => setBoardType("code")}
+                  className="flex items-center gap-2 px-4 py-2"
+                >
+                  <Terminal className="h-4 w-4" />
+                  Lousa de Código
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="px-0">
             {success ? (
@@ -118,65 +156,109 @@ export function AnswerForm({ questionId, isOpen, onClose }: AnswerFormProps) {
                 </AlertDescription>
               </Alert>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-8">
                 {error && (
-                  <Alert variant="destructive">
+                  <Alert variant="destructive" className="mb-6">
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="authorName">Seu Nome</Label>
+                <div className="space-y-4">
+                  <Label htmlFor="authorName" className="text-base font-medium">
+                    Seu Nome
+                  </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                       id="authorName"
                       placeholder="Ex: Maria Silva"
                       value={authorName}
                       onChange={(e) => setAuthorName(e.target.value)}
                       disabled={loading}
-                      className="pl-10 bg-muted/50"
+                      className="pl-12 h-12 bg-muted/50 text-base"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="content">Sua Resposta</Label>
-                  <Textarea
-                    id="content"
-                    placeholder="Descreva sua solução aqui... Use ``` para blocos de código, explique sua abordagem e complexidade."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    rows={8}
-                    disabled={loading}
-                    className="bg-muted/50 resize-none font-mono text-sm"
-                  />
-                  <div className="text-xs text-muted-foreground text-right">
-                    {content.length}/2000 caracteres
-                  </div>
+                <div className="space-y-4">
+                  <Label htmlFor="content" className="text-base font-medium">
+                    Sua Resposta
+                    {boardType === "code" && " (Lousa de Código)"}
+                  </Label>
+
+                  {boardType === "normal" ? (
+                    <div className="relative">
+                      <Textarea
+                        id="content"
+                        placeholder="Descreva sua solução aqui... Use ``` para blocos de código, explique sua abordagem e complexidade."
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        rows={20}
+                        disabled={loading}
+                        className="bg-muted/50 resize-none text-base leading-relaxed p-6 min-h-[500px]"
+                      />
+                      <div className="absolute bottom-4 right-4 text-sm text-muted-foreground bg-background/80 px-2 py-1 rounded">
+                        {content.length}/5000 caracteres
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="bg-black border border-gray-700 rounded-lg overflow-hidden">
+                        <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center gap-2">
+                          <div className="flex gap-2">
+                            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          </div>
+                          <span className="text-gray-300 text-sm ml-2">
+                            Terminal
+                          </span>
+                        </div>
+                        <Textarea
+                          id="content"
+                          placeholder="// Digite seu código aqui...&#10;// Use comentários para explicar sua abordagem&#10;&#10;function minhaSolucao() {&#10;  // Sua implementação aqui&#10;}"
+                          value={content}
+                          onChange={(e) => setContent(e.target.value)}
+                          rows={25}
+                          disabled={loading}
+                          className="bg-black text-green-400 font-mono text-sm resize-none p-6 min-h-[600px] border-0 focus-visible:ring-0"
+                          style={{
+                            fontFamily:
+                              'Monaco, Menlo, "Ubuntu Mono", monospace',
+                            lineHeight: "1.6",
+                          }}
+                        />
+                      </div>
+                      <div className="absolute bottom-6 right-6 text-sm text-gray-400 bg-black/80 px-3 py-1 rounded">
+                        {content.length}/5000 caracteres
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex gap-3 justify-end pt-2">
+                <div className="flex gap-4 justify-end pt-6 border-t">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleClose}
                     disabled={loading}
+                    className="px-8 py-3 text-base"
                   >
                     Cancelar
                   </Button>
                   <Button
                     type="submit"
                     disabled={loading || !authorName.trim() || !content.trim()}
+                    className="px-8 py-3 text-base"
                   >
                     {loading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         Enviando...
                       </>
                     ) : (
                       <>
-                        <Send className="mr-2 h-4 w-4" />
+                        <Send className="mr-2 h-5 w-5" />
                         Enviar Resposta
                       </>
                     )}

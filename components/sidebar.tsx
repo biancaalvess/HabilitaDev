@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { Home, BookOpen, Users, Settings, HelpCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { CATEGORY_LABELS } from "@/lib/types"
+import { Home, BookOpen, Users, Settings, HelpCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { CATEGORY_LABELS } from "@/lib/types";
 
 interface SidebarProps {
-  selectedCategory?: string
-  onCategorySelect: (category: string | undefined) => void
+  selectedCategory?: string;
+  onCategorySelect: (category: string | undefined) => void;
 }
 
 export function Sidebar({ selectedCategory, onCategorySelect }: SidebarProps) {
@@ -15,16 +15,20 @@ export function Sidebar({ selectedCategory, onCategorySelect }: SidebarProps) {
     { icon: Home, label: "Início", id: "home" },
     { icon: BookOpen, label: "Todas as Questões", id: "all" },
     { icon: Users, label: "Contribuir", id: "contribute" },
-  ]
+  ];
 
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border h-screen sticky top-0 flex flex-col">
       <div className="p-6">
         <div className="flex items-center gap-2 mb-6">
           <div className="h-8 w-8 rounded bg-sidebar-primary flex items-center justify-center">
-            <span className="text-sidebar-primary-foreground font-bold text-sm">TI</span>
+            <span className="text-sidebar-primary-foreground font-bold text-sm">
+              TI
+            </span>
           </div>
-          <h1 className="text-lg font-semibold text-sidebar-foreground">TechInterview</h1>
+          <h1 className="text-lg font-semibold text-sidebar-foreground">
+            TechInterview
+          </h1>
         </div>
 
         <nav className="space-y-1">
@@ -44,7 +48,9 @@ export function Sidebar({ selectedCategory, onCategorySelect }: SidebarProps) {
       <Separator className="bg-sidebar-border" />
 
       <div className="p-6 flex-1">
-        <h3 className="text-sm font-medium text-sidebar-foreground mb-3">Categorias</h3>
+        <h3 className="text-sm font-medium text-sidebar-foreground mb-3">
+          Categorias
+        </h3>
         <nav className="space-y-1">
           <Button
             variant="ghost"
@@ -91,5 +97,5 @@ export function Sidebar({ selectedCategory, onCategorySelect }: SidebarProps) {
         </Button>
       </div>
     </aside>
-  )
+  );
 }

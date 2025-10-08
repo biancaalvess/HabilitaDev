@@ -7,7 +7,6 @@ import { TechParticles } from "@/components/ui/tech-particles";
 import { Footer } from "@/components/footer";
 import {
   ChevronDown,
-  Code,
   Database,
   Cpu,
   Network,
@@ -15,6 +14,7 @@ import {
   Users,
   Heart,
 } from "lucide-react";
+import Image from "next/image";
 
 interface HeroSectionProps {
   onStartTraining: () => void;
@@ -121,7 +121,13 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           <Database className="h-8 w-8 text-white" />
           <Cpu className="h-8 w-8 text-white" />
           <Network className="h-8 w-8 text-white" />
-          <Code className="h-8 w-8 text-white" />
+          <Image
+            src="/icon.png"
+            alt="HabilitaDev"
+            width={32}
+            height={32}
+            className="rounded"
+          />
         </div>
 
         {/* Scroll Indicator */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Code } from "lucide-react";
+import Image from "next/image";
 
 export function QuestoesHeader() {
   return (
@@ -8,9 +8,13 @@ export function QuestoesHeader() {
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded bg-blue-500 flex items-center justify-center">
-            <Code className="h-5 w-5 text-white" />
-          </div>
+          <Image
+            src="/icon.png"
+            alt="HabilitaDev"
+            width={32}
+            height={32}
+            className="rounded"
+          />
           <span className="text-xl font-bold text-white">HabilitaDev</span>
         </div>
 

@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send, Code } from "lucide-react";
+import { Send } from "lucide-react";
+import Image from "next/image";
 
 const CATEGORIAS = [
   { id: "algorithms", name: "Algoritmos" },
@@ -148,9 +149,13 @@ export default function ContribuirPage() {
               {/* Header */}
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="h-8 w-8 rounded bg-blue-500 flex items-center justify-center">
-                    <Code className="h-5 w-5 text-white" />
-                  </div>
+                  <Image
+                    src="/icon.png"
+                    alt="HabilitaDev"
+                    width={32}
+                    height={32}
+                    className="rounded"
+                  />
                   <h1 className="text-3xl font-bold text-white">
                     Contribuir com Questão
                   </h1>

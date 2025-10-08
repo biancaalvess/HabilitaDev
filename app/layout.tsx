@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   description:
     "Treine para entrevistas técnicas com questões reais de empresas como Itaú, Meta, X (Twitter) e outras.",
   generator: "v0.app",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
