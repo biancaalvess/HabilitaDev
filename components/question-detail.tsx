@@ -145,18 +145,24 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
           />
         )}
 
-        {question.tags && question.tags.length > 0 && (
+        {Array.isArray(question.tags) && question.tags.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Tags</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {question.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {tag}
+                {Array.isArray(question.tags) && question.tags.length > 0 ? (
+                  question.tags.map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    Sem tags
                   </Badge>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
