@@ -1,5 +1,5 @@
-// ✅ CORREÇÃO: Usar proxy do Next.js para resolver CORS
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// ✅ SOLUÇÃO ALTERNATIVA: Usar rewrites do Next.js (mais eficiente)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/backend';
 
 export interface ApiResponse<T> {
   data: T;
@@ -92,61 +92,61 @@ class ApiService {
     }
   }
 
-  // Questions endpoints - ✅ Usando proxy Next.js (resolve CORS)
+  // Questions endpoints - ✅ Usando rewrites (proxy automático, mais eficiente)
   async getQuestions(): Promise<ApiResponse<Question[]>> {
-    return this.request<Question[]>('/api/proxy/questions');
+    return this.request<Question[]>('/questions/');
   }
 
   async getQuestion(id: number): Promise<ApiResponse<Question>> {
-    return this.request<Question>(`/api/proxy/questions/${id}`);
+    return this.request<Question>(`/questions/${id}`);
   }
 
   async createQuestion(question: Omit<Question, 'id' | 'created_at'>): Promise<ApiResponse<Question>> {
-    return this.request<Question>('/api/proxy/questions', {
+    return this.request<Question>('/questions/', {
       method: 'POST',
       body: JSON.stringify(question),
     });
   }
 
-  // Answers endpoints - ✅ Usando proxy Next.js (resolve CORS)
+  // Answers endpoints - ✅ Usando rewrites (proxy automático)
   async getAnswers(questionId: number): Promise<ApiResponse<Answer[]>> {
-    return this.request<Answer[]>(`/api/proxy/questions/${questionId}/answers`);
+    return this.request<Answer[]>(`/questions/${questionId}/answers`);
   }
 
   async createAnswer(questionId: number, answer: Omit<Answer, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Answer>> {
-    return this.request<Answer>(`/api/proxy/questions/${questionId}/answers`, {
+    return this.request<Answer>(`/questions/${questionId}/answers`, {
       method: 'POST',
       body: JSON.stringify(answer),
     });
   }
 
-  // Comments endpoints - ✅ Usando proxy Next.js (resolve CORS)
+  // Comments endpoints - ✅ Usando rewrites (proxy automático)
   async getComments(questionId: number): Promise<ApiResponse<Comment[]>> {
-    return this.request<Comment[]>(`/api/proxy/questions/${questionId}/comments`);
+    return this.request<Comment[]>(`/questions/${questionId}/comments`);
   }
 
   async createComment(questionId: number, comment: Omit<Comment, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Comment>> {
-    return this.request<Comment>(`/api/proxy/questions/${questionId}/comments`, {
+    return this.request<Comment>(`/questions/${questionId}/comments`, {
       method: 'POST',
       body: JSON.stringify(comment),
     });
   }
 
-  // Feedback endpoints - ✅ Usando proxy Next.js (resolve CORS)
+  // Feedback endpoints - ✅ Usando rewrites (proxy automático)
   async getFeedback(questionId: number): Promise<ApiResponse<Feedback[]>> {
-    return this.request<Feedback[]>(`/api/proxy/questions/${questionId}/feedback`);
+    return this.request<Feedback[]>(`/questions/${questionId}/feedback`);
   }
 
   async createFeedback(questionId: number, feedback: Omit<Feedback, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Feedback>> {
-    return this.request<Feedback>(`/api/proxy/questions/${questionId}/feedback`, {
+    return this.request<Feedback>(`/questions/${questionId}/feedback`, {
       method: 'POST',
       body: JSON.stringify(feedback),
     });
   }
 
-  // Health check - ✅ Proxy do backend
+  // Health check
   async healthCheck(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
-    return this.request<{ status: string; timestamp: string }>('/api/proxy/health');
+    return this.request<{ status: string; timestamp: string }>('/health');
   }
 }
 
