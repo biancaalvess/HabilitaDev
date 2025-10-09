@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://habilitadev-backend.onrender.com';
 
 export async function GET(
   request: NextRequest,
@@ -12,29 +12,26 @@ export async function GET(
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
     });
 
     if (!response.ok) {
-      // Se o backend estiver indisponível, retornar comentários mockados
-      if (response.status === 500 || response.status === 502 || response.status === 503) {
-        console.log('Backend indisponível, retornando comentários mockados');
-        const mockComments = getMockComments(params.id);
-        
-        return NextResponse.json({
-          success: true,
-          data: mockComments,
-          message: 'Dados de demonstração - Backend temporariamente indisponível'
-        }, {
-          status: 200,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          },
-        });
-      }
+      const errorText = await response.text();
+      console.error(`[COMMENTS GET] Backend error: ${errorText}`);
       
-      throw new Error(`Backend responded with status: ${response.status}`);
+      return NextResponse.json({
+        success: false,
+        error: 'Falha ao buscar comentários',
+        message: `Backend respondeu com status: ${response.status}`,
+        details: errorText
+      }, {
+        status: response.status,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      });
     }
 
     const data = await response.json();
@@ -48,18 +45,15 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Proxy error:', error);
-    console.log('Erro na conexão com backend, retornando comentários mockados');
-    
-    // Em caso de erro de conexão, retornar comentários mockados
-    const mockComments = getMockComments(params.id);
+    console.error('[COMMENTS GET] Proxy error:', error);
     
     return NextResponse.json({
-      success: true,
-      data: mockComments,
-      message: 'Dados de demonstração - Backend temporariamente indisponível'
+      success: false,
+      error: 'Falha na conexão com o backend',
+      message: error instanceof Error ? error.message : 'Erro desconhecido',
+      details: 'Verifique se o backend está online e acessível'
     }, {
-      status: 200,
+      status: 503,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -69,29 +63,7 @@ export async function GET(
   }
 }
 
-// Função para gerar comentários mockados
-function getMockComments(questionId: string) {
-  const now = new Date().toISOString();
-  
-  return [
-    {
-      id: 1,
-      question_id: parseInt(questionId),
-      author_name: "Ana Costa",
-      comment_type: "suggestion",
-      content: "Sugestão: A questão poderia incluir mais exemplos práticos para facilitar o entendimento.",
-      created_at: new Date(Date.now() - 86400000).toISOString(), // 1 dia atrás
-    },
-    {
-      id: 2,
-      question_id: parseInt(questionId),
-      author_name: "Carlos Mendes",
-      comment_type: "correction",
-      content: "Correção: Na linha 15, o método deveria ser 'toLowerCase()' em vez de 'toUpper()'.",
-      created_at: new Date(Date.now() - 172800000).toISOString(), // 2 dias atrás
-    }
-  ];
-}
+// Removido: Função getMockComments() - 100% dados reais do backend
 
 export async function POST(
   request: NextRequest,
@@ -106,29 +78,26 @@ export async function POST(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
     });
 
     if (!response.ok) {
-      // Se o backend estiver indisponível, simular criação de comentário
-      if (response.status === 500 || response.status === 502 || response.status === 503) {
-        console.log('Backend indisponível, simulando criação de comentário');
-        const mockComment = createMockComment(body, params.id);
-        
-        return NextResponse.json({
-          success: true,
-          data: mockComment,
-          message: 'Comentário criado com sucesso (modo demonstração)'
-        }, {
-          status: 200,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          },
-        });
-      }
+      const errorText = await response.text();
+      console.error(`[COMMENTS POST] Backend error: ${errorText}`);
       
-      throw new Error(`Backend responded with status: ${response.status}`);
+      return NextResponse.json({
+        success: false,
+        error: 'Falha ao criar comentário',
+        message: `Backend respondeu com status: ${response.status}`,
+        details: errorText
+      }, {
+        status: response.status,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      });
     }
 
     const data = await response.json();
@@ -142,19 +111,15 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('Proxy error:', error);
-    console.log('Erro na conexão com backend, simulando criação de comentário');
-    
-    // Em caso de erro de conexão, simular criação de comentário
-    const body = await request.json();
-    const mockComment = createMockComment(body, params.id);
+    console.error('[COMMENTS POST] Proxy error:', error);
     
     return NextResponse.json({
-      success: true,
-      data: mockComment,
-      message: 'Comentário criado com sucesso (modo demonstração)'
+      success: false,
+      error: 'Falha na conexão com o backend',
+      message: error instanceof Error ? error.message : 'Erro desconhecido',
+      details: 'Verifique se o backend está online e acessível'
     }, {
-      status: 200,
+      status: 503,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -164,19 +129,7 @@ export async function POST(
   }
 }
 
-// Função para criar comentário mockado
-function createMockComment(body: any, questionId: string) {
-  const now = new Date().toISOString();
-  
-  return {
-    id: Math.floor(Math.random() * 1000) + 1,
-    question_id: parseInt(questionId),
-    author_name: body.author_name || 'Usuário',
-    comment_type: body.comment_type || 'suggestion',
-    content: body.content || 'Comentário de exemplo',
-    created_at: now
-  };
-}
+// Removido: Função createMockComment() - 100% dados reais do backend
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
