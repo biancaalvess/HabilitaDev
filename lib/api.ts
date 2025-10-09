@@ -85,6 +85,18 @@ class ApiService {
 
       const data = await response.json();
       console.log('✅ API Response:', data); // Debug para ver resposta
+      
+      // ✅ CORREÇÃO: Backend retorna array direto, mas frontend espera ApiResponse<T>
+      if (Array.isArray(data)) {
+        // Se é um array direto (como questions), envolver em ApiResponse
+        return {
+          success: true,
+          data: data,
+          message: 'Success'
+        };
+      }
+      
+      // Se já é um objeto com success/data, retornar como está
       return data;
     } catch (error) {
       console.error('❌ API request failed:', error);
