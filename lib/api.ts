@@ -126,9 +126,18 @@ class ApiService {
   }
 
   async createAnswer(questionId: number, answer: Omit<Answer, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Answer>> {
+    // ✅ CORREÇÃO: Garantir que todos os campos obrigatórios estão presentes
+    const answerData = {
+      author_name: answer.author_name || '',
+      content: answer.content || '',
+      is_solution: answer.is_solution || false,
+    };
+    
+    console.log('🔍 Enviando resposta:', answerData); // Debug
+    
     return this.request<Answer>(`/questions/${questionId}/answers`, {
       method: 'POST',
-      body: JSON.stringify(answer),
+      body: JSON.stringify(answerData),
     });
   }
 

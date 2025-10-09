@@ -56,11 +56,25 @@ export function InlineAnswerForm({
     try {
       const { apiService } = await import("@/lib/api");
 
-      const result = await apiService.createAnswer(questionId, {
+      // ✅ CORREÇÃO: Validar dados antes de enviar
+      const answerData = {
         author_name: authorName.trim(),
         content: content.trim(),
         is_solution: false,
-      });
+      };
+      
+      console.log('🔍 Dados da resposta:', answerData); // Debug
+      
+      // Verificar se os dados não estão vazios
+      if (!answerData.content || answerData.content.length === 0) {
+        throw new Error("Resposta não pode estar vazia");
+      }
+      
+      if (!answerData.author_name || answerData.author_name.length === 0) {
+        throw new Error("Nome do autor não pode estar vazio");
+      }
+
+      const result = await apiService.createAnswer(questionId, answerData);
 
       if (result.success) {
         setUserAnswer(content.trim());
