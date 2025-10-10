@@ -1,5 +1,5 @@
-// ✅ SOLUÇÃO ALTERNATIVA: Usar rewrites do Next.js (mais eficiente)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/backend';
+// ✅ SOLUÇÃO DEFINITIVA: Chamar backend direto (rewrites não funcionaram)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export interface ApiResponse<T> {
   data: T;
