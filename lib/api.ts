@@ -1,5 +1,5 @@
-// ✅ SOLUÇÃO DEFINITIVA: Chamar backend direto (rewrites não funcionaram)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+// ✅ SOLUÇÃO CORRETA: Frontend chama seu próprio proxy em /api/v1
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 export interface ApiResponse<T> {
   data: T;

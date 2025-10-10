@@ -13,8 +13,15 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
-  // REMOVIDO: Rewrites não funcionaram corretamente
-  // Frontend agora chama backend direto em http://localhost:8000/api/v1
+  // ✅ SOLUÇÃO CORRETA: Rewrite /api/v1/* para /api/proxy/*
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: '/api/proxy/:path*',
+      },
+    ];
+  },
   // Configurações para melhorar estabilidade
   poweredByHeader: false,
   compress: true,
