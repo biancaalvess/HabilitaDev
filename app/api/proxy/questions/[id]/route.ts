@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://habilitadev-backend.onrender.com';
+// ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
+const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
 
 export async function GET(
   request: NextRequest,

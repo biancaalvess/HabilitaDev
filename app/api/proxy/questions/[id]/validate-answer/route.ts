@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
+const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
 const AI_VALIDATION_URL = process.env.AI_VALIDATION_URL || 'http://localhost:5000'; // URL da sua IA
 
 export async function POST(
