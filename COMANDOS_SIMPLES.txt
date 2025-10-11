@@ -1,0 +1,71 @@
+===========================================
+   COMANDOS PARA COPIAR (SEM AS ```)
+===========================================
+
+⚠️ IMPORTANTE: NÃO COPIE OS SÍMBOLOS ``` !!!
+
+===========================================
+   PASSO 1: BACKEND (Terminal 1)
+===========================================
+
+Abra um terminal PowerShell e cole APENAS estes comandos:
+
+cd D:\Desktop\PROJETOS\Desenvolvendo\HabilitaDev-backend
+.\venv\Scripts\activate
+pip install email-validator
+uvicorn app.main:app --reload --port 8000
+
+✅ Deve aparecer:
+INFO:     Uvicorn running on http://127.0.0.1:8000
+
+✅ Teste no navegador:
+http://localhost:8000/docs
+
+===========================================
+   PASSO 2: FRONTEND (Terminal 2)
+===========================================
+
+Abra OUTRO terminal PowerShell e cole APENAS:
+
+cd D:\Desktop\PROJETOS\Desenvolvendo\HabilitaDev
+npm run dev
+
+✅ Deve aparecer:
+> next dev --port 3001
+
+✅ Acesse:
+http://localhost:3001
+
+===========================================
+   RESULTADO ESPERADO
+===========================================
+
+✅ Backend: http://localhost:8000 (documentação API)
+✅ Frontend: http://localhost:3001 (aplicação)
+
+===========================================
+   ERROS COMUNS
+===========================================
+
+❌ "``` não é reconhecido"
+   Solução: NÃO copie os ``` do markdown!
+
+❌ "npm run dev" no backend
+   Solução: npm é só para FRONTEND
+
+❌ "Could not import module app.main"
+   Solução: Execute pip install email-validator
+
+❌ "Port 8000 already in use"
+   Solução: Mate processo na porta 8000:
+   netstat -ano | findstr :8000
+   taskkill /PID [número] /F
+
+===========================================
+   PARAR SERVIDORES
+===========================================
+
+Pressione CTRL+C em cada terminal
+
+===========================================
+
