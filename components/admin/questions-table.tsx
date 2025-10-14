@@ -22,11 +22,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // import { mockQuestions } from "@/lib/mock-data" // Removido - usando dados da API
-import { DIFFICULTY_COLORS, CATEGORY_LABELS } from "@/lib/types";
+import { DIFFICULTY_COLORS, CATEGORY_LABELS, Question } from "@/lib/types";
 
 export function QuestionsTable() {
   // Mock questions - em produção, implementar API real
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
 
   const handleApprove = (id: number) => {
     setQuestions((prev) =>
@@ -78,14 +78,14 @@ export function QuestionsTable() {
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary" className="text-xs">
-                    {CATEGORY_LABELS[question.category]}
+                    {CATEGORY_LABELS[question.category as keyof typeof CATEGORY_LABELS]}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge
                     variant="outline"
                     className={`${
-                      DIFFICULTY_COLORS[question.difficulty]
+                      DIFFICULTY_COLORS[question.difficulty as keyof typeof DIFFICULTY_COLORS]
                     } text-xs capitalize`}
                   >
                     {question.difficulty}
