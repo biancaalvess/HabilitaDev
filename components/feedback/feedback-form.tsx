@@ -69,7 +69,7 @@ export function FeedbackForm({
         feedback_type: feedbackType as any,
         content: content.trim(),
         status: "pending" as any,
-        user_id: user?.id || null, // Permite feedback anônimo
+        user_id: user?.id, // Permite feedback anônimo
       });
 
       if (result.success) {
