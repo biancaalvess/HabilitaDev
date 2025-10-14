@@ -56,8 +56,8 @@ const statusLabels = {
 
 export function FeedbackManagement() {
   // Mock feedbacks - em produção, implementar API real
-  const feedbacks: any[] = [];
-  const [localFeedbacks, setLocalFeedbacks] = useState(feedbacks);
+  const feedbacks: Feedback[] = [];
+  const [localFeedbacks, setLocalFeedbacks] = useState<Feedback[]>(feedbacks);
 
   const handleStatusChange = (id: number, newStatus: Feedback["status"]) => {
     setLocalFeedbacks((prev) =>
@@ -97,14 +97,14 @@ export function FeedbackManagement() {
           </TableHeader>
           <TableBody>
             {localFeedbacks.map((feedback) => {
-              const Icon = feedbackTypeIcons[feedback.feedback_type];
+              const Icon = feedbackTypeIcons[feedback.feedback_type as keyof typeof feedbackTypeIcons];
               return (
                 <TableRow key={feedback.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Icon
                         className={`h-4 w-4 ${
-                          feedbackTypeColors[feedback.feedback_type]
+                          feedbackTypeColors[feedback.feedback_type as keyof typeof feedbackTypeColors]
                         }`}
                       />
                       <span className="capitalize text-sm">
@@ -121,9 +121,9 @@ export function FeedbackManagement() {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={`${statusColors[feedback.status]} text-xs`}
+                      className={`${statusColors[feedback.status as keyof typeof statusColors]} text-xs`}
                     >
-                      {statusLabels[feedback.status]}
+                      {statusLabels[feedback.status as keyof typeof statusLabels]}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
