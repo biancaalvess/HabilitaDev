@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import type { Feedback } from "@/lib/types";
 // import { useFeedback } from "@/lib/feedback" // Removido - implementação simplificada
 
 interface FeedbackListProps {
@@ -43,7 +44,7 @@ const statusLabels = {
 };
 
 export function FeedbackList({ questionId }: FeedbackListProps) {
-  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -98,7 +99,7 @@ export function FeedbackList({ questionId }: FeedbackListProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {feedbacks.map((feedback, index) => {
-          const Icon = feedbackTypeIcons[feedback.feedback_type];
+          const Icon = feedbackTypeIcons[feedback.feedback_type as keyof typeof feedbackTypeIcons];
           return (
             <div key={feedback.id}>
               <div className="space-y-3">
@@ -106,7 +107,7 @@ export function FeedbackList({ questionId }: FeedbackListProps) {
                   <div className="flex items-center gap-2">
                     <Icon
                       className={`h-4 w-4 ${
-                        feedbackTypeColors[feedback.feedback_type]
+                        feedbackTypeColors[feedback.feedback_type as keyof typeof feedbackTypeColors]
                       }`}
                     />
                     <span className="text-sm font-medium capitalize">
@@ -114,9 +115,9 @@ export function FeedbackList({ questionId }: FeedbackListProps) {
                     </span>
                     <Badge
                       variant="outline"
-                      className={`${statusColors[feedback.status]} text-xs`}
+                      className={`${statusColors[feedback.status as keyof typeof statusColors]} text-xs`}
                     >
-                      {statusLabels[feedback.status]}
+                      {statusLabels[feedback.status as keyof typeof statusLabels]}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
