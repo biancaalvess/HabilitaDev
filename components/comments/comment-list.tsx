@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import type { Comment } from "@/lib/types";
 // import { useComments } from "@/lib/comments" // Removido - implementação simplificada
 
 interface CommentListProps {
@@ -33,7 +34,7 @@ const commentTypeLabels = {
 };
 
 export function CommentList({ questionId }: CommentListProps) {
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export function CommentList({ questionId }: CommentListProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {comments.map((comment, index) => {
-          const Icon = commentTypeIcons[comment.comment_type];
+          const Icon = commentTypeIcons[comment.comment_type as keyof typeof commentTypeIcons];
           return (
             <div key={comment.id}>
               <div className="space-y-3">
@@ -96,11 +97,11 @@ export function CommentList({ questionId }: CommentListProps) {
                   <div className="flex items-center gap-2">
                     <Icon
                       className={`h-4 w-4 ${
-                        commentTypeColors[comment.comment_type]
+                        commentTypeColors[comment.comment_type as keyof typeof commentTypeColors]
                       }`}
                     />
                     <span className="text-sm font-medium">
-                      {commentTypeLabels[comment.comment_type]}
+                      {commentTypeLabels[comment.comment_type as keyof typeof commentTypeLabels]}
                     </span>
                     <Badge variant="outline" className="text-xs">
                       {comment.comment_type === "correction"
