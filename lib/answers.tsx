@@ -17,8 +17,15 @@ interface AnswersContextType {
 const AnswersContext = createContext<AnswersContextType | undefined>(undefined);
 
 export function AnswersProvider({ children }: { children: ReactNode }) {
+  const value: AnswersContextType = {
+    answers: [],
+    addAnswer: async () => false,
+    getAnswersForQuestion: () => [],
+    loading: false,
+  };
+  
   return (
-    <AnswersContext.Provider value={{}}>
+    <AnswersContext.Provider value={value}>
       {children}
     </AnswersContext.Provider>
   );
