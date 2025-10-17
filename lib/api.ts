@@ -91,7 +91,7 @@ class ApiService {
         // Se é um array direto (como questions), envolver em ApiResponse
         return {
           success: true,
-          data: data,
+          data: data as T,
           message: 'Success'
         };
       }
