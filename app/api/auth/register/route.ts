@@ -1,30 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { databaseService } from '@/lib/database';
+import { config, validateConfig } from '@/lib/config';
 
-// Simulando um banco de dados em memória (em produção, use um banco real)
-let users: Array<{
-  id: number;
-  username: string;
-  email: string;
-  password: string;
-  role: 'user' | 'admin';
-  created_at: string;
-}> = [
-  {
-    id: 1,
-    username: 'admin',
-    email: 'admin@habilitadev.com',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: password
-    role: 'admin',
-    created_at: '2024-01-01T00:00:00Z',
-  }
-];
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// Validar configurações na inicialização
+validateConfig();
 
 export async function POST(request: NextRequest) {
   try {
+    // Conectar ao banco de dados
+    await databaseService.connect();
+    
     const { username, email, password } = await request.json();
 
     // Validações básicas
@@ -52,28 +39,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se usuário já existe
-    const existingUser = users.find(u => u.email === email || u.username === username);
+    const existingUser = await databaseService.getUserByEmail(email);
     if (existingUser) {
       return NextResponse.json(
-        { success: false, error: 'Usuário já existe com este email ou nome de usuário' },
+        { success: false, error: 'Usuário já existe com este email' },
         { status: 409 }
       );
     }
 
     // Hash da senha
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, config.auth.bcryptRounds);
 
     // Criar novo usuário
-    const newUser = {
-      id: users.length + 1,
+    const newUser = await databaseService.createUser({
       username,
       email,
       password: hashedPassword,
-      role: 'user' as const,
-      created_at: new Date().toISOString(),
-    };
-
-    users.push(newUser);
+      role: 'user',
+    });
 
     // Gerar token JWT
     const token = jwt.sign(
@@ -82,8 +65,8 @@ export async function POST(request: NextRequest) {
         email: newUser.email, 
         role: newUser.role 
       },
-      JWT_SECRET,
-      { expiresIn: '7d' }
+      config.auth.jwtSecret,
+      { expiresIn: config.auth.jwtExpiresIn }
     );
 
     // Retornar dados do usuário (sem senha)
