@@ -1,5 +1,9 @@
 // ✅ SOLUÇÃO: Usar proxy Next.js (resolve CORS e funciona sem backend local)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+import { cacheService } from './cache';
+import { mockQuestions, mockAnswers, mockComments, mockFeedback, simulateNetworkDelay } from './mock-data';
+import { config } from './config';
+
+const API_BASE_URL = config.api.baseUrl;
 
 export interface ApiResponse<T> {
   data: T;
@@ -60,12 +64,24 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
+    const cacheKey = `api_${endpoint}_${JSON.stringify(options)}`;
+    
+    // Verificar cache primeiro
+    const cachedData = cacheService.get<T>(cacheKey);
+    if (cachedData) {
+      console.log('📦 Cache hit for:', endpoint);
+      return {
+        success: true,
+        data: cachedData,
+        message: 'Success (cached)'
+      };
+    }
     
     const defaultHeaders = {
       'Content-Type': 'application/json',
     };
 
-    const config: RequestInit = {
+    const requestConfig: RequestInit = {
       ...options,
       headers: {
         ...defaultHeaders,
@@ -74,8 +90,11 @@ class ApiService {
     };
 
     try {
-      console.log('🔍 Fetching from:', url); // Debug para ver URL exata
-      const response = await fetch(url, config);
+      console.log('🔍 Fetching from:', url);
+      const response = await fetch(url, {
+        ...requestConfig,
+        signal: AbortSignal.timeout(config.api.timeout),
+      });
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -84,24 +103,52 @@ class ApiService {
       }
 
       const data = await response.json();
-      console.log('✅ API Response:', data); // Debug para ver resposta
+      console.log('✅ API Response:', data);
       
-      // ✅ CORREÇÃO: Backend retorna array direto, mas frontend espera ApiResponse<T>
+      // Processar resposta
+      let processedData: T;
       if (Array.isArray(data)) {
-        // Se é um array direto (como questions), envolver em ApiResponse
+        processedData = data as T;
+      } else if (data.success && data.data) {
+        processedData = data.data;
+      } else {
+        processedData = data;
+      }
+      
+      // Armazenar no cache
+      cacheService.set(cacheKey, processedData, 5 * 60 * 1000); // 5 minutos
+      
+      return {
+        success: true,
+        data: processedData,
+        message: 'Success'
+      };
+    } catch (error) {
+      console.error('❌ API request failed:', error);
+      
+      // Tentar usar dados mock como fallback
+      const fallbackData = this.getFallbackData<T>(endpoint);
+      if (fallbackData) {
+        console.log('🔄 Using fallback data for:', endpoint);
         return {
           success: true,
-          data: data as T,
-          message: 'Success'
+          data: fallbackData,
+          message: 'Success (offline mode)'
         };
       }
       
-      // Se já é um objeto com success/data, retornar como está
-      return data;
-    } catch (error) {
-      console.error('❌ API request failed:', error);
       throw error;
     }
+  }
+
+  private getFallbackData<T>(endpoint: string): T | null {
+    // Mapear endpoints para dados mock
+    if (endpoint === '/questions/') {
+      return mockQuestions as T;
+    }
+    
+    // Para outras rotas, retornar null (sem fallback)
+    return null;
   }
 
   // Questions endpoints - ✅ Usando rewrites (proxy automático, mais eficiente)

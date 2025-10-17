@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { databaseService } from '@/lib/database';
+import { config } from '@/lib/config';
+import { mockQuestions } from '@/lib/mock-data';
 
 // ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
-const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
+const BACKEND_URL = config.api.backendUrl;
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
+      signal: AbortSignal.timeout(config.api.timeout),
     });
 
     console.log('Backend response status:', response.status);
@@ -26,13 +29,30 @@ export async function GET(request: NextRequest) {
       const errorText = await response.text();
       console.error('Backend error response:', errorText);
       
-      return NextResponse.json({
-        success: false,
-        error: 'Backend indisponível',
-        message: `Backend respondeu com status: ${response.status}`,
-        details: errorText
-      }, {
-        status: response.status,
+      // Tentar usar banco local como fallback
+      try {
+        await databaseService.connect();
+        const localQuestions = await databaseService.getQuestions();
+        
+        if (localQuestions && localQuestions.length > 0) {
+          console.log('🔄 Using local database as fallback');
+          return NextResponse.json(localQuestions, {
+            status: 200,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          });
+        }
+      } catch (dbError) {
+        console.error('Local database fallback failed:', dbError);
+      }
+      
+      // Se banco local falhar, usar dados mock
+      console.log('🔄 Using mock data as fallback');
+      return NextResponse.json(mockQuestions, {
+        status: 200,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -55,13 +75,30 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Proxy error:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: 'Falha na conexão com o backend',
-      message: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: 'Verifique se o backend está online e acessível'
-    }, {
-      status: 503,
+    // Tentar usar banco local como fallback
+    try {
+      await databaseService.connect();
+      const localQuestions = await databaseService.getQuestions();
+      
+      if (localQuestions && localQuestions.length > 0) {
+        console.log('🔄 Using local database as fallback');
+        return NextResponse.json(localQuestions, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        });
+      }
+    } catch (dbError) {
+      console.error('Local database fallback failed:', dbError);
+    }
+    
+    // Se banco local falhar, usar dados mock
+    console.log('🔄 Using mock data as fallback');
+    return NextResponse.json(mockQuestions, {
+      status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
