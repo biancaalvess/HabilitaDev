@@ -1,4 +1,4 @@
-import { config } from './config';
+import { config } from './config-simple';
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
@@ -13,11 +13,11 @@ export interface LogEntry {
 
 class Logger {
   private logLevel: LogLevel;
-  private format: 'json' | 'text';
+  private format: 'json' | 'pretty';
 
   constructor() {
-    this.logLevel = config.log.level;
-    this.format = config.log.format;
+    this.logLevel = config.log.level as LogLevel;
+    this.format = config.log.format as 'json' | 'pretty';
   }
 
   private shouldLog(level: LogLevel): boolean {
@@ -78,7 +78,7 @@ class Logger {
     }
 
     // Em produção, enviar para serviço de monitoramento
-    if (config.development.nodeEnv === 'production' && config.monitoring.enableErrorReporting) {
+    if (config.development.nodeEnv === 'production' && config.monitoring.enabled) {
       this.sendToMonitoring(entry);
     }
   }

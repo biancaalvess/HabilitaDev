@@ -113,7 +113,7 @@ export const AccessibleDotsLoading = forwardRef<HTMLDivElement, AccessibleLoadin
       md: 'w-2 h-2',
       lg: 'w-3 h-3',
       xl: 'w-4 h-4',
-    }[size];
+    }[size || 'md'];
 
     return (
       <div

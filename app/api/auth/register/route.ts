@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { databaseService } from '@/lib/database';
-import { config, validateConfig } from '@/lib/config';
+import { databaseService } from '@/lib/database-simple';
+import { config, validateConfig } from '@/lib/config-simple';
+import { generateJWT } from '@/lib/jwt-helper';
 import { 
   createSuccessResponse, 
   handleApiError, 
@@ -52,14 +52,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Gerar token JWT
-    const token = jwt.sign(
+    const token = generateJWT(
       { 
         userId: newUser.id, 
         email: newUser.email, 
         role: newUser.role 
       },
       config.auth.jwtSecret,
-      { expiresIn: config.auth.jwtExpiresIn }
+      config.auth.jwtExpiresIn
     );
 
     // Retornar dados do usuário (sem senha)
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
       'Usuário criado com sucesso',
       201,
       {
+        timestamp: new Date().toISOString(),
         requestId: crypto.randomUUID(),
       }
     );

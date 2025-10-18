@@ -1,8 +1,8 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { logger } from './logger';
-import { createError, ERROR_CODES } from './error-handler';
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { logger } from "./logger";
+import { createError, ERROR_CODES } from "./error-handler";
 
 interface Props {
   children: ReactNode;
@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
     });
 
     // Log do erro
-    logger.error('Error Boundary capturou um erro', 'ERROR_BOUNDARY', {
+    logger.error("Error Boundary capturou um erro", "ERROR_BOUNDARY", {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
@@ -86,16 +86,17 @@ export class ErrorBoundary extends Component<Props, State> {
                   />
                 </svg>
               </div>
-              
+
               <h2 className="text-xl font-semibold text-destructive mb-2">
                 Algo deu errado
               </h2>
-              
+
               <p className="text-muted-foreground mb-4">
-                Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver o problema.
+                Ocorreu um erro inesperado. Nossa equipe foi notificada e está
+                trabalhando para resolver o problema.
               </p>
-              
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+
+              {process.env.NODE_ENV === "development" && this.state.error && (
                 <details className="mb-4 text-left">
                   <summary className="cursor-pointer text-sm font-medium">
                     Detalhes do erro (desenvolvimento)
@@ -106,7 +107,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   </pre>
                 </details>
               )}
-              
+
               <div className="flex gap-2 justify-center">
                 <button
                   onClick={this.handleRetry}
@@ -115,7 +116,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   Tentar novamente
                 </button>
                 <button
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => (window.location.href = "/")}
                   className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
                 >
                   Voltar ao início
@@ -141,7 +142,9 @@ export function useErrorHandler() {
 
   const captureError = React.useCallback((error: Error) => {
     setError(error);
-    logger.error('Erro capturado pelo hook', 'ERROR_HANDLER', { error: error.message });
+    logger.error("Erro capturado pelo hook", "ERROR_HANDLER", {
+      error: error.message,
+    });
   }, []);
 
   React.useEffect(() => {
@@ -154,12 +157,12 @@ export function useErrorHandler() {
 }
 
 // Componente de fallback personalizado
-export function ErrorFallback({ 
-  error, 
-  resetError 
-}: { 
-  error: Error; 
-  resetError: () => void; 
+export function ErrorFallback({
+  error,
+  resetError,
+}: {
+  error: Error;
+  resetError: () => void;
 }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -168,9 +171,7 @@ export function ErrorFallback({
           <h2 className="text-xl font-semibold text-destructive mb-2">
             Erro na aplicação
           </h2>
-          <p className="text-muted-foreground mb-4">
-            {error.message}
-          </p>
+          <p className="text-muted-foreground mb-4">{error.message}</p>
           <button
             onClick={resetError}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"

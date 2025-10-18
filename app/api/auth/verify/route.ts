@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { databaseService } from '@/lib/database';
-import { config, validateConfig } from '@/lib/config';
+import { databaseService } from '@/lib/database-simple';
+import { config, validateConfig } from '@/lib/config-simple';
+import { verifyJWT } from '@/lib/jwt-helper';
 import { createSuccessResponse, handleApiError } from '@/lib/api-response';
 import { createError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const token = authHeader.substring(7); // Remove 'Bearer '
 
     try {
-      const decoded = jwt.verify(token, config.auth.jwtSecret) as any;
+      const decoded = verifyJWT(token, config.auth.jwtSecret);
       
       // Buscar usuário atualizado no banco
       const user = await databaseService.getUserById(decoded.userId);
@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
         'Token verificado com sucesso',
         200,
         {
+          timestamp: new Date().toISOString(),
           requestId: crypto.randomUUID(),
         }
       );

@@ -77,7 +77,7 @@ const AccessibleModal = forwardRef<HTMLDivElement, AccessibleModalProps>(
           {...props}
         >
           {/* Header */}
-          {(title || onClose) && (
+          {title && (
             <div className="mb-4 flex items-center justify-between">
               {title && (
                 <h2 id={titleId} className="text-lg font-semibold">

@@ -1,7 +1,7 @@
 // ✅ SOLUÇÃO: Usar proxy Next.js (resolve CORS e funciona sem backend local)
 import { cacheService } from './cache';
 import { mockQuestions, mockAnswers, mockComments, mockFeedback, simulateNetworkDelay } from './mock-data';
-import { config } from './config';
+import { config } from './config-simple';
 
 const API_BASE_URL = config.api.baseUrl;
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databaseService } from '@/lib/database';
-import { config } from '@/lib/config';
+import { databaseService } from '@/lib/database-simple';
+import { config } from '@/lib/config-simple';
 import { mockQuestions } from '@/lib/mock-data';
 
 // ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
