@@ -1,8 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { databaseService } from '@/lib/database';
 import { config, validateConfig } from '@/lib/config';
+import { 
+  createSuccessResponse, 
+  handleApiError, 
+  validateRequired, 
+  validateEmail,
+  validatePassword,
+  sanitizeInput 
+} from '@/lib/api-response';
+import { createError, ERROR_CODES } from '@/lib/error-handler';
 
 // Validar configurações na inicialização
 validateConfig();
@@ -12,39 +21,23 @@ export async function POST(request: NextRequest) {
     // Conectar ao banco de dados
     await databaseService.connect();
     
-    const { username, email, password } = await request.json();
+    // Obter e sanitizar dados
+    const rawData = await request.json();
+    const { username, email, password } = sanitizeInput(rawData);
 
-    // Validações básicas
-    if (!username || !email || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Todos os campos são obrigatórios' },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { success: false, error: 'A senha deve ter pelo menos 6 caracteres' },
-        { status: 400 }
-      );
-    }
-
-    // Validar email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, error: 'Email inválido' },
-        { status: 400 }
-      );
-    }
+    // Validar dados obrigatórios
+    validateRequired({ username, email, password }, ['username', 'email', 'password']);
+    
+    // Validar formato do email
+    validateEmail(email);
+    
+    // Validar senha
+    validatePassword(password, 6);
 
     // Verificar se usuário já existe
     const existingUser = await databaseService.getUserByEmail(email);
     if (existingUser) {
-      return NextResponse.json(
-        { success: false, error: 'Usuário já existe com este email' },
-        { status: 409 }
-      );
+      throw createError('USER_ALREADY_EXISTS');
     }
 
     // Hash da senha
@@ -72,17 +65,19 @@ export async function POST(request: NextRequest) {
     // Retornar dados do usuário (sem senha)
     const { password: _, ...userWithoutPassword } = newUser;
 
-    return NextResponse.json({
-      success: true,
-      user: userWithoutPassword,
-      token,
-    });
+    return createSuccessResponse(
+      {
+        user: userWithoutPassword,
+        token,
+      },
+      'Usuário criado com sucesso',
+      201,
+      {
+        requestId: crypto.randomUUID(),
+      }
+    );
 
   } catch (error) {
-    console.error('Register error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'POST /api/auth/register');
   }
 }

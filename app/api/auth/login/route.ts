@@ -1,8 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { databaseService } from '@/lib/database';
 import { config, validateConfig } from '@/lib/config';
+import { 
+  createSuccessResponse, 
+  handleApiError, 
+  validateRequired, 
+  validateEmail,
+  sanitizeInput 
+} from '@/lib/api-response';
+import { createError, ERROR_CODES } from '@/lib/error-handler';
 
 // Validar configurações na inicialização
 validateConfig();
@@ -12,31 +20,26 @@ export async function POST(request: NextRequest) {
     // Conectar ao banco de dados
     await databaseService.connect();
     
-    const { email, password } = await request.json();
+    // Obter e sanitizar dados
+    const rawData = await request.json();
+    const { email, password } = sanitizeInput(rawData);
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Email e senha são obrigatórios' },
-        { status: 400 }
-      );
-    }
+    // Validar dados obrigatórios
+    validateRequired({ email, password }, ['email', 'password']);
+    
+    // Validar formato do email
+    validateEmail(email);
 
     // Buscar usuário no banco
     const user = await databaseService.getUserByEmail(email);
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Credenciais inválidas' },
-        { status: 401 }
-      );
+      throw createError('AUTH_INVALID_CREDENTIALS');
     }
 
     // Verificar senha
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return NextResponse.json(
-        { success: false, error: 'Credenciais inválidas' },
-        { status: 401 }
-      );
+      throw createError('AUTH_INVALID_CREDENTIALS');
     }
 
     // Gerar token JWT
@@ -53,17 +56,19 @@ export async function POST(request: NextRequest) {
     // Retornar dados do usuário (sem senha)
     const { password: _, ...userWithoutPassword } = user;
 
-    return NextResponse.json({
-      success: true,
-      user: userWithoutPassword,
-      token,
-    });
+    return createSuccessResponse(
+      {
+        user: userWithoutPassword,
+        token,
+      },
+      'Login realizado com sucesso',
+      200,
+      {
+        requestId: crypto.randomUUID(),
+      }
+    );
 
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'POST /api/auth/login');
   }
 }

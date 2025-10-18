@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { databaseService } from '@/lib/database';
 import { config, validateConfig } from '@/lib/config';
+import { createSuccessResponse, handleApiError } from '@/lib/api-response';
+import { createError, ERROR_CODES } from '@/lib/error-handler';
 
 // Validar configurações na inicialização
 validateConfig();
@@ -14,10 +16,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Token não fornecido' },
-        { status: 401 }
-      );
+      throw createError('AUTH_UNAUTHORIZED', 'Token não fornecido');
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer '
@@ -28,32 +27,29 @@ export async function POST(request: NextRequest) {
       // Buscar usuário atualizado no banco
       const user = await databaseService.getUserById(decoded.userId);
       if (!user) {
-        return NextResponse.json(
-          { success: false, error: 'Usuário não encontrado' },
-          { status: 404 }
-        );
+        throw createError('USER_NOT_FOUND');
       }
 
       // Retornar dados do usuário (sem senha)
       const { password: _, ...userWithoutPassword } = user;
 
-      return NextResponse.json({
-        success: true,
-        user: userWithoutPassword,
-      });
+      return createSuccessResponse(
+        { user: userWithoutPassword },
+        'Token verificado com sucesso',
+        200,
+        {
+          requestId: crypto.randomUUID(),
+        }
+      );
 
     } catch (jwtError) {
-      return NextResponse.json(
-        { success: false, error: 'Token inválido' },
-        { status: 401 }
-      );
+      if (jwtError instanceof Error && jwtError.name === 'TokenExpiredError') {
+        throw createError('AUTH_TOKEN_EXPIRED');
+      }
+      throw createError('AUTH_TOKEN_INVALID');
     }
 
   } catch (error) {
-    console.error('Verify token error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'POST /api/auth/verify');
   }
 }
