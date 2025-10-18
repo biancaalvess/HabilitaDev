@@ -1,9 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { databaseService } from '@/lib/database-simple';
+import { config } from '@/lib/config-simple';
 import { mockQuestions } from '@/lib/mock-data';
+
+const BACKEND_URL = config.api.backendUrl;
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('📦 Returning mock questions data');
+    const { searchParams } = new URL(request.url);
+    const queryString = searchParams.toString();
+    
+    // 1. Tentar buscar do backend externo
+    try {
+      const url = `${BACKEND_URL}/api/v1/questions${queryString ? `?${queryString}` : ''}`;
+      console.log('🌐 Attempting to fetch from backend:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
+        },
+        signal: AbortSignal.timeout(config.api.timeout),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully fetched from backend');
+        
+        return NextResponse.json(data, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        console.warn(`⚠️ Backend returned ${response.status}: ${response.statusText}`);
+      }
+    } catch (backendError) {
+      console.warn('⚠️ Backend unavailable:', backendError instanceof Error ? backendError.message : 'Unknown error');
+    }
+
+    // 2. Tentar buscar do banco local
+    try {
+      console.log('💾 Attempting to fetch from local database');
+      await databaseService.connect();
+      const localQuestions = await databaseService.getQuestions();
+      
+      if (localQuestions && localQuestions.length > 0) {
+        console.log('✅ Successfully fetched from local database');
+        
+        return NextResponse.json(localQuestions, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'local-database',
+          },
+        });
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Local database unavailable:', dbError instanceof Error ? dbError.message : 'Unknown error');
+    }
+
+    // 3. Usar dados mock como último recurso
+    console.log('📦 Using mock data as fallback');
     
     return NextResponse.json(mockQuestions, {
       status: 200,
@@ -11,14 +76,27 @@ export async function GET(request: NextRequest) {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'X-Data-Source': 'mock-data',
       },
     });
+
   } catch (error) {
-    console.error('Error in questions route:', error);
+    console.error('❌ Error in questions route:', error);
     
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { 
+        error: 'Internal server error',
+        message: 'Unable to fetch questions from any source',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
     );
   }
 }

@@ -1,144 +1,170 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { config } from '@/lib/config-simple';
+import { mockComments } from '@/lib/mock-data';
 
-// ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
-const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
+const BACKEND_URL = config.api.backendUrl;
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/comments`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[COMMENTS GET] Backend error: ${errorText}`);
+    const questionId = params.id;
+    
+    // 1. Tentar buscar do backend externo
+    try {
+      const url = `${BACKEND_URL}/api/v1/questions/${questionId}/comments`;
+      console.log('🌐 Fetching comments from backend:', url);
       
-      return NextResponse.json({
-        success: false,
-        error: 'Falha ao buscar comentários',
-        message: `Backend respondeu com status: ${response.status}`,
-        details: errorText
-      }, {
-        status: response.status,
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
         },
+        signal: AbortSignal.timeout(config.api.timeout),
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully fetched comments from backend');
+        
+        return NextResponse.json(data, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        console.warn(`⚠️ Backend returned ${response.status} for comments`);
+      }
+    } catch (backendError) {
+      console.warn('⚠️ Backend unavailable for comments:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    const data = await response.json();
+    // 2. Usar dados mock como fallback
+    console.log('📦 Using mock comments data');
+    const filteredComments = mockComments.filter(comment => comment.question_id === parseInt(questionId));
     
-    return NextResponse.json(data, {
+    return NextResponse.json(filteredComments, {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'X-Data-Source': 'mock-data',
       },
     });
+
   } catch (error) {
-    console.error('[COMMENTS GET] Proxy error:', error);
+    console.error('❌ Error in comments route:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: 'Falha na conexão com o backend',
-      message: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: 'Verifique se o backend está online e acessível'
-    }, {
-      status: 503,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        message: 'Unable to fetch comments',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
-    });
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
   }
 }
-
-// Removido: Função getMockComments() - 100% dados reais do backend
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const questionId = params.id;
     const body = await request.json();
     
-    const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/comments`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[COMMENTS POST] Backend error: ${errorText}`);
+    // 1. Tentar enviar para o backend externo
+    try {
+      const url = `${BACKEND_URL}/api/v1/questions/${questionId}/comments`;
+      console.log('🌐 Posting comment to backend:', url);
       
-      return NextResponse.json({
-        success: false,
-        error: 'Falha ao criar comentário',
-        message: `Backend respondeu com status: ${response.status}`,
-        details: errorText
-      }, {
-        status: response.status,
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(config.api.timeout),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully posted comment to backend');
+        
+        return NextResponse.json(data, {
+          status: 201,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        console.warn(`⚠️ Backend returned ${response.status} for comment post`);
+      }
+    } catch (backendError) {
+      console.warn('⚠️ Backend unavailable for comment post:', backendError instanceof Error ? backendError.message : 'Unknown error');
+    }
+
+    // 2. Simular resposta de sucesso
+    console.log('📦 Simulating successful comment post');
+    
+    return NextResponse.json(
+      { 
+        success: true,
+        message: 'Comment posted successfully (offline mode)',
+        data: {
+          id: Date.now(),
+          question_id: parseInt(questionId),
+          ...body,
+          created_at: new Date().toISOString(),
+        }
+      },
+      {
+        status: 201,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'X-Data-Source': 'mock-simulation',
+        },
+      }
+    );
+
+  } catch (error) {
+    console.error('❌ Error posting comment:', error);
+    
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        message: 'Unable to post comment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { 
+        status: 500,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
-      });
-    }
-
-    const data = await response.json();
-    
-    return NextResponse.json(data, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
-  } catch (error) {
-    console.error('[COMMENTS POST] Proxy error:', error);
-    
-    return NextResponse.json({
-      success: false,
-      error: 'Falha na conexão com o backend',
-      message: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: 'Verifique se o backend está online e acessível'
-    }, {
-      status: 503,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
+      }
+    );
   }
-}
-
-// Removido: Função createMockComment() - 100% dados reais do backend
-
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
 }

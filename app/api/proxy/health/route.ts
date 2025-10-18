@@ -1,69 +1,132 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { config } from '@/lib/config-simple';
 
-// ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
-const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
+const BACKEND_URL = config.api.backendUrl;
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${BACKEND_URL}/health`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
+    const healthStatus = {
+      frontend: {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
       },
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
-    });
+      backend: {
+        status: 'unknown',
+        url: BACKEND_URL,
+        lastChecked: new Date().toISOString(),
+      },
+      database: {
+        status: 'unknown',
+        lastChecked: new Date().toISOString(),
+      },
+    };
 
-    if (!response.ok) {
-      return NextResponse.json({
-        success: false,
-        error: 'Backend indisponível',
-        message: `Backend respondeu com status: ${response.status}`
-      }, {
-        status: response.status,
+    // 1. Verificar status do backend
+    try {
+      const backendUrl = `${BACKEND_URL}/health`;
+      console.log('🌐 Checking backend health:', backendUrl);
+      
+      const response = await fetch(backendUrl, {
+        method: 'GET',
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
         },
+        signal: AbortSignal.timeout(5000), // 5 segundos timeout
       });
+
+      if (response.ok) {
+        const backendData = await response.json();
+        healthStatus.backend = {
+          status: 'healthy',
+          url: BACKEND_URL,
+          lastChecked: new Date().toISOString(),
+          response: backendData,
+        };
+        console.log('✅ Backend is healthy');
+      } else {
+        healthStatus.backend = {
+          status: 'unhealthy',
+          url: BACKEND_URL,
+          lastChecked: new Date().toISOString(),
+          error: `HTTP ${response.status}: ${response.statusText}`,
+        };
+        console.warn('⚠️ Backend is unhealthy:', response.status);
+      }
+    } catch (backendError) {
+      healthStatus.backend = {
+        status: 'unreachable',
+        url: BACKEND_URL,
+        lastChecked: new Date().toISOString(),
+        error: backendError instanceof Error ? backendError.message : 'Unknown error',
+      };
+      console.warn('⚠️ Backend is unreachable:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    const data = await response.json();
-    
-    return NextResponse.json(data, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    // 2. Verificar status do banco local
+    try {
+      const { databaseService } = await import('@/lib/database-simple');
+      await databaseService.connect();
+      healthStatus.database = {
+        status: 'healthy',
+        lastChecked: new Date().toISOString(),
+        type: 'sqlite',
+      };
+      console.log('✅ Local database is healthy');
+    } catch (dbError) {
+      healthStatus.database = {
+        status: 'unhealthy',
+        lastChecked: new Date().toISOString(),
+        error: dbError instanceof Error ? dbError.message : 'Unknown error',
+      };
+      console.warn('⚠️ Local database is unhealthy:', dbError instanceof Error ? dbError.message : 'Unknown error');
+    }
+
+    // Determinar status geral
+    const overallStatus = 
+      healthStatus.backend.status === 'healthy' || 
+      healthStatus.database.status === 'healthy' 
+        ? 'healthy' 
+        : 'degraded';
+
+    return NextResponse.json(
+      {
+        status: overallStatus,
+        timestamp: new Date().toISOString(),
+        services: healthStatus,
+        message: overallStatus === 'healthy' 
+          ? 'All systems operational' 
+          : 'Service running with limited functionality',
       },
-    });
+      {
+        status: overallStatus === 'healthy' ? 200 : 503,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
+      }
+    );
+
   } catch (error) {
-    console.error('Health check proxy error:', error);
+    console.error('❌ Error in health check:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: 'Falha na conexão com o backend',
-      message: error instanceof Error ? error.message : 'Erro desconhecido'
-    }, {
-      status: 503,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    return NextResponse.json(
+      {
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: 'Health check failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
-    });
+      {
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
   }
 }
-
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
-}
-

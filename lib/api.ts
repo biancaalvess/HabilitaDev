@@ -153,15 +153,15 @@ class ApiService {
 
   // Questions endpoints - ✅ Usando rewrites (proxy automático, mais eficiente)
   async getQuestions(): Promise<ApiResponse<Question[]>> {
-    return this.request<Question[]>('/questions/');
+    return this.request<Question[]>('/proxy/questions');
   }
 
   async getQuestion(id: number): Promise<ApiResponse<Question>> {
-    return this.request<Question>(`/questions/${id}`);
+    return this.request<Question>(`/proxy/questions/${id}`);
   }
 
   async createQuestion(question: Omit<Question, 'id' | 'created_at'>): Promise<ApiResponse<Question>> {
-    return this.request<Question>('/questions/', {
+    return this.request<Question>('/proxy/questions', {
       method: 'POST',
       body: JSON.stringify(question),
     });
@@ -169,7 +169,7 @@ class ApiService {
 
   // Answers endpoints - ✅ Usando rewrites (proxy automático)
   async getAnswers(questionId: number): Promise<ApiResponse<Answer[]>> {
-    return this.request<Answer[]>(`/questions/${questionId}/answers`);
+    return this.request<Answer[]>(`/proxy/questions/${questionId}/answers`);
   }
 
   async createAnswer(questionId: number, answer: Omit<Answer, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Answer>> {
@@ -182,7 +182,7 @@ class ApiService {
     
     console.log('🔍 Enviando resposta:', answerData); // Debug
     
-    return this.request<Answer>(`/questions/${questionId}/answers`, {
+    return this.request<Answer>(`/proxy/questions/${questionId}/answers`, {
       method: 'POST',
       body: JSON.stringify(answerData),
     });
@@ -190,11 +190,11 @@ class ApiService {
 
   // Comments endpoints - ✅ Usando rewrites (proxy automático)
   async getComments(questionId: number): Promise<ApiResponse<Comment[]>> {
-    return this.request<Comment[]>(`/questions/${questionId}/comments`);
+    return this.request<Comment[]>(`/proxy/questions/${questionId}/comments`);
   }
 
   async createComment(questionId: number, comment: Omit<Comment, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Comment>> {
-    return this.request<Comment>(`/questions/${questionId}/comments`, {
+    return this.request<Comment>(`/proxy/questions/${questionId}/comments`, {
       method: 'POST',
       body: JSON.stringify(comment),
     });
@@ -202,11 +202,11 @@ class ApiService {
 
   // Feedback endpoints - ✅ Usando rewrites (proxy automático)
   async getFeedback(questionId: number): Promise<ApiResponse<Feedback[]>> {
-    return this.request<Feedback[]>(`/questions/${questionId}/feedback`);
+    return this.request<Feedback[]>(`/proxy/questions/${questionId}/feedback`);
   }
 
   async createFeedback(questionId: number, feedback: Omit<Feedback, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Feedback>> {
-    return this.request<Feedback>(`/questions/${questionId}/feedback`, {
+    return this.request<Feedback>(`/proxy/questions/${questionId}/feedback`, {
       method: 'POST',
       body: JSON.stringify(feedback),
     });
@@ -214,7 +214,7 @@ class ApiService {
 
   // Health check
   async healthCheck(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
-    return this.request<{ status: string; timestamp: string }>('/health');
+    return this.request<{ status: string; timestamp: string }>('/proxy/health');
   }
 }
 

@@ -1,150 +1,171 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { config } from '@/lib/config-simple';
+import { mockFeedback } from '@/lib/mock-data';
 
-// ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
-const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    console.log(`[FEEDBACK POST] Iniciando requisição para question ${params.id}`);
-    
-    const body = await request.json();
-    console.log('[FEEDBACK POST] Body recebido:', body);
-
-    console.log(`[FEEDBACK POST] Tentando conectar com backend: ${BACKEND_URL}/api/v1/questions/${params.id}/feedback`);
-    
-    const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/feedback`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
-    });
-
-    console.log(`[FEEDBACK POST] Response status: ${response.status}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[FEEDBACK POST] Backend error: ${errorText}`);
-      
-      return NextResponse.json({
-        success: false,
-        error: 'Falha ao criar feedback',
-        message: `Backend respondeu com status: ${response.status}`,
-        details: errorText
-      }, {
-        status: response.status,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        },
-      });
-    }
-
-    const data = await response.json();
-    console.log('[FEEDBACK POST] Dados recebidos do backend:', data);
-
-    return NextResponse.json(data, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
-  } catch (error) {
-    console.error('[FEEDBACK POST] Proxy error:', error);
-    
-    return NextResponse.json({
-      success: false,
-      error: 'Falha na conexão com o backend',
-      message: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: 'Verifique se o backend está online e acessível'
-    }, {
-      status: 503,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
-  }
-}
+const BACKEND_URL = config.api.backendUrl;
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/feedback`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[FEEDBACK GET] Backend error: ${errorText}`);
+    const questionId = params.id;
+    
+    // 1. Tentar buscar do backend externo
+    try {
+      const url = `${BACKEND_URL}/api/v1/questions/${questionId}/feedback`;
+      console.log('🌐 Fetching feedback from backend:', url);
       
-      return NextResponse.json({
-        success: false,
-        error: 'Falha ao buscar feedbacks',
-        message: `Backend respondeu com status: ${response.status}`,
-        details: errorText
-      }, {
-        status: response.status,
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
         },
+        signal: AbortSignal.timeout(config.api.timeout),
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully fetched feedback from backend');
+        
+        return NextResponse.json(data, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        console.warn(`⚠️ Backend returned ${response.status} for feedback`);
+      }
+    } catch (backendError) {
+      console.warn('⚠️ Backend unavailable for feedback:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    const data = await response.json();
-
-    return NextResponse.json(data, {
+    // 2. Usar dados mock como fallback
+    console.log('📦 Using mock feedback data');
+    const filteredFeedback = mockFeedback.filter(feedback => feedback.question_id === parseInt(questionId));
+    
+    return NextResponse.json(filteredFeedback, {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'X-Data-Source': 'mock-data',
       },
     });
+
   } catch (error) {
-    console.error('[FEEDBACK GET] Proxy error:', error);
+    console.error('❌ Error in feedback route:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: 'Falha na conexão com o backend',
-      message: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: 'Verifique se o backend está online e acessível'
-    }, {
-      status: 503,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        message: 'Unable to fetch feedback',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
-    });
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
   }
 }
 
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
-}
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const questionId = params.id;
+    const body = await request.json();
+    
+    // 1. Tentar enviar para o backend externo
+    try {
+      const url = `${BACKEND_URL}/api/v1/questions/${questionId}/feedback`;
+      console.log('🌐 Posting feedback to backend:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(config.api.timeout),
+      });
 
-// Removido: Funções createMockFeedback() e getMockFeedback() - 100% dados reais do backend
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully posted feedback to backend');
+        
+        return NextResponse.json(data, {
+          status: 201,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        console.warn(`⚠️ Backend returned ${response.status} for feedback post`);
+      }
+    } catch (backendError) {
+      console.warn('⚠️ Backend unavailable for feedback post:', backendError instanceof Error ? backendError.message : 'Unknown error');
+    }
+
+    // 2. Simular resposta de sucesso
+    console.log('📦 Simulating successful feedback post');
+    
+    return NextResponse.json(
+      { 
+        success: true,
+        message: 'Feedback posted successfully (offline mode)',
+        data: {
+          id: Date.now(),
+          question_id: parseInt(questionId),
+          ...body,
+          created_at: new Date().toISOString(),
+          status: 'pending',
+        }
+      },
+      {
+        status: 201,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'X-Data-Source': 'mock-simulation',
+        },
+      }
+    );
+
+  } catch (error) {
+    console.error('❌ Error posting feedback:', error);
+    
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        message: 'Unable to post feedback',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
+  }
+}

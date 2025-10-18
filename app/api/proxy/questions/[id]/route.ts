@@ -1,78 +1,122 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { databaseService } from '@/lib/database-simple';
+import { config } from '@/lib/config-simple';
+import { mockQuestions } from '@/lib/mock-data';
 
-// ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
-const BACKEND_URL = 'https://habilitadev-backend.onrender.com';
+const BACKEND_URL = config.api.backendUrl;
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Backend error for question ${params.id}:`, errorText);
+    const questionId = params.id;
+    
+    // 1. Tentar buscar do backend externo
+    try {
+      const url = `${BACKEND_URL}/api/v1/questions/${questionId}`;
+      console.log('🌐 Fetching question from backend:', url);
       
-      return NextResponse.json({
-        success: false,
-        error: 'Questão não encontrada ou backend indisponível',
-        message: `Backend respondeu com status: ${response.status}`,
-        details: errorText
-      }, {
-        status: response.status,
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
         },
+        signal: AbortSignal.timeout(config.api.timeout),
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully fetched question from backend');
+        
+        return NextResponse.json(data, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        console.warn(`⚠️ Backend returned ${response.status} for question ${questionId}`);
+      }
+    } catch (backendError) {
+      console.warn('⚠️ Backend unavailable for question:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    const data = await response.json();
+    // 2. Tentar buscar do banco local
+    try {
+      console.log('💾 Attempting to fetch question from local database');
+      await databaseService.connect();
+      const localQuestion = await databaseService.getQuestionById(parseInt(questionId));
+      
+      if (localQuestion) {
+        console.log('✅ Successfully fetched question from local database');
+        
+        return NextResponse.json(localQuestion, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'local-database',
+          },
+        });
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Local database unavailable for question:', dbError instanceof Error ? dbError.message : 'Unknown error');
+    }
+
+    // 3. Usar dados mock como fallback
+    console.log('📦 Using mock question data');
+    const mockQuestion = mockQuestions.find(q => q.id === parseInt(questionId));
     
-    return NextResponse.json(data, {
+    if (!mockQuestion) {
+      return NextResponse.json(
+        { 
+          error: 'Question not found',
+          message: `Question with ID ${questionId} not found`,
+        },
+        { 
+          status: 404,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
+    
+    return NextResponse.json(mockQuestion, {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'X-Data-Source': 'mock-data',
       },
     });
+
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('❌ Error in question route:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: 'Falha na conexão com o backend',
-      message: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: 'Verifique se o backend está online e acessível'
-    }, {
-      status: 503,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        message: 'Unable to fetch question',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
-    });
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
   }
-}
-
-// Removido: Função getMockQuestionById() - 100% dados reais do backend
-
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
 }
