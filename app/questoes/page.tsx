@@ -6,7 +6,7 @@ import { QuestoesSidebar } from "@/components/questoes-sidebar";
 import { QuestionCard } from "@/components/question-card";
 import { QuestionFilters } from "@/components/question-filters";
 import { QuestionDetail } from "@/components/question-detail";
-import { useQuestions } from "@/hooks/use-api";
+import { useOptimizedQuestions } from "@/hooks/use-optimized-questions";
 import type { QuestionFilter, Question } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 
@@ -22,7 +22,10 @@ export default function QuestoesPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
-  const { questions, loading, error } = useQuestions();
+  const { questions, loading, error, isOffline, refresh } = useOptimizedQuestions({
+    enableCache: true,
+    enableMockFallback: true,
+  });
 
   const filteredQuestions = useMemo(() => {
     // Verificar se questions é um array válido
@@ -97,31 +100,37 @@ export default function QuestoesPage() {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center max-w-2xl">
               <div className="mb-4 flex justify-center">
-                <img
-                  src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeTE5cmV3aTV2bmRkYzFua2cwamg3cHNxc2NqeTlocGs0NHYyMTd3MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/IKsO37j6PoslBVHSG3/giphy.gif"
-                  alt="Manutenção"
-                  className="w-32 h-32 object-contain"
-                  style={{
-                    filter: "none",
-                    mixBlendMode: "normal",
-                  }}
-                />
+                {isOffline ? (
+                  <div className="w-32 h-32 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
+                      </svg>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeTE5cmV3aTV2bmRkYzFua2cwamg3cHNxc2NqeTlocGs0NHYyMTd3MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/IKsO37j6PoslBVHSG3/giphy.gif"
+                    alt="Erro"
+                    className="w-32 h-32 object-contain"
+                    style={{
+                      filter: "none",
+                      mixBlendMode: "normal",
+                    }}
+                  />
+                )}
               </div>
               <h2 className="text-2xl font-bold text-white mb-4">
-                {error.includes("manutenção") || error.includes("indisponível")
-                  ? "API em Manutenção"
-                  : "Erro ao carregar questões"}
+                {isOffline ? "Modo Offline" : "Erro ao carregar questões"}
               </h2>
               <p className="text-white/60 mb-6 text-lg leading-relaxed">
-                {error.includes("manutenção") || error.includes("indisponível")
-                  ? "O HabilitaDev está temporariamente em manutenção. Em breve retornaremos com novidades!"
-                  : error}
+                {isOffline 
+                  ? "Você está offline. Usando dados de exemplo para demonstração."
+                  : error
+                }
               </p>
               <div className="flex gap-4 justify-center">
-                <Button
-                  onClick={() => window.location.reload()}
-                  variant="outline"
-                >
+                <Button onClick={refresh} variant="outline">
                   Tentar novamente
                 </Button>
                 <Button
