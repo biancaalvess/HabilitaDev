@@ -1,0 +1,47 @@
+{
+  "name": "HabilitaDev - Desenvolvimento",
+  "description": "Configurações para ambiente de desenvolvimento",
+  "database": {
+    "url": "file:./dev.db",
+    "logging": true,
+    "synchronize": true
+  },
+  "api": {
+    "timeout": 30000,
+    "retries": 3,
+    "cache": {
+      "enabled": true,
+      "ttl": 300000
+    }
+  },
+  "security": {
+    "jwt": {
+      "expiresIn": "7d",
+      "refreshExpiresIn": "30d"
+    },
+    "bcrypt": {
+      "rounds": 10
+    },
+    "rateLimit": {
+      "max": 100,
+      "windowMs": 900000
+    }
+  },
+  "logging": {
+    "level": "debug",
+    "format": "text",
+    "console": true,
+    "file": false
+  },
+  "monitoring": {
+    "enabled": false,
+    "analytics": false,
+    "errorReporting": false
+  },
+  "features": {
+    "mockData": true,
+    "offlineMode": true,
+    "debugMode": true,
+    "hotReload": true
+  }
+}

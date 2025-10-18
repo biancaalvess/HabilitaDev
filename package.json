@@ -9,7 +9,11 @@
     "lint": "next lint",
     "start": "next start",
     "check-deps": "node scripts/check-unused-deps.js",
-    "clean-deps": "npm run check-deps && npm prune"
+    "clean-deps": "npm run check-deps && npm prune",
+    "setup-env": "node scripts/setup-env.js",
+    "env:init": "node scripts/setup-env.js init",
+    "env:validate": "node scripts/setup-env.js validate",
+    "env:list": "node scripts/setup-env.js list"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
