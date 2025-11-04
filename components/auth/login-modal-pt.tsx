@@ -74,7 +74,10 @@ export function LoginModalPT({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-slate-800/95 backdrop-blur-sm border border-blue-400/20 p-0 gap-0">
+      <DialogContent 
+        className="sm:max-w-md bg-slate-800/95 backdrop-blur-sm border border-blue-400/20 p-0 gap-0"
+        showCloseButton={false}
+      >
         <DialogTitle className="sr-only">Login</DialogTitle>
         <div className="p-6 sm:p-8">
           {/* Header */}
