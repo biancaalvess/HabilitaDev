@@ -38,12 +38,12 @@ export function QuestionFilters({
   const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 
   return (
-    <Card className="mb-6">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
+    <Card className="mb-4 sm:mb-6">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-medium">Filtros</h3>
+            <h3 className="font-medium text-sm sm:text-base">Filtros</h3>
             {activeFiltersCount > 0 && (
               <Badge variant="secondary" className="text-xs">
                 {activeFiltersCount}
@@ -55,15 +55,15 @@ export function QuestionFilters({
               variant="ghost"
               size="sm"
               onClick={clearFilters}
-              className="text-xs"
+              className="text-xs h-7 sm:h-8"
             >
               <X className="h-3 w-3 mr-1" />
-              Limpar
+              <span className="hidden sm:inline">Limpar</span>
             </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">
               Dificuldade

@@ -47,23 +47,23 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-center px-6 py-6">
-        <div className="flex items-center space-x-8">
+      <nav className="relative z-10 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-6">
+        <div className="flex items-center space-x-4 sm:space-x-6 md:space-x-8">
           <a
             href="#inicio"
-            className="text-white/80 hover:text-white transition-colors"
+            className="text-white/80 hover:text-white transition-colors text-sm sm:text-base"
           >
             Inicio
           </a>
           <a
             href="questoes"
-            className="text-white/80 hover:text-white transition-colors"
+            className="text-white/80 hover:text-white transition-colors text-sm sm:text-base"
           >
             Questões
           </a>
           <a
             href="#sobre"
-            className="text-white/80 hover:text-white transition-colors"
+            className="text-white/80 hover:text-white transition-colors text-sm sm:text-base"
           >
             Sobre
           </a>
@@ -80,9 +80,9 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
         </div>
 
         {/* Main Title */}
-        <h1 className="text-6xl md:text-8xl font-bold text-white mb-6 leading-tight">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-4 sm:mb-6 leading-tight">
           <span className="block">HABILITA</span>
-          <span className="block text-4xl md:text-6xl text-blue-300 mt-2">
+          <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-blue-300 mt-1 sm:mt-2">
             DEV
           </span>
         </h1>
@@ -91,7 +91,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
         <div className="w-24 h-0.5 bg-blue-400 mb-8" />
 
         {/* Description */}
-        <p className="text-xl md:text-2xl text-white/90 max-w-4xl mb-12 leading-relaxed">
+        <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-4xl mb-8 sm:mb-12 leading-relaxed px-4">
           Um espaço para estudantes e profissionais praticarem, errarem sem
           pressão e se prepararem para{" "}
           <span className="text-blue-300 font-semibold">
@@ -101,16 +101,16 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           <span className="text-blue-300 font-semibold"> e desafios </span> que
           realmente importam.
           <br />
-          <span className="text-lg text-white/70 mt-4 block">
+          <span className="text-sm sm:text-base md:text-lg text-white/70 mt-3 sm:mt-4 block">
             Prepare-se para o sucesso. Sua jornada começa hoje.
           </span>
         </p>
 
         {/* CTA Button */}
-        <Link href="/questoes">
+        <Link href="/questoes" className="w-full sm:w-auto">
           <Button
             size="lg"
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto font-semibold shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 h-auto font-semibold shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 w-full sm:w-auto"
           >
             VAMOS COMEÇAR
           </Button>
@@ -165,9 +165,9 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Missão */}
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6">
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-10 w-10 rounded bg-blue-500 flex items-center justify-center">
                   <Target className="h-5 w-5 text-white" />
@@ -183,7 +183,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             </div>
 
             {/* Visão */}
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6">
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-10 w-10 rounded bg-blue-500 flex items-center justify-center">
                   <Users className="h-5 w-5 text-white" />
@@ -198,7 +198,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             </div>
 
             {/* Valores */}
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6">
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-400/20 rounded-xl p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-10 w-10 rounded bg-blue-500 flex items-center justify-center">
                   <Heart className="h-5 w-5 text-white" />

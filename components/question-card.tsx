@@ -61,24 +61,25 @@ export const QuestionCard = memo(function QuestionCard({
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+          <div className="flex items-center gap-3 sm:gap-4 text-xs text-muted-foreground flex-wrap">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              {formatDate(question.created_at)}
+              <span className="hidden sm:inline">{formatDate(question.created_at)}</span>
+              <span className="sm:hidden">{new Date(question.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
             </div>
             <div className="flex items-center gap-1">
               <MessageSquare className="w-3 h-3" />
-              Feedback
+              <span className="hidden xs:inline">Feedback</span>
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onViewDetails(question.id)}
-              className="text-primary hover:text-primary-foreground hover:bg-primary"
+              className="text-primary hover:text-primary-foreground hover:bg-primary flex-1 sm:flex-initial text-xs sm:text-sm"
             >
               Responder
             </Button>
@@ -86,9 +87,10 @@ export const QuestionCard = memo(function QuestionCard({
               variant="ghost"
               size="sm"
               onClick={() => onViewDetails(question.id)}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground flex-1 sm:flex-initial text-xs sm:text-sm"
             >
-              Ver detalhes →
+              <span className="hidden sm:inline">Ver detalhes →</span>
+              <span className="sm:hidden">Detalhes</span>
             </Button>
           </div>
         </div>

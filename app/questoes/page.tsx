@@ -80,11 +80,11 @@ export default function QuestoesPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <QuestoesHeader />
-        <main className="container mx-auto px-6 py-8">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-              <p className="text-white/80">Carregando questões...</p>
+              <p className="text-white/80 text-sm sm:text-base">Carregando questões...</p>
             </div>
           </div>
         </main>
@@ -96,9 +96,9 @@ export default function QuestoesPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <QuestoesHeader />
-        <main className="container mx-auto px-6 py-8">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center max-w-2xl">
+            <div className="text-center max-w-2xl px-4">
               <div className="mb-4 flex justify-center">
                 {isOffline ? (
                   <div className="w-32 h-32 flex items-center justify-center">
@@ -129,13 +129,14 @@ export default function QuestoesPage() {
                   : error
                 }
               </p>
-              <div className="flex gap-4 justify-center">
-                <Button onClick={refresh} variant="outline">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                <Button onClick={refresh} variant="outline" className="w-full sm:w-auto">
                   Tentar novamente
                 </Button>
                 <Button
                   onClick={() => (window.location.href = "/")}
                   variant="ghost"
+                  className="w-full sm:w-auto"
                 >
                   Voltar ao início
                 </Button>
@@ -151,7 +152,7 @@ export default function QuestoesPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <QuestoesHeader />
-        <main className="container mx-auto px-6 py-8">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <QuestionDetail question={selectedQuestion} onBack={handleBack} />
         </main>
       </div>
@@ -170,24 +171,27 @@ export default function QuestoesPage() {
       <div className="absolute bottom-20 right-10 w-1 h-1 bg-white rounded-full animate-ping opacity-30" />
 
       <div className="relative z-10 flex">
-        <QuestoesSidebar
-          selectedCategory={selectedCategory}
-          onCategorySelect={setSelectedCategory}
-          isMinimized={isSidebarMinimized}
-          onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
-        />
+        {/* Sidebar - Hidden on mobile, visible on desktop */}
+        <div className="hidden md:block">
+          <QuestoesSidebar
+            selectedCategory={selectedCategory}
+            onCategorySelect={setSelectedCategory}
+            isMinimized={isSidebarMinimized}
+            onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
+          />
+        </div>
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col w-full md:w-auto">
           <QuestoesHeader />
 
-          <main className="flex-1 p-6">
-            <div className="mb-8">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 leading-tight">
                 {selectedCategory
                   ? `Questões de ${selectedCategory}`
                   : "Treine para Entrevistas Técnicas"}
               </h2>
-              <p className="text-blue-300/80 text-lg sm:text-xl max-w-3xl">
+              <p className="text-blue-300/80 text-base sm:text-lg md:text-xl max-w-3xl">
                 Questões reais de empresas como Itaú, Meta, X (Twitter) e outras
                 grandes techs.
               </p>
@@ -199,7 +203,7 @@ export default function QuestoesPage() {
               totalQuestions={filteredQuestions.length}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {filteredQuestions.map((question) => (
                 <QuestionCard
                   key={question.id}
