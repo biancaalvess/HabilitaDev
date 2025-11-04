@@ -1,6 +1,5 @@
 // ✅ SOLUÇÃO: Usar proxy Next.js (resolve CORS e funciona sem backend local)
 import { cacheService } from './cache';
-import { mockQuestions, mockAnswers, mockComments, mockFeedback, simulateNetworkDelay } from './mock-data';
 import { config } from './config-simple';
 
 const API_BASE_URL = config.api.baseUrl;
@@ -125,30 +124,8 @@ class ApiService {
       };
     } catch (error) {
       console.error('❌ API request failed:', error);
-      
-      // Tentar usar dados mock como fallback
-      const fallbackData = this.getFallbackData<T>(endpoint);
-      if (fallbackData) {
-        console.log('🔄 Using fallback data for:', endpoint);
-        return {
-          success: true,
-          data: fallbackData,
-          message: 'Success (offline mode)'
-        };
-      }
-      
       throw error;
     }
-  }
-
-  private getFallbackData<T>(endpoint: string): T | null {
-    // Mapear endpoints para dados mock
-    if (endpoint === '/questions/') {
-      return mockQuestions as T;
-    }
-    
-    // Para outras rotas, retornar null (sem fallback)
-    return null;
   }
 
   // Questions endpoints - ✅ Usando rewrites (proxy automático, mais eficiente)
