@@ -36,28 +36,6 @@ export function ParticlesBackground({
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    // Ajustar canvas para tamanho da tela
-    const resizeCanvas = () => {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width || window.innerWidth;
-      canvas.height = rect.height || window.innerHeight;
-      
-      // Recriar partículas se necessário
-      if (particlesRef.current.length === 0) {
-        createParticles();
-      }
-    };
-
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-
-    // Detectar visibilidade da página para pausar animação
-    const handleVisibilityChange = () => {
-      isVisibleRef.current = !document.hidden;
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
     // Criar partículas iniciais
     const createParticles = () => {
       const particles: Particle[] = [];
@@ -82,6 +60,28 @@ export function ParticlesBackground({
 
       particlesRef.current = particles;
     };
+
+    // Ajustar canvas para tamanho da tela
+    const resizeCanvas = () => {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width || window.innerWidth;
+      canvas.height = rect.height || window.innerHeight;
+      
+      // Recriar partículas se necessário
+      if (particlesRef.current.length === 0) {
+        createParticles();
+      }
+    };
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // Detectar visibilidade da página para pausar animação
+    const handleVisibilityChange = () => {
+      isVisibleRef.current = !document.hidden;
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // Animar partículas
     const animate = () => {
