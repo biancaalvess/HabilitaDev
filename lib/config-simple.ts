@@ -56,8 +56,18 @@ export const config = {
 export function validateConfig() {
   const errors: string[] = [];
   
-  if (config.auth.jwtSecret === "your-super-secret-jwt-key-change-in-production") {
+  // Verificar se JWT_SECRET está usando fallback inseguro
+  const defaultSecrets = [
+    "your-super-secret-jwt-key-change-in-production",
+    "your-super-secret-jwt-key-for-development",
+  ];
+  if (defaultSecrets.includes(config.auth.jwtSecret)) {
     errors.push("JWT_SECRET deve ser alterado em produção");
+  }
+  
+  // Em produção, JWT_SECRET deve ser fornecido
+  if (config.development.nodeEnv === 'production' && !process.env.JWT_SECRET) {
+    errors.push("JWT_SECRET é obrigatório em produção");
   }
   
   if (config.auth.bcryptRounds < 10) {
