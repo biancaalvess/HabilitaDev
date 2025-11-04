@@ -44,6 +44,15 @@ interface Feedback {
   created_at: string;
 }
 
+interface Answer {
+  id: number;
+  question_id: number;
+  author_name: string;
+  content: string;
+  created_at: string;
+  is_solution: boolean;
+}
+
 class DatabaseService {
   private db: Database | null = null;
 
@@ -120,6 +129,16 @@ class DatabaseService {
         content TEXT NOT NULL,
         status TEXT DEFAULT 'pending',
         user_id INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS answers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER NOT NULL,
+        author_name TEXT NOT NULL,
+        content TEXT NOT NULL,
+        is_solution BOOLEAN DEFAULT FALSE,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
       );
@@ -246,6 +265,28 @@ class DatabaseService {
     const newFeedback = await this.db.get<Feedback>('SELECT * FROM feedback WHERE id = ?', id);
     if (!newFeedback) throw new Error('Failed to retrieve new feedback');
     return newFeedback;
+  }
+
+  // Answers methods
+  async getAnswers(questionId: number): Promise<Answer[]> {
+    if (!this.db) return [];
+    return this.db.all<Answer[]>('SELECT * FROM answers WHERE question_id = ? ORDER BY created_at DESC', questionId);
+  }
+
+  async createAnswer(answerData: Omit<Answer, 'id' | 'created_at'>): Promise<Answer> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    const result = await this.db.run(
+      'INSERT INTO answers (question_id, author_name, content, is_solution) VALUES (?, ?, ?, ?)',
+      answerData.question_id,
+      answerData.author_name,
+      answerData.content,
+      answerData.is_solution || false
+    );
+    const id = result.lastID;
+    if (!id) throw new Error('Failed to create answer');
+    const newAnswer = await this.db.get<Answer>('SELECT * FROM answers WHERE id = ?', id);
+    if (!newAnswer) throw new Error('Failed to retrieve new answer');
+    return newAnswer;
   }
 }
 
