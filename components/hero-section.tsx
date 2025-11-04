@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { WireframeHands } from "@/components/ui/wireframe-hands";
@@ -13,16 +14,24 @@ import {
   Target,
   Users,
   Heart,
+  LogIn,
+  User,
 } from "lucide-react";
 import Image from "next/image";
 
 import { ParticlesBackground } from "@/components/particles-background";
+import { AuthModalV2 } from "@/components/auth/auth-modal-v2";
+import { useAuth } from "@/lib/auth";
+import { UserMenu } from "@/components/user-menu";
 
 interface HeroSectionProps {
   onStartTraining: () => void;
 }
 
 export default function HeroSection({ onStartTraining }: HeroSectionProps) {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user } = useAuth();
+
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden scroll-smooth">
       {/* Particles Background */}
@@ -55,7 +64,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-20 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-6">
+      <nav className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex items-center space-x-4 sm:space-x-6 md:space-x-8">
           <a
             href="#inicio"
@@ -75,6 +84,23 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           >
             Sobre
           </a>
+        </div>
+        
+        {/* Login Button */}
+        <div className="flex items-center">
+          {user ? (
+            <UserMenu />
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAuthModal(true)}
+              className="text-white/80 hover:text-white hover:bg-blue-500/20 transition-colors flex items-center gap-2"
+            >
+              <LogIn className="h-4 w-4" />
+              <span className="hidden sm:inline">Entrar</span>
+            </Button>
+          )}
         </div>
       </nav>
 
@@ -237,6 +263,12 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
 
       {/* Footer */}
       <Footer />
+
+      {/* Auth Modal */}
+      <AuthModalV2
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }
