@@ -12,36 +12,8 @@ interface CommentsContextType {
 
 const CommentsContext = createContext<CommentsContextType | undefined>(undefined)
 
-// Mock comments for demonstration
-const mockComments: Comment[] = [
-  {
-    id: 1,
-    question_id: 1,
-    author_name: "Maria Silva",
-    comment_type: "correction",
-    content: "A complexidade temporal está incorreta. Deveria ser O(n log n) em vez de O(n²).",
-    created_at: "2024-01-15T14:30:00Z",
-  },
-  {
-    id: 2,
-    question_id: 1,
-    author_name: "João Santos",
-    comment_type: "suggestion",
-    content: "Sugiro adicionar um exemplo prático de uso do algoritmo para melhor compreensão.",
-    created_at: "2024-01-14T10:15:00Z",
-  },
-  {
-    id: 3,
-    question_id: 2,
-    author_name: "Ana Costa",
-    comment_type: "correction",
-    content: "Há um erro na linha 3 do código. O operador deveria ser '==' em vez de '='.",
-    created_at: "2024-01-13T16:45:00Z",
-  },
-]
-
 export function CommentsProvider({ children }: { children: ReactNode }) {
-  const [comments, setComments] = useState<Comment[]>(mockComments)
+  const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(false)
 
   const addComment = async (
