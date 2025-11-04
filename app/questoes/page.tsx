@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { Menu, Filter } from "lucide-react";
 import { ParticlesBackground } from "@/components/particles-background";
+import { AuthModalV2 } from "@/components/auth/auth-modal-v2";
 
 export default function QuestoesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,6 +32,7 @@ export default function QuestoesPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { questions, loading, error, isOffline, refresh } =
     useOptimizedQuestions({
@@ -210,6 +212,7 @@ export default function QuestoesPage() {
             onCategorySelect={setSelectedCategory}
             isMinimized={isSidebarMinimized}
             onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
+            onLoginClick={() => setShowAuthModal(true)}
           />
         </div>
 
@@ -248,6 +251,10 @@ export default function QuestoesPage() {
                     }}
                     isMinimized={false}
                     onToggleMinimize={() => {}}
+                    onLoginClick={() => {
+                      setShowAuthModal(true);
+                      setMobileMenuOpen(false);
+                    }}
                   />
                 </div>
               </SheetContent>
@@ -305,6 +312,12 @@ export default function QuestoesPage() {
           </main>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModalV2
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }
