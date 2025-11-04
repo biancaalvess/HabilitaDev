@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { databaseService } from '@/lib/database-simple';
 import { config } from '@/lib/config-simple';
-import { mockQuestions } from '@/lib/mock-data';
 
 const BACKEND_URL = config.api.backendUrl;
 
@@ -69,36 +68,23 @@ export async function GET(
       console.warn('⚠️ Local database unavailable for question:', dbError instanceof Error ? dbError.message : 'Unknown error');
     }
 
-    // 3. Usar dados mock como fallback
-    console.log('📦 Using mock question data');
-    const mockQuestion = mockQuestions.find(q => q.id === parseInt(questionId));
+    // 3. Retornar erro 404 se questão não encontrada
+    console.log('📦 Question not found in backend or local database');
     
-    if (!mockQuestion) {
-      return NextResponse.json(
-        { 
-          error: 'Question not found',
-          message: `Question with ID ${questionId} not found`,
-        },
-        { 
-          status: 404,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          },
-        }
-      );
-    }
-    
-    return NextResponse.json(mockQuestion, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'X-Data-Source': 'mock-data',
+    return NextResponse.json(
+      { 
+        error: 'Question not found',
+        message: `Question with ID ${questionId} not found in any available source`,
       },
-    });
+      { 
+        status: 404,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
 
   } catch (error) {
     console.error('❌ Error in question route:', error);

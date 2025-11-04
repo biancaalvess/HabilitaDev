@@ -3,19 +3,16 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiService, type Question } from '@/lib/api';
 import { cacheService } from '@/lib/cache';
-import { mockQuestions } from '@/lib/mock-data';
 
 interface UseOptimizedQuestionsOptions {
   enableCache?: boolean;
   cacheTimeout?: number;
-  enableMockFallback?: boolean;
 }
 
 export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}) {
   const {
     enableCache = true,
     cacheTimeout = 5 * 60 * 1000, // 5 minutos
-    enableMockFallback = true,
   } = options;
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -71,20 +68,12 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
       }
     } catch (err) {
       console.error('Error fetching questions:', err);
-      
-      // Tentar usar dados mock como fallback
-      if (enableMockFallback) {
-        console.log('🔄 Using mock data as fallback');
-        setQuestions(mockQuestions);
-        setError('Modo offline - usando dados de exemplo');
-      } else {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar questões');
-        setQuestions([]);
-      }
+      setError(err instanceof Error ? err.message : 'Erro ao carregar questões');
+      setQuestions([]);
     } finally {
       setLoading(false);
     }
-  }, [enableCache, enableMockFallback]);
+  }, [enableCache]);
 
   // Carregar questões na inicialização
   useEffect(() => {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { config } from '@/lib/config-simple';
-import { mockAnswers } from '@/lib/mock-data';
 
 const BACKEND_URL = config.api.backendUrl;
 
@@ -45,17 +44,16 @@ export async function GET(
       console.warn('⚠️ Backend unavailable for answers:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    // 2. Usar dados mock como fallback
-    console.log('📦 Using mock answers data');
-    const filteredAnswers = mockAnswers.filter(answer => answer.question_id === parseInt(questionId));
+    // 2. Retornar array vazio se backend não estiver disponível
+    console.log('📦 No answers available from backend');
     
-    return NextResponse.json(filteredAnswers, {
+    return NextResponse.json([], {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'X-Data-Source': 'mock-data',
+        'X-Data-Source': 'none',
       },
     });
 
@@ -123,27 +121,20 @@ export async function POST(
       console.warn('⚠️ Backend unavailable for answer post:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    // 2. Simular resposta de sucesso
-    console.log('📦 Simulating successful answer post');
-    
+    // 2. Retornar erro se backend não estiver disponível
     return NextResponse.json(
       { 
-        success: true,
-        message: 'Answer posted successfully (offline mode)',
-        data: {
-          id: Date.now(),
-          question_id: parseInt(questionId),
-          ...body,
-          created_at: new Date().toISOString(),
-        }
+        success: false,
+        error: 'Failed to save answer',
+        message: 'Unable to save answer. Please try again later.',
+        details: 'Backend is currently unavailable'
       },
       {
-        status: 201,
+        status: 503,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'X-Data-Source': 'mock-simulation',
         },
       }
     );

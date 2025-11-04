@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { config } from '@/lib/config-simple';
 import { databaseService } from '@/lib/database-simple';
-import { mockComments } from '@/lib/mock-data';
 
 const BACKEND_URL = config.api.backendUrl;
 
@@ -69,17 +68,16 @@ export async function GET(
       console.warn('⚠️ Local database unavailable for comments:', dbError instanceof Error ? dbError.message : 'Unknown error');
     }
 
-    // 3. Usar dados mock como último recurso
-    console.log('📦 Using mock comments data');
-    const filteredComments = mockComments.filter(comment => comment.question_id === parseInt(questionId));
+    // 3. Retornar array vazio se nenhuma fonte estiver disponível
+    console.log('📦 No comments available from backend or local database');
     
-    return NextResponse.json(filteredComments, {
+    return NextResponse.json([], {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'X-Data-Source': 'mock-data',
+        'X-Data-Source': 'none',
       },
     });
 
@@ -176,27 +174,20 @@ export async function POST(
     } catch (dbError) {
       console.warn('⚠️ Local database unavailable for comment post:', dbError instanceof Error ? dbError.message : 'Unknown error');
       
-      // 3. Simular resposta de sucesso como último recurso
-      console.log('📦 Simulating successful comment post');
-      
+      // 3. Retornar erro se não conseguir salvar
       return NextResponse.json(
         { 
-          success: true,
-          message: 'Comment posted successfully (offline mode)',
-          data: {
-            id: Date.now(),
-            question_id: parseInt(questionId),
-            ...body,
-            created_at: new Date().toISOString(),
-          }
+          success: false,
+          error: 'Failed to save comment',
+          message: 'Unable to save comment. Please try again later.',
+          details: dbError instanceof Error ? dbError.message : 'Unknown error'
         },
         {
-          status: 201,
+          status: 503,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'X-Data-Source': 'mock-simulation',
           },
         }
       );

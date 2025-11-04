@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { databaseService } from '@/lib/database-simple';
 import { config } from '@/lib/config-simple';
-import { mockQuestions } from '@/lib/mock-data';
 
 const BACKEND_URL = config.api.backendUrl;
 
@@ -67,16 +66,16 @@ export async function GET(request: NextRequest) {
       console.warn('⚠️ Local database unavailable:', dbError instanceof Error ? dbError.message : 'Unknown error');
     }
 
-    // 3. Usar dados mock como último recurso
-    console.log('📦 Using mock data as fallback');
+    // 3. Retornar array vazio se nenhuma fonte estiver disponível
+    console.log('📦 No data available from backend or local database');
     
-    return NextResponse.json(mockQuestions, {
+    return NextResponse.json([], {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'X-Data-Source': 'mock-data',
+        'X-Data-Source': 'none',
       },
     });
 
