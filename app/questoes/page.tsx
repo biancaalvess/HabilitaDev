@@ -197,11 +197,11 @@ export default function QuestoesPage() {
                   Categorias
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="bg-slate-900/95 backdrop-blur-sm border-blue-400/20 w-72">
-                <SheetHeader>
-                  <SheetTitle className="text-white">Categorias</SheetTitle>
+              <SheetContent side="left" className="bg-slate-900/95 backdrop-blur-sm border-blue-400/20 w-72 p-0">
+                <SheetHeader className="p-6 pb-4 border-b border-blue-400/20">
+                  <SheetTitle className="text-white text-lg">Categorias</SheetTitle>
                 </SheetHeader>
-                <div className="mt-6">
+                <div className="overflow-y-auto">
                   <QuestoesSidebar
                     selectedCategory={selectedCategory}
                     onCategorySelect={(cat) => {
