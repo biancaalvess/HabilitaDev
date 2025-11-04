@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth";
 import {
   Home,
   BookOpen,
@@ -15,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Code,
-  LogIn,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -25,7 +23,6 @@ interface QuestoesSidebarProps {
   onCategorySelect: (category: string | undefined) => void;
   isMinimized?: boolean;
   onToggleMinimize?: () => void;
-  onLoginClick?: () => void;
 }
 
 const categories = [
@@ -44,13 +41,8 @@ export function QuestoesSidebar({
   onCategorySelect,
   isMinimized = false,
   onToggleMinimize,
-  onLoginClick,
 }: QuestoesSidebarProps) {
   const router = useRouter();
-  const { user } = useAuth();
-  
-  // Só mostrar o botão de login se o usuário não estiver logado
-  const shouldShowLoginButton = !user && onLoginClick;
   return (
     <div
       className={`${
@@ -95,17 +87,6 @@ export function QuestoesSidebar({
           )}
           {!isMinimized && (
             <div className="flex items-center gap-1">
-              {shouldShowLoginButton && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onLoginClick}
-                  className="text-white/70 hover:text-white hover:bg-blue-500/20 p-1.5 h-8 w-8 opacity-80 hover:opacity-100 transition-all"
-                  title="Login"
-                >
-                  <LogIn className="h-4 w-4" />
-                </Button>
-              )}
               {onToggleMinimize && (
                 <Button
                   variant="ghost"
@@ -120,17 +101,6 @@ export function QuestoesSidebar({
           )}
           {isMinimized && (
             <div className="absolute top-2 right-2 flex items-center gap-1">
-              {shouldShowLoginButton && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onLoginClick}
-                  className="text-white/70 hover:text-white hover:bg-blue-500/20 p-1 h-6 w-6 opacity-80 hover:opacity-100 transition-all"
-                  title="Login"
-                >
-                  <LogIn className="h-4 w-4" />
-                </Button>
-              )}
               {onToggleMinimize && (
                 <Button
                   variant="ghost"

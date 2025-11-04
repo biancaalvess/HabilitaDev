@@ -210,10 +210,6 @@ export default function QuestoesPage() {
             onCategorySelect={setSelectedCategory}
             isMinimized={isSidebarMinimized}
             onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
-            onLoginClick={() => {
-              // O header já tem o modal de login, então apenas scroll para o topo
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
           />
         </div>
 
@@ -252,11 +248,6 @@ export default function QuestoesPage() {
                     }}
                     isMinimized={false}
                     onToggleMinimize={() => {}}
-                    onLoginClick={() => {
-                      setMobileMenuOpen(false);
-                      // O header já tem o modal de login, então apenas scroll para o topo
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
                   />
                 </div>
               </SheetContent>
