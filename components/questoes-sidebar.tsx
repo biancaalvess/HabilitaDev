@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 import {
   Home,
   BookOpen,
@@ -46,6 +47,10 @@ export function QuestoesSidebar({
   onLoginClick,
 }: QuestoesSidebarProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  
+  // Só mostrar o botão de login se o usuário não estiver logado
+  const shouldShowLoginButton = !user && onLoginClick;
   return (
     <div
       className={`${
@@ -90,48 +95,52 @@ export function QuestoesSidebar({
           )}
           {!isMinimized && (
             <div className="flex items-center gap-1">
-              {onLoginClick && (
+              {shouldShowLoginButton && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onLoginClick}
-                  className="text-white/60 hover:text-white hover:bg-blue-500/20 p-1.5 h-7 w-7 opacity-70 hover:opacity-100 transition-opacity"
+                  className="text-white/70 hover:text-white hover:bg-blue-500/20 p-1.5 h-8 w-8 opacity-80 hover:opacity-100 transition-all"
                   title="Login"
                 >
-                  <LogIn className="h-3.5 w-3.5" />
+                  <LogIn className="h-4 w-4" />
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleMinimize}
-                className="text-white/80 hover:text-white hover:bg-blue-500/20 p-1 h-6 w-6 sm:h-7 sm:w-7"
-              >
-                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
+              {onToggleMinimize && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleMinimize}
+                  className="text-white/80 hover:text-white hover:bg-blue-500/20 p-1 h-6 w-6 sm:h-7 sm:w-7"
+                >
+                  <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              )}
             </div>
           )}
           {isMinimized && (
             <div className="absolute top-2 right-2 flex items-center gap-1">
-              {onLoginClick && (
+              {shouldShowLoginButton && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onLoginClick}
-                  className="text-white/60 hover:text-white hover:bg-blue-500/20 p-1 h-5 w-5 opacity-70 hover:opacity-100 transition-opacity"
+                  className="text-white/70 hover:text-white hover:bg-blue-500/20 p-1 h-6 w-6 opacity-80 hover:opacity-100 transition-all"
                   title="Login"
                 >
-                  <LogIn className="h-3 w-3" />
+                  <LogIn className="h-4 w-4" />
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleMinimize}
-                className="text-white/80 hover:text-white hover:bg-blue-500/20 p-1 h-6 w-6"
-              >
-                <ChevronRight className="h-3 w-3" />
-              </Button>
+              {onToggleMinimize && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleMinimize}
+                  className="text-white/80 hover:text-white hover:bg-blue-500/20 p-1 h-6 w-6"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              )}
             </div>
           )}
         </div>
