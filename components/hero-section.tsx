@@ -20,9 +20,17 @@ interface HeroSectionProps {
   onStartTraining: () => void;
 }
 
+import { ParticlesBackground } from "@/components/particles-background";
+
 export default function HeroSection({ onStartTraining }: HeroSectionProps) {
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden scroll-smooth">
+      {/* Particles Background */}
+      <ParticlesBackground
+        particleCount={80}
+        speed={0.4}
+        color="rgba(59, 130, 246, 0.4)"
+      />
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]" />
 
@@ -47,7 +55,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-6">
+      <nav className="relative z-20 flex items-center justify-center px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex items-center space-x-4 sm:space-x-6 md:space-x-8">
           <a
             href="#inicio"
@@ -71,7 +79,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       </nav>
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-120px)] px-6 text-center">
+      <div className="relative z-20 flex flex-col items-center justify-center min-h-[calc(100vh-120px)] px-6 text-center">
         {/* Category Label */}
         <div className="mb-4">
           <span className="text-sm font-medium text-blue-300 uppercase tracking-wider">
