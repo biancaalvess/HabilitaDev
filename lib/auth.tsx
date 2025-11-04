@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Error verifying token:", error);
         localStorage.removeItem("habilitadev_token");
+        localStorage.removeItem("habilitadev_refresh_token");
         setLoading(false);
       }
     } else {
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData.user);
       } else {
         localStorage.removeItem("habilitadev_token");
+        localStorage.removeItem("habilitadev_refresh_token");
       }
     } catch (error) {
       console.error("Token verification failed:", error);
@@ -162,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       localStorage.removeItem("habilitadev_token");
+      localStorage.removeItem("habilitadev_refresh_token");
     }
   };
 

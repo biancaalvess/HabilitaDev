@@ -7,13 +7,6 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth";
 
@@ -62,110 +55,128 @@ export function RegisterForm({
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle>Criar Conta</CardTitle>
-        <CardDescription>Crie sua conta para começar a treinar</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-white mb-2">Criar Conta</h2>
+        <p className="text-white/60 text-sm">Crie sua conta para começar a treinar</p>
+      </div>
+      <div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+            <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 mb-4">
+              <AlertDescription className="text-red-400">{error}</AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="username">Nome de usuário</Label>
-            <Input
-              id="username"
-              type="text"
-              placeholder="seuusuario"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={loading}
-              className="bg-muted/50"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              className="bg-muted/50"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <div className="relative">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-white/80">
+                Nome de usuário
+              </Label>
               <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="seuusuario"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 disabled={loading}
-                className="bg-muted/50 pr-10"
+                className="bg-slate-700/50 border-slate-600 text-white placeholder:text-white/40 focus:border-blue-400"
+                required
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white/80">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
+                className="bg-slate-700/50 border-slate-600 text-white placeholder:text-white/40 focus:border-blue-400"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-white/80">
+                Senha
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-white/40 focus:border-blue-400 pr-10"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-white/60 hover:text-white"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-white/80">
+                Confirmar senha
+              </Label>
+              <Input
+                id="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                placeholder="Confirme sua senha"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+                className="bg-slate-700/50 border-slate-600 text-white placeholder:text-white/40 focus:border-blue-400"
+                required
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-6"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Criando conta...
+                </>
+              ) : (
+                "Criar conta"
+              )}
+            </Button>
+
+            <div className="text-center text-sm">
+              <span className="text-white/60">Já tem uma conta? </span>
+              <button
+                type="button"
+                onClick={onSwitchToLogin}
+                className="text-blue-400 hover:text-blue-300 hover:underline font-medium"
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
+                Entrar
+              </button>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar senha</Label>
-            <Input
-              id="confirmPassword"
-              type={showPassword ? "text" : "password"}
-              placeholder="Confirme sua senha"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
-              className="bg-muted/50"
-            />
-          </div>
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Criando conta...
-              </>
-            ) : (
-              "Criar conta"
-            )}
-          </Button>
-
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">Já tem uma conta? </span>
-            <Button
-              variant="link"
-              className="p-0 h-auto"
-              onClick={onSwitchToLogin}
-            >
-              Entrar
-            </Button>
-          </div>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
