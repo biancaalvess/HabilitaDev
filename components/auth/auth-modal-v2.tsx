@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { LoginModalPT } from "./login-modal-pt";
 import { RegisterForm } from "./register-form";
 
@@ -38,6 +38,7 @@ export function AuthModalV2({ isOpen, onClose }: AuthModalV2Props) {
       ) : (
         <Dialog open={isOpen} onOpenChange={onClose}>
           <DialogContent className="sm:max-w-md bg-slate-800/95 backdrop-blur-sm border border-blue-400/20 p-0 gap-0">
+            <DialogTitle className="sr-only">Criar Conta</DialogTitle>
             <div className="p-6 sm:p-8">
               <RegisterForm
                 onSuccess={handleSuccess}

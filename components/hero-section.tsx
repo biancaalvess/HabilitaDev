@@ -67,7 +67,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
       <nav className="relative z-20 flex items-center px-4 sm:px-6 py-4 sm:py-6">
         {/* Espaço vazio à esquerda para balancear */}
         <div className="flex-1"></div>
-        
+
         {/* Links centralizados */}
         <div className="flex items-center space-x-4 sm:space-x-6 md:space-x-8">
           <a
@@ -89,7 +89,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             Sobre
           </a>
         </div>
-        
+
         {/* Login Button - Canto direito */}
         <div className="flex-1 flex justify-end items-center">
           {user ? (
@@ -102,7 +102,7 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
               className="text-white/80 hover:text-white hover:bg-blue-500/20 transition-colors flex items-center gap-2"
             >
               <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">Entrar</span>
+              <span className="hidden sm:inline">Login</span>
             </Button>
           )}
         </div>

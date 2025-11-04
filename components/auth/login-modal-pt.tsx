@@ -5,7 +5,7 @@ import { X, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth";
 import { config } from "@/lib/config-simple";
@@ -75,6 +75,7 @@ export function LoginModalPT({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-slate-800/95 backdrop-blur-sm border border-blue-400/20 p-0 gap-0">
+        <DialogTitle className="sr-only">Login</DialogTitle>
         <div className="p-6 sm:p-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
