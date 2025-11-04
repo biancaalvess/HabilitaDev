@@ -55,38 +55,40 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <Button variant="ghost" onClick={onBack} className="mb-4">
+    <div className="max-w-4xl mx-auto px-2 sm:px-4">
+      <div className="mb-4 sm:mb-6">
+        <Button variant="ghost" onClick={onBack} className="mb-3 sm:mb-4 text-sm sm:text-base">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar às questões
+          <span className="hidden sm:inline">Voltar às questões</span>
+          <span className="sm:hidden">Voltar</span>
         </Button>
 
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <h1 className="text-3xl font-bold text-balance">{question.title}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-balance flex-1">{question.title}</h1>
           <Badge
             variant="outline"
             className={`${
               DIFFICULTY_COLORS[question.difficulty]
-            } capitalize shrink-0`}
+            } capitalize shrink-0 w-fit`}
           >
             {question.difficulty}
           </Badge>
         </div>
 
-        <div className="flex flex-wrap gap-3 mb-6">
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            {formatDate(question.created_at)}
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+            <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">{formatDate(question.created_at)}</span>
+            <span className="sm:hidden">{new Date(question.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
           </div>
 
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="text-xs">
             <Tag className="w-3 h-3 mr-1" />
             {CATEGORY_LABELS[question.category]}
           </Badge>
 
           {question.company && (
-            <Badge variant="outline">
+            <Badge variant="outline" className="text-xs">
               <Building2 className="w-3 h-3 mr-1" />
               {question.company}
             </Badge>
@@ -94,17 +96,17 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
         </div>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
               Descrição do Problema
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0">
             <div className="prose prose-invert max-w-none">
-              <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+              <p className="text-foreground leading-relaxed whitespace-pre-wrap text-sm sm:text-base">
                 {question.description}
               </p>
             </div>
@@ -119,19 +121,19 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
                   <Check className="h-5 w-5" />
                   Solução
                 </CardTitle>
-                <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                <Button variant="outline" size="sm" onClick={copyToClipboard} className="text-xs sm:text-sm">
                   {copied ? (
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   ) : (
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   )}
                   {copied ? "Copiado!" : "Copiar"}
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="bg-muted/50 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-                <pre className="whitespace-pre-wrap text-foreground">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="bg-muted/50 rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm overflow-x-auto">
+                <pre className="whitespace-pre-wrap text-foreground break-words">
                   {question.answer}
                 </pre>
               </div>
@@ -172,8 +174,8 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
 
         <AnswerList questionId={question.id} />
 
-        <div className="flex justify-center gap-3">
-          <Button onClick={() => setShowCommentForm(true)} variant="outline">
+        <div className="flex justify-center gap-2 sm:gap-3">
+          <Button onClick={() => setShowCommentForm(true)} variant="outline" className="w-full sm:w-auto text-sm sm:text-base">
             <MessageSquare className="h-4 w-4 mr-2" />
             Comentar
           </Button>
@@ -184,7 +186,7 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
         <CommentList questionId={question.id} />
 
         <div className="flex justify-center">
-          <Button onClick={() => setShowFeedbackForm(true)} variant="outline">
+          <Button onClick={() => setShowFeedbackForm(true)} variant="outline" className="w-full sm:w-auto text-sm sm:text-base">
             <MessageSquare className="h-4 w-4 mr-2" />
             Enviar Feedback
           </Button>
