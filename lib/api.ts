@@ -114,8 +114,10 @@ class ApiService {
         processedData = data;
       }
       
-      // Armazenar no cache
-      cacheService.set(cacheKey, processedData, 5 * 60 * 1000); // 5 minutos
+      // Armazenar no cache (apenas para GET requests)
+      if (!options.method || options.method === 'GET') {
+        cacheService.set(cacheKey, processedData, 5 * 60 * 1000); // 5 minutos
+      }
       
       return {
         success: true,

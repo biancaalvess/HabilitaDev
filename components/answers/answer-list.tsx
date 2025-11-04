@@ -19,23 +19,55 @@ export function AnswerList({ questionId }: AnswerListProps) {
   const [copiedAnswerId, setCopiedAnswerId] = useState<number | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchAnswers = async () => {
+      if (!isMounted) return;
+      
       try {
         setLoading(true);
         setError(null);
         const { apiService } = await import("@/lib/api");
         const response = await apiService.getAnswers(questionId);
-        setAnswers(response.data || []);
+        if (isMounted) {
+          setAnswers(response.data || []);
+        }
       } catch (error) {
         console.error("Error fetching answers:", error);
-        setError("Erro ao carregar respostas");
-        setAnswers([]);
+        if (isMounted) {
+          setError("Erro ao carregar respostas");
+          setAnswers([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchAnswers();
+    
+    // Ouvir eventos de criação de respostas
+    const handleAnswerCreated = () => {
+      if (isMounted) {
+        fetchAnswers();
+      }
+    };
+    
+    window.addEventListener('answer-created', handleAnswerCreated);
+    
+    // Recarregar respostas a cada 10 segundos para pegar novas respostas
+    const interval = setInterval(() => {
+      if (isMounted) {
+        fetchAnswers();
+      }
+    }, 10000);
+    
+    return () => {
+      isMounted = false;
+      window.removeEventListener('answer-created', handleAnswerCreated);
+      clearInterval(interval);
+    };
   }, [questionId]);
 
   const formatDate = (dateString: string) => {

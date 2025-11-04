@@ -48,17 +48,27 @@ export function FeedbackList({ questionId }: FeedbackListProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchFeedbacks = async () => {
+      if (!isMounted) return;
+      
       try {
         setLoading(true);
         const { apiService } = await import("@/lib/api");
         const response = await apiService.getFeedback(questionId);
-        setFeedbacks(response.data || []);
+        if (isMounted) {
+          setFeedbacks(response.data || []);
+        }
       } catch (error) {
         console.error("Error fetching feedbacks:", error);
-        setFeedbacks([]);
+        if (isMounted) {
+          setFeedbacks([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -66,15 +76,22 @@ export function FeedbackList({ questionId }: FeedbackListProps) {
     
     // Ouvir eventos de criação de feedbacks
     const handleFeedbackCreated = () => {
-      fetchFeedbacks();
+      if (isMounted) {
+        fetchFeedbacks();
+      }
     };
     
     window.addEventListener('feedback-created', handleFeedbackCreated);
     
     // Recarregar feedbacks a cada 10 segundos para pegar novos feedbacks
-    const interval = setInterval(fetchFeedbacks, 10000);
+    const interval = setInterval(() => {
+      if (isMounted) {
+        fetchFeedbacks();
+      }
+    }, 10000);
     
     return () => {
+      isMounted = false;
       window.removeEventListener('feedback-created', handleFeedbackCreated);
       clearInterval(interval);
     };

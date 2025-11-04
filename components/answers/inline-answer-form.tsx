@@ -81,6 +81,10 @@ export function InlineAnswerForm({
         setShowValidation(true);
         setContent("");
         setAuthorName("");
+        
+        // Disparar evento customizado para recarregar respostas
+        window.dispatchEvent(new CustomEvent('answer-created'));
+        
         // Não chamar onSuccess imediatamente, aguardar validação
       } else {
         setError("Erro ao enviar resposta. Tente novamente.");

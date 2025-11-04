@@ -38,17 +38,27 @@ export function CommentList({ questionId }: CommentListProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchComments = async () => {
+      if (!isMounted) return;
+      
       try {
         setLoading(true);
         const { apiService } = await import("@/lib/api");
         const response = await apiService.getComments(questionId);
-        setComments(response.data || []);
+        if (isMounted) {
+          setComments(response.data || []);
+        }
       } catch (error) {
         console.error("Error fetching comments:", error);
-        setComments([]);
+        if (isMounted) {
+          setComments([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -56,15 +66,22 @@ export function CommentList({ questionId }: CommentListProps) {
     
     // Ouvir eventos de criação de comentários
     const handleCommentCreated = () => {
-      fetchComments();
+      if (isMounted) {
+        fetchComments();
+      }
     };
     
     window.addEventListener('comment-created', handleCommentCreated);
     
     // Recarregar comentários a cada 10 segundos para pegar novos comentários
-    const interval = setInterval(fetchComments, 10000);
+    const interval = setInterval(() => {
+      if (isMounted) {
+        fetchComments();
+      }
+    }, 10000);
     
     return () => {
+      isMounted = false;
       window.removeEventListener('comment-created', handleCommentCreated);
       clearInterval(interval);
     };
