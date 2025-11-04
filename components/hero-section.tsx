@@ -16,11 +16,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+import { ParticlesBackground } from "@/components/particles-background";
+
 interface HeroSectionProps {
   onStartTraining: () => void;
 }
-
-import { ParticlesBackground } from "@/components/particles-background";
 
 export default function HeroSection({ onStartTraining }: HeroSectionProps) {
   return (
