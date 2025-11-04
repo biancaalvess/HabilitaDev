@@ -171,7 +171,11 @@ class DatabaseService {
 
   async getQuestions(): Promise<Question[]> {
     if (!this.db) return []; // Retorna array vazio se DB não disponível
-    return this.db.all<Question[]>('SELECT * FROM questions');
+    const questions = await this.db.all<Question[]>('SELECT * FROM questions ORDER BY created_at DESC');
+    return questions.map(q => ({
+      ...q,
+      tags: q.tags ? (typeof q.tags === 'string' ? JSON.parse(q.tags) : q.tags) : [],
+    }));
   }
 
   async getQuestionById(id: number): Promise<Question | undefined> {
