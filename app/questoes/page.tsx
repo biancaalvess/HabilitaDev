@@ -27,7 +27,6 @@ export default function QuestoesPage() {
 
   const { questions, loading, error, isOffline, refresh } = useOptimizedQuestions({
     enableCache: true,
-    enableMockFallback: true,
   });
 
   const filteredQuestions = useMemo(() => {
