@@ -38,8 +38,14 @@ export function ParticlesBackground({
 
     // Ajustar canvas para tamanho da tela
     const resizeCanvas = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width || window.innerWidth;
+      canvas.height = rect.height || window.innerHeight;
+      
+      // Recriar partículas se necessário
+      if (particlesRef.current.length === 0) {
+        createParticles();
+      }
     };
 
     resizeCanvas();
@@ -60,10 +66,13 @@ export function ParticlesBackground({
         window.innerWidth < 768 ? 30 : window.innerWidth < 1024 ? 40 : particleCount
       );
 
+      const width = canvas.width || window.innerWidth;
+      const height = canvas.height || window.innerHeight;
+
       for (let i = 0; i < count; i++) {
         particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
+          x: Math.random() * width,
+          y: Math.random() * height,
           vx: (Math.random() - 0.5) * speed,
           vy: (Math.random() - 0.5) * speed,
           radius: Math.random() * 2 + 1,
@@ -73,8 +82,6 @@ export function ParticlesBackground({
 
       particlesRef.current = particles;
     };
-
-    createParticles();
 
     // Animar partículas
     const animate = () => {
@@ -152,10 +159,12 @@ export function ParticlesBackground({
   return (
     <canvas
       ref={canvasRef}
-      className={`absolute inset-0 pointer-events-none ${className}`}
+      className={`fixed inset-0 w-full h-full pointer-events-none ${className}`}
       style={{
         zIndex: 0,
         willChange: "transform",
+        width: "100%",
+        height: "100%",
       }}
       aria-hidden="true"
     />
