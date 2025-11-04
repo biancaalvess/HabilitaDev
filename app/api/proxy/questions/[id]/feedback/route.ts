@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { config } from '@/lib/config-simple';
+import { databaseService } from '@/lib/database-simple';
 import { mockFeedback } from '@/lib/mock-data';
 
 const BACKEND_URL = config.api.backendUrl;
@@ -45,7 +46,30 @@ export async function GET(
       console.warn('⚠️ Backend unavailable for feedback:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    // 2. Usar dados mock como fallback
+    // 2. Tentar buscar do banco local
+    try {
+      console.log('💾 Attempting to fetch feedback from local database');
+      await databaseService.connect();
+      const localFeedback = await databaseService.getFeedback(parseInt(questionId));
+      
+      if (localFeedback && localFeedback.length > 0) {
+        console.log('✅ Successfully fetched feedback from local database');
+        
+        return NextResponse.json(localFeedback, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'local-database',
+          },
+        });
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Local database unavailable for feedback:', dbError instanceof Error ? dbError.message : 'Unknown error');
+    }
+
+    // 3. Usar dados mock como último recurso
     console.log('📦 Using mock feedback data');
     const filteredFeedback = mockFeedback.filter(feedback => feedback.question_id === parseInt(questionId));
     
@@ -123,31 +147,62 @@ export async function POST(
       console.warn('⚠️ Backend unavailable for feedback post:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    // 2. Simular resposta de sucesso
-    console.log('📦 Simulating successful feedback post');
-    
-    return NextResponse.json(
-      { 
+    // 2. Salvar no banco local
+    try {
+      console.log('💾 Saving feedback to local database');
+      await databaseService.connect();
+      const newFeedback = await databaseService.createFeedback({
+        question_id: parseInt(questionId),
+        feedback_type: body.feedback_type,
+        content: body.content,
+        status: body.status || 'pending',
+        user_id: body.user_id || undefined,
+      });
+      
+      console.log('✅ Successfully saved feedback to local database');
+      
+      return NextResponse.json({
         success: true,
-        message: 'Feedback posted successfully (offline mode)',
-        data: {
-          id: Date.now(),
-          question_id: parseInt(questionId),
-          ...body,
-          created_at: new Date().toISOString(),
-          status: 'pending',
-        }
-      },
-      {
+        message: 'Feedback posted successfully',
+        data: newFeedback,
+      }, {
         status: 201,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'X-Data-Source': 'mock-simulation',
+          'X-Data-Source': 'local-database',
         },
-      }
-    );
+      });
+    } catch (dbError) {
+      console.warn('⚠️ Local database unavailable for feedback post:', dbError instanceof Error ? dbError.message : 'Unknown error');
+      
+      // 3. Simular resposta de sucesso como último recurso
+      console.log('📦 Simulating successful feedback post');
+      
+      return NextResponse.json(
+        { 
+          success: true,
+          message: 'Feedback posted successfully (offline mode)',
+          data: {
+            id: Date.now(),
+            question_id: parseInt(questionId),
+            ...body,
+            created_at: new Date().toISOString(),
+            status: 'pending',
+          }
+        },
+        {
+          status: 201,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'mock-simulation',
+          },
+        }
+      );
+    }
 
   } catch (error) {
     console.error('❌ Error posting feedback:', error);

@@ -107,24 +107,76 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const response = await fetch(`${BACKEND_URL}/api/v1/questions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
-    });
+    // 1. Tentar enviar para o backend externo
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/v1/questions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully created question on backend');
+        
+        return NextResponse.json(data, {
+          status: 201,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        console.warn(`⚠️ Backend returned ${response.status} for question creation`);
+      }
+    } catch (backendError) {
+      console.warn('⚠️ Backend unavailable for question creation:', backendError instanceof Error ? backendError.message : 'Unknown error');
+    }
+
+    // 2. Salvar no banco local
+    try {
+      console.log('💾 Saving question to local database');
+      await databaseService.connect();
+      const newQuestion = await databaseService.createQuestion({
+        title: body.title,
+        description: body.description || body.title,
+        answer: body.answer || '',
+        difficulty: body.difficulty,
+        category: body.category,
+        company: body.company,
+        tags: body.tags || [],
+      });
+      
+      console.log('✅ Successfully saved question to local database');
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Question created successfully',
+        data: newQuestion,
+      }, {
+        status: 201,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'X-Data-Source': 'local-database',
+        },
+      });
+    } catch (dbError) {
+      console.warn('⚠️ Local database unavailable for question creation:', dbError instanceof Error ? dbError.message : 'Unknown error');
+      
       return NextResponse.json({
         success: false,
         error: 'Falha ao criar questão',
-        message: `Backend respondeu com status: ${response.status}`,
-        details: errorText
+        message: 'Não foi possível salvar a questão. Tente novamente mais tarde.',
+        details: dbError instanceof Error ? dbError.message : 'Unknown error'
       }, {
-        status: response.status,
+        status: 503,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -132,19 +184,8 @@ export async function POST(request: NextRequest) {
         },
       });
     }
-
-    const data = await response.json();
-    
-    return NextResponse.json(data, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('❌ Error creating question:', error);
     return NextResponse.json({
       success: false,
       error: 'Falha na conexão com o backend',

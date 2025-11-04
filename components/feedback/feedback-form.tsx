@@ -76,6 +76,10 @@ export function FeedbackForm({
         setSuccess(true);
         setContent("");
         setFeedbackType("");
+        
+        // Disparar evento customizado para recarregar feedbacks
+        window.dispatchEvent(new CustomEvent('feedback-created'));
+        
         setTimeout(() => {
           setSuccess(false);
           onClose();

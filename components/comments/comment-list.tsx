@@ -53,6 +53,21 @@ export function CommentList({ questionId }: CommentListProps) {
     };
 
     fetchComments();
+    
+    // Ouvir eventos de criação de comentários
+    const handleCommentCreated = () => {
+      fetchComments();
+    };
+    
+    window.addEventListener('comment-created', handleCommentCreated);
+    
+    // Recarregar comentários a cada 10 segundos para pegar novos comentários
+    const interval = setInterval(fetchComments, 10000);
+    
+    return () => {
+      window.removeEventListener('comment-created', handleCommentCreated);
+      clearInterval(interval);
+    };
   }, [questionId]);
 
   const formatDate = (dateString: string) => {

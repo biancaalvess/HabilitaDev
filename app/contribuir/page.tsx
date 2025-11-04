@@ -99,6 +99,9 @@ export default function ContribuirPage() {
         alert(
           "Questão enviada com sucesso! Obrigado pela contribuição. Ela será revisada antes de ser publicada."
         );
+        
+        // Disparar evento para recarregar questões
+        window.dispatchEvent(new CustomEvent('question-created'));
       } else {
         alert("Erro ao enviar questão. Tente novamente.");
       }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { config } from '@/lib/config-simple';
+import { databaseService } from '@/lib/database-simple';
 import { mockComments } from '@/lib/mock-data';
 
 const BACKEND_URL = config.api.backendUrl;
@@ -45,7 +46,30 @@ export async function GET(
       console.warn('⚠️ Backend unavailable for comments:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    // 2. Usar dados mock como fallback
+    // 2. Tentar buscar do banco local
+    try {
+      console.log('💾 Attempting to fetch comments from local database');
+      await databaseService.connect();
+      const localComments = await databaseService.getComments(parseInt(questionId));
+      
+      if (localComments && localComments.length > 0) {
+        console.log('✅ Successfully fetched comments from local database');
+        
+        return NextResponse.json(localComments, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'local-database',
+          },
+        });
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Local database unavailable for comments:', dbError instanceof Error ? dbError.message : 'Unknown error');
+    }
+
+    // 3. Usar dados mock como último recurso
     console.log('📦 Using mock comments data');
     const filteredComments = mockComments.filter(comment => comment.question_id === parseInt(questionId));
     
@@ -123,30 +147,60 @@ export async function POST(
       console.warn('⚠️ Backend unavailable for comment post:', backendError instanceof Error ? backendError.message : 'Unknown error');
     }
 
-    // 2. Simular resposta de sucesso
-    console.log('📦 Simulating successful comment post');
-    
-    return NextResponse.json(
-      { 
+    // 2. Salvar no banco local
+    try {
+      console.log('💾 Saving comment to local database');
+      await databaseService.connect();
+      const newComment = await databaseService.createComment({
+        question_id: parseInt(questionId),
+        author_name: body.author_name || 'Anônimo',
+        comment_type: body.comment_type,
+        content: body.content,
+      });
+      
+      console.log('✅ Successfully saved comment to local database');
+      
+      return NextResponse.json({
         success: true,
-        message: 'Comment posted successfully (offline mode)',
-        data: {
-          id: Date.now(),
-          question_id: parseInt(questionId),
-          ...body,
-          created_at: new Date().toISOString(),
-        }
-      },
-      {
+        message: 'Comment posted successfully',
+        data: newComment,
+      }, {
         status: 201,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'X-Data-Source': 'mock-simulation',
+          'X-Data-Source': 'local-database',
         },
-      }
-    );
+      });
+    } catch (dbError) {
+      console.warn('⚠️ Local database unavailable for comment post:', dbError instanceof Error ? dbError.message : 'Unknown error');
+      
+      // 3. Simular resposta de sucesso como último recurso
+      console.log('📦 Simulating successful comment post');
+      
+      return NextResponse.json(
+        { 
+          success: true,
+          message: 'Comment posted successfully (offline mode)',
+          data: {
+            id: Date.now(),
+            question_id: parseInt(questionId),
+            ...body,
+            created_at: new Date().toISOString(),
+          }
+        },
+        {
+          status: 201,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'mock-simulation',
+          },
+        }
+      );
+    }
 
   } catch (error) {
     console.error('❌ Error posting comment:', error);

@@ -63,6 +63,21 @@ export function FeedbackList({ questionId }: FeedbackListProps) {
     };
 
     fetchFeedbacks();
+    
+    // Ouvir eventos de criação de feedbacks
+    const handleFeedbackCreated = () => {
+      fetchFeedbacks();
+    };
+    
+    window.addEventListener('feedback-created', handleFeedbackCreated);
+    
+    // Recarregar feedbacks a cada 10 segundos para pegar novos feedbacks
+    const interval = setInterval(fetchFeedbacks, 10000);
+    
+    return () => {
+      window.removeEventListener('feedback-created', handleFeedbackCreated);
+      clearInterval(interval);
+    };
   }, [questionId]);
 
   const formatDate = (dateString: string) => {

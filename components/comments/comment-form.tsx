@@ -87,6 +87,10 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
         setContent("");
         setAuthorName("");
         setCommentType("");
+        
+        // Disparar evento customizado para recarregar comentários
+        window.dispatchEvent(new CustomEvent('comment-created'));
+        
         setTimeout(() => {
           setSuccess(false);
           onClose();

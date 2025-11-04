@@ -25,6 +25,25 @@ interface Question {
   approved: boolean;
 }
 
+interface Comment {
+  id: number;
+  question_id: number;
+  author_name: string;
+  comment_type: 'correction' | 'suggestion';
+  content: string;
+  created_at: string;
+}
+
+interface Feedback {
+  id: number;
+  question_id: number;
+  feedback_type: 'correction' | 'suggestion' | 'improvement';
+  content: string;
+  status: 'pending' | 'reviewed' | 'implemented';
+  user_id?: number;
+  created_at: string;
+}
+
 class DatabaseService {
   private db: Database | null = null;
 
@@ -82,6 +101,27 @@ class DatabaseService {
         tags TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         approved BOOLEAN DEFAULT FALSE
+      );
+
+      CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER NOT NULL,
+        author_name TEXT NOT NULL,
+        comment_type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER NOT NULL,
+        feedback_type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        user_id INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
       );
     `);
   }
@@ -157,6 +197,51 @@ class DatabaseService {
     const newQuestion = await this.getQuestionById(id);
     if (!newQuestion) throw new Error('Failed to retrieve new question');
     return newQuestion;
+  }
+
+  // Comments methods
+  async getComments(questionId: number): Promise<Comment[]> {
+    if (!this.db) return [];
+    return this.db.all<Comment[]>('SELECT * FROM comments WHERE question_id = ? ORDER BY created_at DESC', questionId);
+  }
+
+  async createComment(commentData: Omit<Comment, 'id' | 'created_at'>): Promise<Comment> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    const result = await this.db.run(
+      'INSERT INTO comments (question_id, author_name, comment_type, content) VALUES (?, ?, ?, ?)',
+      commentData.question_id,
+      commentData.author_name,
+      commentData.comment_type,
+      commentData.content
+    );
+    const id = result.lastID;
+    if (!id) throw new Error('Failed to create comment');
+    const newComment = await this.db.get<Comment>('SELECT * FROM comments WHERE id = ?', id);
+    if (!newComment) throw new Error('Failed to retrieve new comment');
+    return newComment;
+  }
+
+  // Feedback methods
+  async getFeedback(questionId: number): Promise<Feedback[]> {
+    if (!this.db) return [];
+    return this.db.all<Feedback[]>('SELECT * FROM feedback WHERE question_id = ? ORDER BY created_at DESC', questionId);
+  }
+
+  async createFeedback(feedbackData: Omit<Feedback, 'id' | 'created_at'>): Promise<Feedback> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    const result = await this.db.run(
+      'INSERT INTO feedback (question_id, feedback_type, content, status, user_id) VALUES (?, ?, ?, ?, ?)',
+      feedbackData.question_id,
+      feedbackData.feedback_type,
+      feedbackData.content,
+      feedbackData.status || 'pending',
+      feedbackData.user_id || null
+    );
+    const id = result.lastID;
+    if (!id) throw new Error('Failed to create feedback');
+    const newFeedback = await this.db.get<Feedback>('SELECT * FROM feedback WHERE id = ?', id);
+    if (!newFeedback) throw new Error('Failed to retrieve new feedback');
+    return newFeedback;
   }
 }
 
