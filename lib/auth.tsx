@@ -101,13 +101,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setUser(data.user);
-        localStorage.setItem("habilitadev_token", data.token);
+        setUser(data.data?.user || data.user);
+        localStorage.setItem("habilitadev_token", data.data?.token || data.token);
         setLoading(false);
         return { success: true };
       } else {
         setLoading(false);
-        return { success: false, error: data.error || "Erro no login" };
+        // Extrair mensagem do objeto de erro ou usar fallback
+        const errorMessage = 
+          (typeof data.error === 'object' && data.error?.message) ||
+          data.message ||
+          data.error ||
+          "Erro no login";
+        return { success: false, error: String(errorMessage) };
       }
     } catch (error) {
       setLoading(false);
@@ -134,13 +140,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setUser(data.user);
-        localStorage.setItem("habilitadev_token", data.token);
+        setUser(data.data?.user || data.user);
+        localStorage.setItem("habilitadev_token", data.data?.token || data.token);
         setLoading(false);
         return { success: true };
       } else {
         setLoading(false);
-        return { success: false, error: data.error || "Erro no registro" };
+        // Extrair mensagem do objeto de erro ou usar fallback
+        const errorMessage = 
+          (typeof data.error === 'object' && data.error?.message) ||
+          data.message ||
+          data.error ||
+          "Erro no registro";
+        return { success: false, error: String(errorMessage) };
       }
     } catch (error) {
       setLoading(false);
