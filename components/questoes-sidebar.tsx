@@ -46,8 +46,8 @@ export function QuestoesSidebar({
   return (
     <div
       className={`${
-        isMinimized ? "w-16 sm:w-18 lg:w-20" : "w-56 sm:w-64 lg:w-72"
-      } bg-slate-900/80 backdrop-blur-sm border-r border-blue-400/20 min-h-screen transition-all duration-300`}
+        isMinimized ? "w-16 sm:w-18 lg:w-20" : "w-full md:w-56 lg:w-64 xl:w-72"
+      } bg-slate-900/80 backdrop-blur-sm md:border-r border-blue-400/20 md:min-h-screen transition-all duration-300`}
     >
       <div className={`${isMinimized ? "p-4 sm:p-5" : "p-3 sm:p-4 lg:p-6"}`}>
         {/* Header com botão de toggle */}

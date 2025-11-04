@@ -9,6 +9,8 @@ import { QuestionDetail } from "@/components/question-detail";
 import { useOptimizedQuestions } from "@/hooks/use-optimized-questions";
 import type { QuestionFilter, Question } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, Filter } from "lucide-react";
 
 export default function QuestoesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,6 +23,7 @@ export default function QuestoesPage() {
   );
   const [showFeedback, setShowFeedback] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { questions, loading, error, isOffline, refresh } = useOptimizedQuestions({
     enableCache: true,
@@ -183,6 +186,45 @@ export default function QuestoesPage() {
 
         <div className="flex-1 flex flex-col w-full md:w-auto">
           <QuestoesHeader />
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden px-4 pt-4 flex items-center justify-between">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="bg-slate-800/50 border-blue-400/20 text-white">
+                  <Menu className="h-4 w-4 mr-2" />
+                  <Filter className="h-4 w-4 mr-2" />
+                  Categorias
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-slate-900/95 backdrop-blur-sm border-blue-400/20 w-72">
+                <SheetHeader>
+                  <SheetTitle className="text-white">Categorias</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
+                  <QuestoesSidebar
+                    selectedCategory={selectedCategory}
+                    onCategorySelect={(cat) => {
+                      setSelectedCategory(cat);
+                      setMobileMenuOpen(false);
+                    }}
+                    isMinimized={false}
+                    onToggleMinimize={() => {}}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+            {selectedCategory && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedCategory(undefined)}
+                className="text-white/80 hover:text-white"
+              >
+                Limpar filtro
+              </Button>
+            )}
+          </div>
 
           <main className="flex-1 p-4 sm:p-6 lg:p-8">
             <div className="mb-6 sm:mb-8">
