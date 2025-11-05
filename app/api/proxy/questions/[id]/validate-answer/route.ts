@@ -62,6 +62,13 @@ export async function POST(
     }
 
     // Fallback: usar backend tradicional
+    if (!BACKEND_URL) {
+      return NextResponse.json(
+        { error: 'Backend não configurado. Configure BACKEND_URL no .env' },
+        { status: 503 }
+      );
+    }
+
     console.log(`[AI VALIDATION] Tentando backend tradicional: ${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`);
     
     const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`, {
