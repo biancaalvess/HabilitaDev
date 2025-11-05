@@ -25,6 +25,16 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
+  webpack: (config, { isServer }) => {
+    // Ignorar sqlite3 durante o build (não disponível em ambientes serverless)
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'sqlite3': 'commonjs sqlite3',
+      });
+    }
+    return config;
+  },
   // ✅ SOLUÇÃO CORRETA: Rewrite /api/v1/* para /api/proxy/*
   async rewrites() {
     return [

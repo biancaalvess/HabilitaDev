@@ -70,12 +70,20 @@ class DatabaseService {
         return;
       }
 
-      // Importação dinâmica do sqlite3 apenas quando necessário (não durante build)
-      const sqlite3 = await import('sqlite3');
+      // Evitar importação durante build - usar require dinâmico
+      // Isso previne webpack de tentar resolver o módulo durante o build
+      let sqlite3: any;
+      try {
+        // Usar require em vez de import para evitar análise estática do webpack
+        sqlite3 = eval('require')('sqlite3');
+      } catch (requireError) {
+        console.warn('⚠️ sqlite3 não disponível:', requireError instanceof Error ? requireError.message : 'Unknown error');
+        return;
+      }
       
       this.db = await open({
         filename: config.database.url.replace('file:', ''),
-        driver: sqlite3.default.Database,
+        driver: sqlite3.Database,
       });
 
       await this.createTables();
