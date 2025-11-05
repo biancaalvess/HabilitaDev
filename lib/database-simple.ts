@@ -74,8 +74,12 @@ class DatabaseService {
       // Isso previne webpack de tentar resolver o módulo durante o build
       let sqlite3: any;
       try {
-        // Usar require em vez de import para evitar análise estática do webpack
-        sqlite3 = eval('require')('sqlite3');
+        // Usar require dinâmico para evitar análise estática do webpack
+        // O webpack não consegue analisar strings dinâmicas
+        const requireFunc = typeof require !== 'undefined' ? require : (() => {
+          throw new Error('require is not available');
+        });
+        sqlite3 = requireFunc('sqlite3');
       } catch (requireError) {
         console.warn('⚠️ sqlite3 não disponível:', requireError instanceof Error ? requireError.message : 'Unknown error');
         return;
