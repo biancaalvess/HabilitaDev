@@ -1,8 +1,11 @@
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { databaseService } from '@/lib/database-simple';
 import { config, validateConfig } from '@/lib/config-simple';
 import { generateJWT } from '@/lib/jwt-helper';
+import { emailService } from '@/lib/email-service';
+import { getVerificationEmailTemplate } from '@/lib/email-templates';
 import { 
   createSuccessResponse, 
   handleApiError, 
@@ -51,6 +54,26 @@ export async function POST(request: NextRequest) {
       role: 'user',
     });
 
+    // Gerar token de verificação de email
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // Expira em 24 horas
+
+    await databaseService.createEmailVerificationToken(newUser.id, verificationToken, expiresAt);
+
+    // Enviar email de verificação
+    try {
+      const emailTemplate = getVerificationEmailTemplate(verificationToken, newUser.username);
+      await emailService.sendEmail({
+        to: newUser.email,
+        subject: 'Verifique seu email - HabilitaDev',
+        html: emailTemplate,
+      });
+    } catch (emailError) {
+      console.error('Erro ao enviar email de verificação:', emailError);
+      // Não falhar o registro se o email não for enviado
+    }
+
     // Gerar token JWT
     const token = generateJWT(
       { 
@@ -69,8 +92,9 @@ export async function POST(request: NextRequest) {
       {
         user: userWithoutPassword,
         token,
+        email_verification_required: true,
       },
-      'Usuário criado com sucesso',
+      'Conta criada com sucesso! Verifique seu email para confirmar sua conta.',
       201,
       {
         timestamp: new Date().toISOString(),

@@ -142,6 +142,26 @@ class DatabaseService {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
       );
+
+      CREATE TABLE IF NOT EXISTS email_verification_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
     `);
   }
 
@@ -186,6 +206,213 @@ class DatabaseService {
     const newUser = await this.getUserById(id);
     if (!newUser) throw new Error('Failed to retrieve new user');
     return newUser;
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    const updates: string[] = [];
+    const values: any[] = [];
+    
+    if (userData.username) {
+      updates.push('username = ?');
+      values.push(userData.username);
+    }
+    if (userData.email) {
+      updates.push('email = ?');
+      values.push(userData.email);
+    }
+    if (userData.password) {
+      updates.push('password = ?');
+      values.push(userData.password);
+    }
+    if (userData.role) {
+      updates.push('role = ?');
+      values.push(userData.role);
+    }
+    
+    if (updates.length === 0) {
+      const user = await this.getUserById(id);
+      if (!user) throw new Error('User not found');
+      return user;
+    }
+    
+    values.push(id);
+    await this.db.run(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      ...values
+    );
+    
+    const updatedUser = await this.getUserById(id);
+    if (!updatedUser) throw new Error('Failed to retrieve updated user');
+    return updatedUser;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    if (!this.db) return [];
+    return this.db.all<User[]>('SELECT * FROM users ORDER BY created_at DESC');
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    await this.db.run('DELETE FROM users WHERE id = ?', id);
+  }
+
+  // Email verification tokens
+  async createEmailVerificationToken(userId: number, token: string, expiresAt: Date): Promise<void> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    // Invalidar tokens anteriores
+    await this.db.run('UPDATE email_verification_tokens SET used = TRUE WHERE user_id = ?', userId);
+    // Criar novo token
+    await this.db.run(
+      'INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+      userId,
+      token,
+      expiresAt.toISOString()
+    );
+  }
+
+  async getEmailVerificationToken(token: string): Promise<{ user_id: number; expires_at: string; used: boolean } | undefined> {
+    if (!this.db) return undefined;
+    return this.db.get('SELECT user_id, expires_at, used FROM email_verification_tokens WHERE token = ?', token);
+  }
+
+  async markEmailVerificationTokenAsUsed(token: string): Promise<void> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    await this.db.run('UPDATE email_verification_tokens SET used = TRUE WHERE token = ?', token);
+  }
+
+  // Password reset tokens
+  async createPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<void> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    // Invalidar tokens anteriores
+    await this.db.run('UPDATE password_reset_tokens SET used = TRUE WHERE user_id = ?', userId);
+    // Criar novo token
+    await this.db.run(
+      'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+      userId,
+      token,
+      expiresAt.toISOString()
+    );
+  }
+
+  async getPasswordResetToken(token: string): Promise<{ user_id: number; expires_at: string; used: boolean } | undefined> {
+    if (!this.db) return undefined;
+    return this.db.get('SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = ?', token);
+  }
+
+  async markPasswordResetTokenAsUsed(token: string): Promise<void> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    await this.db.run('UPDATE password_reset_tokens SET used = TRUE WHERE token = ?', token);
+  }
+
+  // Questions admin methods
+  async updateQuestion(id: number, questionData: Partial<Question>): Promise<Question> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    const updates: string[] = [];
+    const values: any[] = [];
+    
+    if (questionData.title) {
+      updates.push('title = ?');
+      values.push(questionData.title);
+    }
+    if (questionData.description) {
+      updates.push('description = ?');
+      values.push(questionData.description);
+    }
+    if (questionData.answer) {
+      updates.push('answer = ?');
+      values.push(questionData.answer);
+    }
+    if (questionData.difficulty) {
+      updates.push('difficulty = ?');
+      values.push(questionData.difficulty);
+    }
+    if (questionData.category) {
+      updates.push('category = ?');
+      values.push(questionData.category);
+    }
+    if (questionData.company !== undefined) {
+      updates.push('company = ?');
+      values.push(questionData.company);
+    }
+    if (questionData.tags !== undefined) {
+      updates.push('tags = ?');
+      values.push(JSON.stringify(questionData.tags));
+    }
+    if (questionData.approved !== undefined) {
+      updates.push('approved = ?');
+      values.push(questionData.approved ? 1 : 0);
+    }
+    
+    if (updates.length === 0) {
+      const question = await this.getQuestionById(id);
+      if (!question) throw new Error('Question not found');
+      return question;
+    }
+    
+    values.push(id);
+    await this.db.run(
+      `UPDATE questions SET ${updates.join(', ')} WHERE id = ?`,
+      ...values
+    );
+    
+    const updatedQuestion = await this.getQuestionById(id);
+    if (!updatedQuestion) throw new Error('Failed to retrieve updated question');
+    return {
+      ...updatedQuestion,
+      tags: updatedQuestion.tags ? (typeof updatedQuestion.tags === 'string' ? JSON.parse(updatedQuestion.tags) : updatedQuestion.tags) : [],
+    };
+  }
+
+  async deleteQuestion(id: number): Promise<void> {
+    if (!this.db) throw new Error('Database not available in this environment');
+    await this.db.run('DELETE FROM questions WHERE id = ?', id);
+  }
+
+  async getPendingQuestions(): Promise<Question[]> {
+    if (!this.db) return [];
+    const questions = await this.db.all<Question[]>('SELECT * FROM questions WHERE approved = FALSE ORDER BY created_at DESC');
+    return questions.map(q => ({
+      ...q,
+      tags: q.tags ? (typeof q.tags === 'string' ? JSON.parse(q.tags) : q.tags) : [],
+    }));
+  }
+
+  // Statistics
+  async getStats(): Promise<{
+    totalUsers: number;
+    totalQuestions: number;
+    pendingQuestions: number;
+    approvedQuestions: number;
+    totalFeedback: number;
+    totalAnswers: number;
+  }> {
+    if (!this.db) {
+      return {
+        totalUsers: 0,
+        totalQuestions: 0,
+        pendingQuestions: 0,
+        approvedQuestions: 0,
+        totalFeedback: 0,
+        totalAnswers: 0,
+      };
+    }
+    
+    const totalUsers = await this.db.get<{ count: number }>('SELECT COUNT(*) as count FROM users');
+    const totalQuestions = await this.db.get<{ count: number }>('SELECT COUNT(*) as count FROM questions');
+    const pendingQuestions = await this.db.get<{ count: number }>('SELECT COUNT(*) as count FROM questions WHERE approved = FALSE');
+    const approvedQuestions = await this.db.get<{ count: number }>('SELECT COUNT(*) as count FROM questions WHERE approved = TRUE');
+    const totalFeedback = await this.db.get<{ count: number }>('SELECT COUNT(*) as count FROM feedback');
+    const totalAnswers = await this.db.get<{ count: number }>('SELECT COUNT(*) as count FROM answers');
+    
+    return {
+      totalUsers: totalUsers?.count || 0,
+      totalQuestions: totalQuestions?.count || 0,
+      pendingQuestions: pendingQuestions?.count || 0,
+      approvedQuestions: approvedQuestions?.count || 0,
+      totalFeedback: totalFeedback?.count || 0,
+      totalAnswers: totalAnswers?.count || 0,
+    };
   }
 
   async getQuestions(): Promise<Question[]> {

@@ -105,6 +105,15 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
             </div>
           </div>
 
+          <div className="text-right">
+            <a
+              href="/forgot-password"
+              className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
+            >
+              Esqueceu sua senha?
+            </a>
+          </div>
+
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>

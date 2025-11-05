@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { MoreHorizontal, Eye, Edit, Trash2, Check, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MoreHorizontal, Eye, Edit, Trash2, Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,27 +21,88 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { mockQuestions } from "@/lib/mock-data" // Removido - usando dados da API
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DIFFICULTY_COLORS, CATEGORY_LABELS, Question } from "@/lib/types";
 
 export function QuestionsTable() {
-  // Mock questions - em produção, implementar API real
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const handleApprove = (id: number) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, approved: true } : q))
-    );
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/admin/pending-questions");
+      const data = await response.json();
+      
+      if (data.success) {
+        setQuestions(data.data || []);
+      } else {
+        setError(data.error?.message || "Erro ao carregar questões");
+      }
+    } catch (err) {
+      setError("Erro ao carregar questões");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (id: number) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, approved: false } : q))
-    );
+  const handleApprove = async (id: number) => {
+    try {
+      const response = await fetch(`/api/proxy/questions/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approved: true }),
+      });
+      
+      if (response.ok) {
+        setQuestions((prev) => prev.filter((q) => q.id !== id));
+      } else {
+        alert("Erro ao aprovar questão");
+      }
+    } catch (err) {
+      alert("Erro ao aprovar questão");
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setQuestions((prev) => prev.filter((q) => q.id !== id));
+  const handleReject = async (id: number) => {
+    try {
+      const response = await fetch(`/api/proxy/questions/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approved: false }),
+      });
+      
+      if (response.ok) {
+        setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, approved: false } : q)));
+      } else {
+        alert("Erro ao rejeitar questão");
+      }
+    } catch (err) {
+      alert("Erro ao rejeitar questão");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta questão?")) return;
+    
+    try {
+      const response = await fetch(`/api/proxy/questions/${id}`, {
+        method: "DELETE",
+      });
+      
+      if (response.ok) {
+        setQuestions((prev) => prev.filter((q) => q.id !== id));
+      } else {
+        alert("Erro ao excluir questão");
+      }
+    } catch (err) {
+      alert("Erro ao excluir questão");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -52,13 +113,41 @@ export function QuestionsTable() {
     });
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando questões...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Gerenciar Questões</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
+        {questions.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            Nenhuma questão pendente
+          </p>
+        ) : (
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Título</TableHead>
@@ -155,6 +244,7 @@ export function QuestionsTable() {
             ))}
           </TableBody>
         </Table>
+        )}
       </CardContent>
     </Card>
   );

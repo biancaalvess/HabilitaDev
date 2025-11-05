@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth";
+import { EmailVerificationNotice } from "./email-verification-notice";
 
 interface RegisterFormProps {
   onSuccess: () => void;
@@ -25,6 +26,8 @@ export function RegisterForm({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [showVerificationNotice, setShowVerificationNotice] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const { register, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,7 +51,12 @@ export function RegisterForm({
 
     const result = await register(username, email, password);
     if (result.success) {
-      onSuccess();
+      setRegisteredEmail(email);
+      setShowVerificationNotice(true);
+      // Não fechar o modal imediatamente, mostrar aviso
+      setTimeout(() => {
+        onSuccess();
+      }, 5000); // Fechar após 5 segundos
     } else {
       setError(result.error || "Usuário ou email já existe.");
     }
@@ -62,6 +70,10 @@ export function RegisterForm({
       </div>
       <div>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {showVerificationNotice && (
+            <EmailVerificationNotice email={registeredEmail} />
+          )}
+          
           {error && (
             <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 mb-4">
               <AlertDescription className="text-red-400">{error}</AlertDescription>

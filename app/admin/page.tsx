@@ -6,6 +6,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminStats } from "@/components/admin/admin-stats";
 import { QuestionsTable } from "@/components/admin/questions-table";
 import { FeedbackManagement } from "@/components/admin/feedback-management";
+import { UsersTable } from "@/components/admin/users-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -172,13 +173,7 @@ export default function AdminPage() {
                 Administrar contas de usuários e permissões
               </p>
             </div>
-            <Card>
-              <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">
-                  Funcionalidade em desenvolvimento
-                </p>
-              </CardContent>
-            </Card>
+            <UsersTable />
           </div>
         );
       case "settings":

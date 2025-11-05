@@ -50,6 +50,17 @@ export const config = {
     appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001',
     appName: process.env.NEXT_PUBLIC_APP_NAME || 'HabilitaDev',
   },
+  
+  // Configurações de Email
+  email: {
+    provider: process.env.EMAIL_PROVIDER || 'console', // 'resend', 'sendgrid', 'console'
+    fromEmail: process.env.FROM_EMAIL || 'noreply@habilitadev.com',
+    fromName: process.env.FROM_NAME || 'HabilitaDev',
+    // Resend
+    resendApiKey: process.env.RESEND_API_KEY || '',
+    // SendGrid
+    sendgridApiKey: process.env.SENDGRID_API_KEY || '',
+  },
 } as const;
 
 // Validação de configurações críticas

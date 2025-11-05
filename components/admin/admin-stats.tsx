@@ -1,39 +1,84 @@
 "use client";
 
-import { Users, BookOpen, MessageSquare, TrendingUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, BookOpen, MessageSquare, TrendingUp, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { mockQuestions } from "@/lib/mock-data" // Removido - usando dados da API
-// import { useFeedback } from "@/lib/feedback" // Removido - implementação simplificada
+
+interface Stats {
+  totalUsers: number;
+  totalQuestions: number;
+  pendingQuestions: number;
+  approvedQuestions: number;
+  totalFeedback: number;
+  totalAnswers: number;
+}
 
 export function AdminStats() {
-  // Mock data - em produção, implementar API real
-  const feedbacks: any[] = [];
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/admin/stats");
+      const data = await response.json();
+      
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading || !stats) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardContent className="py-8 text-center">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  const approvalRate = stats.totalQuestions > 0
+    ? Math.round((stats.approvedQuestions / stats.totalQuestions) * 100)
+    : 0;
+
+  const statsCards = [
     {
       title: "Total de Questões",
-      value: 6, // Mock value - em produção, usar dados da API
-      description: "6 aprovadas", // Mock value - em produção, usar dados da API
+      value: stats.totalQuestions,
+      description: `${stats.approvedQuestions} aprovadas`,
       icon: BookOpen,
       color: "text-blue-400",
     },
     {
       title: "Feedbacks Pendentes",
-      value: feedbacks.filter((f) => f.status === "pending").length,
-      description: "Aguardando revisão",
+      value: stats.totalFeedback,
+      description: "Total de feedbacks",
       icon: MessageSquare,
       color: "text-yellow-400",
     },
     {
-      title: "Usuários Ativos",
-      value: 127,
-      description: "+12% este mês",
+      title: "Usuários",
+      value: stats.totalUsers,
+      description: "Total de usuários",
       icon: Users,
       color: "text-green-400",
     },
     {
       title: "Taxa de Aprovação",
-      value: "94%",
+      value: `${approvalRate}%`,
       description: "Questões aprovadas",
       icon: TrendingUp,
       color: "text-purple-400",
@@ -42,7 +87,7 @@ export function AdminStats() {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat) => (
+      {statsCards.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
