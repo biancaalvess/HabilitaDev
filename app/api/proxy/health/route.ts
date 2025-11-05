@@ -3,9 +3,30 @@ import { config } from '@/lib/config-simple';
 
 const BACKEND_URL = config.api.backendUrl;
 
+interface HealthStatus {
+  frontend: {
+    status: string;
+    timestamp: string;
+    version: string;
+  };
+  backend: {
+    status: string;
+    url: string;
+    lastChecked: string;
+    response?: any;
+    error?: string;
+  };
+  database: {
+    status: string;
+    lastChecked: string;
+    type?: string;
+    error?: string;
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const healthStatus = {
+    const healthStatus: HealthStatus = {
       frontend: {
         status: 'healthy',
         timestamp: new Date().toISOString(),
