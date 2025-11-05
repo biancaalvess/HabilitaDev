@@ -59,11 +59,27 @@ export function LoginModalPT({
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     // Verificar se o backend está configurado
     const backendUrl = config.api.backendUrl;
     if (!backendUrl) {
-      alert('OAuth não está disponível. O backend não está configurado. Configure BACKEND_URL no .env para usar autenticação OAuth.');
+      alert('OAuth não está disponível. O backend não está configurado. Configure NEXT_PUBLIC_BACKEND_URL no .env para usar autenticação OAuth.');
+      return;
+    }
+
+    // Verificar se o backend está acessível antes de redirecionar
+    try {
+      const healthCheck = await fetch(`${backendUrl}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000), // 5 segundos timeout
+      });
+
+      if (!healthCheck.ok) {
+        alert('O backend não está respondendo corretamente. Verifique se o servidor está online e se as credenciais OAuth estão configuradas no backend.');
+        return;
+      }
+    } catch (error) {
+      alert('Não foi possível conectar ao backend. Verifique se o servidor está online e se a URL está correta.');
       return;
     }
 
@@ -78,11 +94,27 @@ export function LoginModalPT({
     window.location.href = googleAuthUrl;
   };
 
-  const handleGitHubLogin = () => {
+  const handleGitHubLogin = async () => {
     // Verificar se o backend está configurado
     const backendUrl = config.api.backendUrl;
     if (!backendUrl) {
-      alert('OAuth não está disponível. O backend não está configurado. Configure BACKEND_URL no .env para usar autenticação OAuth.');
+      alert('OAuth não está disponível. O backend não está configurado. Configure NEXT_PUBLIC_BACKEND_URL no .env para usar autenticação OAuth.');
+      return;
+    }
+
+    // Verificar se o backend está acessível antes de redirecionar
+    try {
+      const healthCheck = await fetch(`${backendUrl}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000), // 5 segundos timeout
+      });
+
+      if (!healthCheck.ok) {
+        alert('O backend não está respondendo corretamente. Verifique se o servidor está online e se as credenciais OAuth estão configuradas no backend.');
+        return;
+      }
+    } catch (error) {
+      alert('Não foi possível conectar ao backend. Verifique se o servidor está online e se a URL está correta.');
       return;
     }
 
