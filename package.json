@@ -61,7 +61,6 @@
     "recharts": "2.15.4",
     "sonner": "^1.7.4",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
     "styled-components": "^6.1.19",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",

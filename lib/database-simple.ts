@@ -1,4 +1,3 @@
-import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import bcrypt from 'bcryptjs';
 import { config } from './config-simple';
@@ -62,18 +61,21 @@ class DatabaseService {
     }
 
     try {
-      // Em ambientes serverless (Vercel, etc), SQLite pode não funcionar
+      // Em ambientes serverless (Vercel, Netlify, etc), SQLite pode não funcionar
       // Verificar se estamos em ambiente que suporta SQLite
-      if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+      if (process.env.VERCEL || process.env.NETLIFY || process.env.NODE_ENV === 'production') {
         // Em produção, pode não ter acesso ao sistema de arquivos
         // SQLite será opcional e a aplicação usará fallbacks
         console.warn('⚠️ SQLite pode não estar disponível neste ambiente. Usando fallbacks.');
         return;
       }
 
+      // Importação dinâmica do sqlite3 apenas quando necessário (não durante build)
+      const sqlite3 = await import('sqlite3');
+      
       this.db = await open({
         filename: config.database.url.replace('file:', ''),
-        driver: sqlite3.Database,
+        driver: sqlite3.default.Database,
       });
 
       await this.createTables();
