@@ -60,8 +60,14 @@ export function LoginModalPT({
   };
 
   const handleGoogleLogin = () => {
-    // Redirecionar para o endpoint OAuth do backend
+    // Verificar se o backend está configurado
     const backendUrl = config.api.backendUrl;
+    if (!backendUrl) {
+      alert('OAuth não está disponível. O backend não está configurado. Configure BACKEND_URL no .env para usar autenticação OAuth.');
+      return;
+    }
+
+    // Redirecionar para o endpoint OAuth do backend
     const googleAuthUrl = `${backendUrl}/api/v1/auth/google`;
     
     // Salvar URL de retorno
@@ -73,8 +79,14 @@ export function LoginModalPT({
   };
 
   const handleGitHubLogin = () => {
-    // Redirecionar para o endpoint OAuth do backend
+    // Verificar se o backend está configurado
     const backendUrl = config.api.backendUrl;
+    if (!backendUrl) {
+      alert('OAuth não está disponível. O backend não está configurado. Configure BACKEND_URL no .env para usar autenticação OAuth.');
+      return;
+    }
+
+    // Redirecionar para o endpoint OAuth do backend
     const githubAuthUrl = `${backendUrl}/api/v1/auth/github`;
     
     // Salvar URL de retorno
