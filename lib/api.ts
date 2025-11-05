@@ -90,15 +90,56 @@ class ApiService {
 
     try {
       console.log('🔍 Fetching from:', url);
-      const response = await fetch(url, {
-        ...requestConfig,
-        signal: AbortSignal.timeout(config.api.timeout),
-      });
+      
+      // Usar AbortController para melhor controle do timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+      
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          ...requestConfig,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
+      }
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ API Error:', response.status, errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        
+        try {
+          // Ler o corpo da resposta como texto primeiro para poder fazer parse depois
+          const responseText = await response.text();
+          
+          if (responseText) {
+            try {
+              const errorData = JSON.parse(responseText);
+              
+              // Extrair mensagem de erro de diferentes formatos
+              if (errorData.error) {
+                if (typeof errorData.error === 'object') {
+                  errorMessage = errorData.error.message || errorData.error.code || errorMessage;
+                } else if (typeof errorData.error === 'string') {
+                  errorMessage = errorData.error;
+                }
+              } else if (errorData.message) {
+                errorMessage = typeof errorData.message === 'string' ? errorData.message : errorMessage;
+              }
+            } catch (parseError) {
+              // Se não for JSON válido, usar o texto diretamente
+              errorMessage = responseText || errorMessage;
+            }
+          }
+        } catch (readError) {
+          // Se não conseguir ler o corpo, usar mensagem padrão
+          console.error('❌ Failed to read error response:', readError);
+        }
+        
+        console.error('❌ API Error:', response.status, errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -126,6 +167,14 @@ class ApiService {
       };
     } catch (error) {
       console.error('❌ API request failed:', error);
+      
+      // Melhorar mensagens de erro para timeouts
+      if (error instanceof Error) {
+        if (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('aborted')) {
+          throw new Error('A requisição demorou muito para responder. Verifique sua conexão e tente novamente.');
+        }
+      }
+      
       throw error;
     }
   }

@@ -108,11 +108,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setLoading(false);
         // Extrair mensagem do objeto de erro ou usar fallback
-        const errorMessage = 
-          (typeof data.error === 'object' && data.error?.message) ||
-          data.message ||
-          data.error ||
-          "Erro no login";
+        let errorMessage = "Erro no login";
+        
+        if (data.error) {
+          if (typeof data.error === 'object') {
+            // Se error é um objeto, extrair a propriedade message
+            errorMessage = data.error.message || data.error.code || "Erro no login";
+          } else if (typeof data.error === 'string') {
+            errorMessage = data.error;
+          }
+        } else if (data.message) {
+          errorMessage = typeof data.message === 'string' ? data.message : "Erro no login";
+        }
+        
         return { success: false, error: String(errorMessage) };
       }
     } catch (error) {
@@ -147,11 +155,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setLoading(false);
         // Extrair mensagem do objeto de erro ou usar fallback
-        const errorMessage = 
-          (typeof data.error === 'object' && data.error?.message) ||
-          data.message ||
-          data.error ||
-          "Erro no registro";
+        let errorMessage = "Erro no registro";
+        
+        if (data.error) {
+          if (typeof data.error === 'object') {
+            // Se error é um objeto, extrair a propriedade message
+            errorMessage = data.error.message || data.error.code || "Erro no registro";
+          } else if (typeof data.error === 'string') {
+            errorMessage = data.error;
+          }
+        } else if (data.message) {
+          errorMessage = typeof data.message === 'string' ? data.message : "Erro no registro";
+        }
+        
         return { success: false, error: String(errorMessage) };
       }
     } catch (error) {

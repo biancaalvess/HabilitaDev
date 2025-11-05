@@ -26,9 +26,27 @@ const ErrorDisplay = memo(function ErrorDisplay({
   variant = "default",
   className = "",
 }: ErrorDisplayProps) {
-  const errorMessage = typeof error === "string" ? error : error.message;
+  // Extrair mensagem de erro de diferentes formatos
+  let errorMessage = "Erro desconhecido";
+  
+  if (typeof error === "string") {
+    errorMessage = error;
+  } else if (error instanceof Error) {
+    errorMessage = error.message || "Erro desconhecido";
+  } else if (typeof error === "object" && error !== null) {
+    // Tratar objetos de erro com diferentes estruturas
+    errorMessage = 
+      (error as any).message || 
+      (error as any).code || 
+      (error as any).error?.message ||
+      (error as any).error?.code ||
+      String(error);
+  }
+  
   const errorStack =
-    typeof error === "object" && error.stack ? error.stack : null;
+    typeof error === "object" && error !== null && "stack" in error && typeof (error as any).stack === "string" 
+      ? (error as any).stack 
+      : null;
 
   if (variant === "inline") {
     return (

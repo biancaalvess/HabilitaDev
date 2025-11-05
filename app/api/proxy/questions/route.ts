@@ -9,38 +9,56 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
     
-    // 1. Tentar buscar do backend externo
+    // 1. Tentar buscar do backend externo (com timeout reduzido para fallback mais rápido)
     try {
       const url = `${BACKEND_URL}/api/v1/questions${queryString ? `?${queryString}` : ''}`;
       console.log('🌐 Attempting to fetch from backend:', url);
       
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'HabilitaDev-Frontend/1.0',
-        },
-        signal: AbortSignal.timeout(config.api.timeout),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Successfully fetched from backend');
-        
-        return NextResponse.json(data, {
-          status: 200,
+      // Usar timeout menor para fallback mais rápido (10 segundos)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
+      
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
           headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'X-Data-Source': 'backend',
+            'Content-Type': 'application/json',
+            'User-Agent': 'HabilitaDev-Frontend/1.0',
           },
+          signal: controller.signal,
         });
-      } else {
-        console.warn(`⚠️ Backend returned ${response.status}: ${response.statusText}`);
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Successfully fetched from backend');
+          
+          return NextResponse.json(data, {
+            status: 200,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+              'X-Data-Source': 'backend',
+            },
+          });
+        } else {
+          console.warn(`⚠️ Backend returned ${response.status}: ${response.statusText}`);
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
       }
     } catch (backendError) {
-      console.warn('⚠️ Backend unavailable:', backendError instanceof Error ? backendError.message : 'Unknown error');
+      const errorMessage = backendError instanceof Error ? backendError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      
+      if (isTimeout) {
+        console.warn('⚠️ Backend timeout - falling back to local database');
+      } else {
+        console.warn('⚠️ Backend unavailable:', errorMessage);
+      }
     }
 
     // 2. Tentar buscar do banco local
