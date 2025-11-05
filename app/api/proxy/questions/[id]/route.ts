@@ -12,8 +12,9 @@ export async function GET(
     const questionId = params.id;
     
     // 1. Tentar buscar do backend externo
-    try {
-      const url = `${BACKEND_URL}/api/v1/questions/${questionId}`;
+    if (BACKEND_URL) {
+      try {
+        const url = `${BACKEND_URL}/api/v1/questions/${questionId}`;
       console.log('🌐 Fetching question from backend:', url);
       
       const response = await fetch(url, {
@@ -43,6 +44,9 @@ export async function GET(
       }
     } catch (backendError) {
       console.warn('⚠️ Backend unavailable for question:', backendError instanceof Error ? backendError.message : 'Unknown error');
+    }
+    } else {
+      console.log('ℹ️ BACKEND_URL não configurado, usando apenas banco local');
     }
 
     // 2. Tentar buscar do banco local

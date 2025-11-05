@@ -44,8 +44,9 @@ export async function GET(request: NextRequest) {
     };
 
     // 1. Verificar status do backend
-    try {
-      const backendUrl = `${BACKEND_URL}/health`;
+    if (BACKEND_URL) {
+      try {
+        const backendUrl = `${BACKEND_URL}/health`;
       console.log('🌐 Checking backend health:', backendUrl);
       
       const response = await fetch(backendUrl, {
@@ -82,6 +83,15 @@ export async function GET(request: NextRequest) {
         error: backendError instanceof Error ? backendError.message : 'Unknown error',
       };
       console.warn('⚠️ Backend is unreachable:', backendError instanceof Error ? backendError.message : 'Unknown error');
+    }
+    } else {
+      healthStatus.backend = {
+        status: 'not_configured',
+        url: '',
+        lastChecked: new Date().toISOString(),
+        error: 'BACKEND_URL não configurado',
+      };
+      console.log('ℹ️ BACKEND_URL não configurado, pulando verificação de backend');
     }
 
     // 2. Verificar status do banco local

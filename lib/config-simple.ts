@@ -15,7 +15,7 @@ export const config = {
   // Configurações da API
   api: {
     baseUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
-    backendUrl: process.env.BACKEND_URL || 'https://habilitadev-backend.onrender.com',
+    backendUrl: process.env.BACKEND_URL || '',
     timeout: 30000, // 30 segundos
   },
   

@@ -10,9 +10,10 @@ export async function GET(request: NextRequest) {
     const queryString = searchParams.toString();
     
     // 1. Tentar buscar do backend externo (com timeout reduzido para fallback mais rápido)
-    try {
-      const url = `${BACKEND_URL}/api/v1/questions${queryString ? `?${queryString}` : ''}`;
-      console.log('🌐 Attempting to fetch from backend:', url);
+    if (BACKEND_URL) {
+      try {
+        const url = `${BACKEND_URL}/api/v1/questions${queryString ? `?${queryString}` : ''}`;
+        console.log('🌐 Attempting to fetch from backend:', url);
       
       // Usar timeout menor para fallback mais rápido (10 segundos)
       const controller = new AbortController();
@@ -50,15 +51,18 @@ export async function GET(request: NextRequest) {
         clearTimeout(timeoutId);
         throw fetchError;
       }
-    } catch (backendError) {
-      const errorMessage = backendError instanceof Error ? backendError.message : 'Unknown error';
-      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
-      
-      if (isTimeout) {
-        console.warn('⚠️ Backend timeout - falling back to local database');
-      } else {
-        console.warn('⚠️ Backend unavailable:', errorMessage);
+      } catch (backendError) {
+        const errorMessage = backendError instanceof Error ? backendError.message : 'Unknown error';
+        const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+
+        if (isTimeout) {
+          console.warn('⚠️ Backend timeout - falling back to local database');
+        } else {
+          console.warn('⚠️ Backend unavailable:', errorMessage);
+        }
       }
+    } else {
+      console.log('ℹ️ BACKEND_URL não configurado, usando apenas banco local');
     }
 
     // 2. Tentar buscar do banco local
@@ -125,8 +129,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // 1. Tentar enviar para o backend externo
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/v1/questions`, {
+    if (BACKEND_URL) {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/v1/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,6 +158,9 @@ export async function POST(request: NextRequest) {
       }
     } catch (backendError) {
       console.warn('⚠️ Backend unavailable for question creation:', backendError instanceof Error ? backendError.message : 'Unknown error');
+    }
+    } else {
+      console.log('ℹ️ BACKEND_URL não configurado, salvando apenas no banco local');
     }
 
     // 2. Salvar no banco local
