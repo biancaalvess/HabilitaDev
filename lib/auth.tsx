@@ -85,10 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("habilitadev_refresh_token");
       throw error;
     } finally {
-      // Só alterar loading se não estiver sendo chamado de fora do useEffect inicial
-      if (loading) {
-        setLoading(false);
-      }
+      // Não alterar loading aqui, pois pode estar sendo chamado de fora do useEffect inicial
+      // O loading será gerenciado pelo useEffect e pela função que chama verifyToken
     }
   };
 

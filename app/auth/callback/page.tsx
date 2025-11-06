@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -11,8 +11,13 @@ export default function AuthCallbackPage() {
   const { verifyToken } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Processando autenticação...");
+  const processedRef = useRef(false);
 
   useEffect(() => {
+    // Evitar processamento duplicado
+    if (processedRef.current) return;
+    processedRef.current = true;
+
     const processOAuthCallback = async () => {
       const accessToken = searchParams.get("access_token");
       const refreshToken = searchParams.get("refresh_token");
@@ -91,7 +96,8 @@ export default function AuthCallbackPage() {
     };
 
     processOAuthCallback();
-  }, [searchParams, router, verifyToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">

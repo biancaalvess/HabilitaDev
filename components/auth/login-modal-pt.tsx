@@ -26,7 +26,9 @@ export function LoginModalPT({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<"google" | "github" | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "github" | null>(
+    null
+  );
   const { login } = useAuth();
 
   // Limpar campos ao fechar
@@ -63,11 +65,9 @@ export function LoginModalPT({
 
   const handleOAuthLogin = (provider: "google" | "github") => {
     const backendUrl = config.api.backendUrl;
-    
+
     if (!backendUrl) {
-      setError(
-        "OAuth não está disponível. O backend não está configurado."
-      );
+      setError("OAuth não está disponível. O backend não está configurado.");
       return;
     }
 
@@ -77,9 +77,11 @@ export function LoginModalPT({
 
     // Construir URL de callback
     const callbackUrl = `${window.location.origin}/auth/callback`;
-    
+
     // URL do backend OAuth com callback
-    const oauthUrl = `${backendUrl}/api/v1/auth/${provider}?redirect_uri=${encodeURIComponent(callbackUrl)}`;
+    const oauthUrl = `${backendUrl}/api/v1/auth/${provider}?redirect_uri=${encodeURIComponent(
+      callbackUrl
+    )}`;
 
     // Salvar URL de retorno para depois do callback
     const returnUrl = window.location.href;
