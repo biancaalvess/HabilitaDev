@@ -63,33 +63,39 @@ export function LoginModalPT({
     // Verificar se o backend está configurado
     const backendUrl = config.api.backendUrl;
     if (!backendUrl) {
-      alert('OAuth não está disponível. O backend não está configurado. Configure NEXT_PUBLIC_BACKEND_URL no .env para usar autenticação OAuth.');
+      alert(
+        "OAuth não está disponível. O backend não está configurado. Configure NEXT_PUBLIC_BACKEND_URL no .env para usar autenticação OAuth."
+      );
       return;
     }
 
     // Verificar se o backend está acessível antes de redirecionar
     try {
       const healthCheck = await fetch(`${backendUrl}/health`, {
-        method: 'GET',
+        method: "GET",
         signal: AbortSignal.timeout(5000), // 5 segundos timeout
       });
 
       if (!healthCheck.ok) {
-        alert('O backend não está respondendo corretamente. Verifique se o servidor está online e se as credenciais OAuth estão configuradas no backend.');
+        alert(
+          "O backend não está respondendo corretamente. Verifique se o servidor está online e se as credenciais OAuth estão configuradas no backend."
+        );
         return;
       }
     } catch (error) {
-      alert('Não foi possível conectar ao backend. Verifique se o servidor está online e se a URL está correta.');
+      alert(
+        "Não foi possível conectar ao backend. Verifique se o servidor está online e se a URL está correta."
+      );
       return;
     }
 
     // Redirecionar para o endpoint OAuth do backend
     const googleAuthUrl = `${backendUrl}/api/v1/auth/google`;
-    
+
     // Salvar URL de retorno
     const returnUrl = window.location.href;
     localStorage.setItem("oauth_return_url", returnUrl);
-    
+
     // Redirecionar para Google OAuth
     window.location.href = googleAuthUrl;
   };
@@ -98,40 +104,27 @@ export function LoginModalPT({
     // Verificar se o backend está configurado
     const backendUrl = config.api.backendUrl;
     if (!backendUrl) {
-      alert('OAuth não está disponível. O backend não está configurado. Configure NEXT_PUBLIC_BACKEND_URL no .env para usar autenticação OAuth.');
-      return;
-    }
-
-    // Verificar se o backend está acessível antes de redirecionar
-    try {
-      const healthCheck = await fetch(`${backendUrl}/health`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(5000), // 5 segundos timeout
-      });
-
-      if (!healthCheck.ok) {
-        alert('O backend não está respondendo corretamente. Verifique se o servidor está online e se as credenciais OAuth estão configuradas no backend.');
-        return;
-      }
-    } catch (error) {
-      alert('Não foi possível conectar ao backend. Verifique se o servidor está online e se a URL está correta.');
+      alert(
+        "OAuth não está disponível. O backend não está configurado. Configure NEXT_PUBLIC_BACKEND_URL no .env para usar autenticação OAuth."
+      );
       return;
     }
 
     // Redirecionar para o endpoint OAuth do backend
+    // O backend vai lidar com erros OAuth e retornar mensagens apropriadas
     const githubAuthUrl = `${backendUrl}/api/v1/auth/github`;
-    
+
     // Salvar URL de retorno
     const returnUrl = window.location.href;
     localStorage.setItem("oauth_return_url", returnUrl);
-    
+
     // Redirecionar para GitHub OAuth
     window.location.href = githubAuthUrl;
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-md bg-slate-800/95 backdrop-blur-sm border border-blue-400/20 p-0 gap-0"
         showCloseButton={false}
       >
@@ -153,8 +146,13 @@ export function LoginModalPT({
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
-                <AlertDescription className="text-red-400">{error}</AlertDescription>
+              <Alert
+                variant="destructive"
+                className="bg-red-500/10 border-red-500/20"
+              >
+                <AlertDescription className="text-red-400">
+                  {error}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -260,7 +258,7 @@ export function LoginModalPT({
                 <path d="M16.318 13.714v5.484h9.078c-0.37 2.354-2.745 6.901-9.078 6.901-5.458 0-9.917-4.521-9.917-10.099s4.458-10.099 9.917-10.099c3.109 0 5.193 1.318 6.38 2.464l4.339-4.182c-2.786-2.599-6.396-4.182-10.719-4.182-8.844 0-16 7.151-16 16s7.156 16 16 16c9.234 0 15.365-6.49 15.365-15.635 0-1.052-0.115-1.854-0.255-2.651z" />
               </svg>
             </button>
-            
+
             <button
               type="button"
               onClick={handleGitHubLogin}
@@ -296,4 +294,3 @@ export function LoginModalPT({
     </Dialog>
   );
 }
-
