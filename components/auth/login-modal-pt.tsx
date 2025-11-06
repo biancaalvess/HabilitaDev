@@ -59,7 +59,7 @@ export function LoginModalPT({
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     // Verificar se o backend está configurado
     const backendUrl = config.api.backendUrl;
     if (!backendUrl) {
@@ -69,27 +69,8 @@ export function LoginModalPT({
       return;
     }
 
-    // Verificar se o backend está acessível antes de redirecionar
-    try {
-      const healthCheck = await fetch(`${backendUrl}/health`, {
-        method: "GET",
-        signal: AbortSignal.timeout(5000), // 5 segundos timeout
-      });
-
-      if (!healthCheck.ok) {
-        alert(
-          "O backend não está respondendo corretamente. Verifique se o servidor está online e se as credenciais OAuth estão configuradas no backend."
-        );
-        return;
-      }
-    } catch (error) {
-      alert(
-        "Não foi possível conectar ao backend. Verifique se o servidor está online e se a URL está correta."
-      );
-      return;
-    }
-
     // Redirecionar para o endpoint OAuth do backend
+    // O backend vai lidar com erros OAuth e retornar mensagens apropriadas
     const googleAuthUrl = `${backendUrl}/api/v1/auth/google`;
 
     // Salvar URL de retorno
@@ -100,7 +81,7 @@ export function LoginModalPT({
     window.location.href = googleAuthUrl;
   };
 
-  const handleGitHubLogin = async () => {
+  const handleGitHubLogin = () => {
     // Verificar se o backend está configurado
     const backendUrl = config.api.backendUrl;
     if (!backendUrl) {
