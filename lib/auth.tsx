@@ -28,6 +28,7 @@ interface AuthContextType {
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  verifyToken: (token: string) => Promise<void>;
   loading: boolean;
   isAdmin: boolean;
 }
@@ -70,16 +71,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json();
-        setUser(userData.user);
+        setUser(userData.user || userData.data?.user);
+        return;
       } else {
+        // Token inválido
         localStorage.removeItem("habilitadev_token");
         localStorage.removeItem("habilitadev_refresh_token");
+        throw new Error("Token inválido ou expirado");
       }
     } catch (error) {
       console.error("Token verification failed:", error);
       localStorage.removeItem("habilitadev_token");
+      localStorage.removeItem("habilitadev_refresh_token");
+      throw error;
     } finally {
-      setLoading(false);
+      // Só alterar loading se não estiver sendo chamado de fora do useEffect inicial
+      if (loading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -203,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        verifyToken,
         loading,
         isAdmin,
       }}

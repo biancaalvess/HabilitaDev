@@ -26,6 +26,7 @@ export function LoginModalPT({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "github" | null>(null);
   const { login } = useAuth();
 
   // Limpar campos ao fechar
@@ -34,6 +35,7 @@ export function LoginModalPT({
       setEmail("");
       setPassword("");
       setError("");
+      setOauthLoading(null);
     }
   }, [isOpen]);
 
@@ -59,49 +61,37 @@ export function LoginModalPT({
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Verificar se o backend está configurado
+  const handleOAuthLogin = (provider: "google" | "github") => {
     const backendUrl = config.api.backendUrl;
+    
     if (!backendUrl) {
-      alert(
-        "OAuth não está disponível. O backend não está configurado. Configure NEXT_PUBLIC_BACKEND_URL no .env para usar autenticação OAuth."
+      setError(
+        "OAuth não está disponível. O backend não está configurado."
       );
       return;
     }
 
-    // Redirecionar para o endpoint OAuth do backend
-    // O backend vai lidar com erros OAuth e retornar mensagens apropriadas
-    const googleAuthUrl = `${backendUrl}/api/v1/auth/google`;
+    // Definir loading do provider específico
+    setOauthLoading(provider);
+    setError("");
 
-    // Salvar URL de retorno
+    // Construir URL de callback
+    const callbackUrl = `${window.location.origin}/auth/callback`;
+    
+    // URL do backend OAuth com callback
+    const oauthUrl = `${backendUrl}/api/v1/auth/${provider}?redirect_uri=${encodeURIComponent(callbackUrl)}`;
+
+    // Salvar URL de retorno para depois do callback
     const returnUrl = window.location.href;
     localStorage.setItem("oauth_return_url", returnUrl);
+    localStorage.setItem("oauth_provider", provider);
 
-    // Redirecionar para Google OAuth
-    window.location.href = googleAuthUrl;
+    // Redirecionar para OAuth
+    window.location.href = oauthUrl;
   };
 
-  const handleGitHubLogin = () => {
-    // Verificar se o backend está configurado
-    const backendUrl = config.api.backendUrl;
-    if (!backendUrl) {
-      alert(
-        "OAuth não está disponível. O backend não está configurado. Configure NEXT_PUBLIC_BACKEND_URL no .env para usar autenticação OAuth."
-      );
-      return;
-    }
-
-    // Redirecionar para o endpoint OAuth do backend
-    // O backend vai lidar com erros OAuth e retornar mensagens apropriadas
-    const githubAuthUrl = `${backendUrl}/api/v1/auth/github`;
-
-    // Salvar URL de retorno
-    const returnUrl = window.location.href;
-    localStorage.setItem("oauth_return_url", returnUrl);
-
-    // Redirecionar para GitHub OAuth
-    window.location.href = githubAuthUrl;
-  };
+  const handleGoogleLogin = () => handleOAuthLogin("google");
+  const handleGitHubLogin = () => handleOAuthLogin("github");
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -119,6 +109,7 @@ export function LoginModalPT({
               size="icon"
               onClick={onClose}
               className="text-white/80 hover:text-white hover:bg-slate-700/50"
+              disabled={isLoading || oauthLoading !== null}
             >
               <X className="h-5 w-5" />
             </Button>
@@ -147,7 +138,7 @@ export function LoginModalPT({
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || oauthLoading !== null}
                 className="bg-slate-700/50 border-slate-600 text-white placeholder:text-white/40 focus:border-blue-400"
                 required
               />
@@ -161,10 +152,11 @@ export function LoginModalPT({
                 <button
                   type="button"
                   onClick={() => {
-                    // TODO: Implementar recuperação de senha
-                    alert("Funcionalidade de recuperação de senha em breve");
+                    window.location.href = "/forgot-password";
+                    onClose();
                   }}
                   className="text-xs text-blue-400 hover:text-blue-300 hover:underline"
+                  disabled={isLoading || oauthLoading !== null}
                 >
                   Esqueceu a senha?
                 </button>
@@ -176,7 +168,7 @@ export function LoginModalPT({
                   placeholder="Digite sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || oauthLoading !== null}
                   className="bg-slate-700/50 border-slate-600 text-white placeholder:text-white/40 focus:border-blue-400 pr-10"
                   required
                 />
@@ -186,7 +178,7 @@ export function LoginModalPT({
                   size="icon"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-white/60 hover:text-white"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
+                  disabled={isLoading || oauthLoading !== null}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -200,7 +192,7 @@ export function LoginModalPT({
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-6"
-              disabled={isLoading}
+              disabled={isLoading || oauthLoading !== null}
             >
               {isLoading ? (
                 <>
@@ -227,33 +219,41 @@ export function LoginModalPT({
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="p-3 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 transition-colors"
+              className="p-3 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
               aria-label="Entrar com Google"
-              disabled={isLoading}
+              disabled={isLoading || oauthLoading !== null}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 32 32"
-                className="w-6 h-6 fill-current text-white"
-              >
-                <path d="M16.318 13.714v5.484h9.078c-0.37 2.354-2.745 6.901-9.078 6.901-5.458 0-9.917-4.521-9.917-10.099s4.458-10.099 9.917-10.099c3.109 0 5.193 1.318 6.38 2.464l4.339-4.182c-2.786-2.599-6.396-4.182-10.719-4.182-8.844 0-16 7.151-16 16s7.156 16 16 16c9.234 0 15.365-6.49 15.365-15.635 0-1.052-0.115-1.854-0.255-2.651z" />
-              </svg>
+              {oauthLoading === "google" ? (
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 32 32"
+                  className="w-6 h-6 fill-current text-white"
+                >
+                  <path d="M16.318 13.714v5.484h9.078c-0.37 2.354-2.745 6.901-9.078 6.901-5.458 0-9.917-4.521-9.917-10.099s4.458-10.099 9.917-10.099c3.109 0 5.193 1.318 6.38 2.464l4.339-4.182c-2.786-2.599-6.396-4.182-10.719-4.182-8.844 0-16 7.151-16 16s7.156 16 16 16c9.234 0 15.365-6.49 15.365-15.635 0-1.052-0.115-1.854-0.255-2.651z" />
+                </svg>
+              )}
             </button>
 
             <button
               type="button"
               onClick={handleGitHubLogin}
-              className="p-3 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 transition-colors"
+              className="p-3 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
               aria-label="Entrar com GitHub"
-              disabled={isLoading}
+              disabled={isLoading || oauthLoading !== null}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 32 32"
-                className="w-6 h-6 fill-current text-white"
-              >
-                <path d="M16 0.396c-8.839 0-16 7.167-16 16 0 7.073 4.584 13.068 10.937 15.183 0.803 0.151 1.093-0.344 1.093-0.772 0-0.38-0.009-1.385-0.015-2.719-4.453 0.964-5.391-2.151-5.391-2.151-0.729-1.844-1.781-2.339-1.781-2.339-1.448-0.989 0.115-0.968 0.115-0.968 1.604 0.109 2.448 1.645 2.448 1.645 1.427 2.448 3.744 1.74 4.661 1.328 0.14-1.031 0.557-1.74 1.011-2.135-3.552-0.401-7.287-1.776-7.287-7.907 0-1.751 0.62-3.177 1.645-4.297-0.177-0.401-0.719-2.031 0.141-4.235 0 0 1.339-0.427 4.4 1.641 1.281-0.355 2.641-0.532 4-0.541 1.36 0.009 2.719 0.187 4 0.541 3.043-2.068 4.381-1.641 4.381-1.641 0.859 2.204 0.317 3.833 0.161 4.235 1.015 1.12 1.635 2.547 1.635 4.297 0 6.145-3.74 7.5-7.296 7.891 0.556 0.479 1.077 1.464 1.077 2.959 0 2.14-0.020 3.864-0.020 4.385 0 0.416 0.28 0.916 1.104 0.755 6.4-2.093 10.979-8.093 10.979-15.156 0-8.833-7.161-16-16-16z" />
-              </svg>
+              {oauthLoading === "github" ? (
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 32 32"
+                  className="w-6 h-6 fill-current text-white"
+                >
+                  <path d="M16 0.396c-8.839 0-16 7.167-16 16 0 7.073 4.584 13.068 10.937 15.183 0.803 0.151 1.093-0.344 1.093-0.772 0-0.38-0.009-1.385-0.015-2.719-4.453 0.964-5.391-2.151-5.391-2.151-0.729-1.844-1.781-2.339-1.781-2.339-1.448-0.989 0.115-0.968 0.115-0.968 1.604 0.109 2.448 1.645 2.448 1.645 1.427 2.448 3.744 1.74 4.661 1.328 0.14-1.031 0.557-1.74 1.011-2.135-3.552-0.401-7.287-1.776-7.287-7.907 0-1.751 0.62-3.177 1.645-4.297-0.177-0.401-0.719-2.031 0.141-4.235 0 0 1.339-0.427 4.4 1.641 1.281-0.355 2.641-0.532 4-0.541 1.36 0.009 2.719 0.187 4 0.541 3.043-2.068 4.381-1.641 4.381-1.641 0.859 2.204 0.317 3.833 0.161 4.235 1.015 1.12 1.635 2.547 1.635 4.297 0 6.145-3.74 7.5-7.296 7.891 0.556 0.479 1.077 1.464 1.077 2.959 0 2.14-0.020 3.864-0.020 4.385 0 0.416 0.28 0.916 1.104 0.755 6.4-2.093 10.979-8.093 10.979-15.156 0-8.833-7.161-16-16-16z" />
+                </svg>
+              )}
             </button>
           </div>
 
@@ -265,6 +265,7 @@ export function LoginModalPT({
                 type="button"
                 onClick={onSwitchToRegister}
                 className="text-blue-400 hover:text-blue-300 hover:underline font-medium"
+                disabled={isLoading || oauthLoading !== null}
               >
                 Criar conta
               </button>
