@@ -2,16 +2,17 @@
 
 import type React from "react";
 import { useState } from "react";
-import styled from "styled-components";
 import {
   MessageSquare,
   Send,
   Loader2,
-  User,
   AlertCircle,
   Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
@@ -20,6 +21,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Comment } from "@/lib/types";
 
 interface CommentFormProps {
@@ -36,11 +44,6 @@ const commentTypeLabels = {
 const commentTypeDescriptions = {
   correction: "Corrigir um erro na questão ou resposta",
   suggestion: "Sugerir melhorias na questão ou resposta",
-};
-
-const commentTypeIcons = {
-  correction: AlertCircle,
-  suggestion: Lightbulb,
 };
 
 export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
@@ -132,7 +135,7 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <StyledWrapper>
+        <div className="w-full">
           {success ? (
             <Alert className="border-green-500/20 bg-green-500/10">
               <AlertDescription className="text-green-400">
@@ -140,79 +143,88 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
               </AlertDescription>
             </Alert>
           ) : (
-            <form className="form" onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {error && (
-                <Alert variant="destructive" className="border-red-500/20 bg-red-500/10 mb-4">
+                <Alert variant="destructive" className="border-red-500/20 bg-red-500/10">
                   <AlertDescription className="text-red-400 font-medium">{error}</AlertDescription>
                 </Alert>
               )}
 
-              <p className="title">Deixar Comentário</p>
-              <p className="message">Compartilhe sua correção ou sugestão para ajudar a melhorar esta questão.</p>
-
-              <label>
-                <input
-                  required
-                  placeholder=" "
+              <div className="space-y-2">
+                <Label htmlFor="authorName">Seu Nome</Label>
+                <Input
+                  id="authorName"
                   type="text"
-                  className="input"
+                  placeholder="Digite seu nome"
                   value={authorName}
                   onChange={(e) => setAuthorName(e.target.value)}
                   disabled={loading}
-                />
-                <span>Seu Nome</span>
-              </label>
-
-              <div className="select-wrapper">
-                <select
-                  value={commentType}
-                  onChange={(e) => setCommentType(e.target.value as Comment["comment_type"])}
-                  disabled={loading}
-                  className="select-input"
                   required
-                >
-                  <option value="">Selecione o tipo...</option>
-                  {Object.entries(commentTypeLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label} - {commentTypeDescriptions[key as keyof typeof commentTypeDescriptions]}
-                    </option>
-                  ))}
-                </select>
-                <span className="select-label">Tipo de Comentário</span>
+                  minLength={2}
+                />
               </div>
 
-              <label>
-                <textarea
-                  required
-                  placeholder=" "
-                  className="input textarea"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+              <div className="space-y-2">
+                <Label htmlFor="commentType">Tipo de Comentário</Label>
+                <Select
+                  value={commentType}
+                  onValueChange={(value) => setCommentType(value as Comment["comment_type"])}
                   disabled={loading}
-                  rows={4}
-                />
-                <span>Comentário</span>
-                <div className="char-count">{content.length}/500 caracteres</div>
-              </label>
+                  required
+                >
+                  <SelectTrigger id="commentType">
+                    <SelectValue placeholder="Selecione o tipo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(commentTypeLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label} - {commentTypeDescriptions[key as keyof typeof commentTypeDescriptions]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <div className="button-group">
-                <button
+              <div className="space-y-2">
+                <Label htmlFor="content">Comentário</Label>
+                <div className="relative">
+                  <Textarea
+                    id="content"
+                    placeholder="Digite seu comentário..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    disabled={loading}
+                    rows={4}
+                    required
+                    minLength={10}
+                    maxLength={500}
+                    className="pr-20"
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                    {content.length}/500
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 sm:flex-row flex-col">
+                <Button
                   type="button"
-                  className="cancel-btn"
+                  variant="outline"
                   onClick={handleClose}
                   disabled={loading}
+                  className="flex-1"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="submit"
                   disabled={
                     loading ||
                     !authorName.trim() ||
                     !commentType ||
                     !content.trim()
                   }
+                  className="flex-1"
                 >
                   {loading ? (
                     <>
@@ -225,241 +237,12 @@ export function CommentForm({ questionId, isOpen, onClose }: CommentFormProps) {
                       Enviar
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           )}
-        </StyledWrapper>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
-
-const StyledWrapper = styled.div`
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-width: 100%;
-    background-color: transparent;
-    padding: 0;
-    border-radius: 20px;
-    position: relative;
-  }
-
-  .title {
-    font-size: 28px;
-    color: #3b82f6;
-    font-weight: 600;
-    letter-spacing: -1px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding-left: 30px;
-    margin: 0 0 10px 0;
-  }
-
-  .title::before,.title::after {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    border-radius: 50%;
-    left: 0px;
-    background-color: #3b82f6;
-  }
-
-  .title::before {
-    width: 18px;
-    height: 18px;
-    background-color: #3b82f6;
-  }
-
-  .title::after {
-    width: 18px;
-    height: 18px;
-    animation: pulse 1s linear infinite;
-  }
-
-  .message {
-    color: rgba(88, 87, 87, 0.822);
-    font-size: 14px;
-    margin: 0 0 15px 0;
-  }
-
-  .form label {
-    position: relative;
-  }
-
-  .form label .input {
-    width: 100%;
-    padding: 10px 10px 20px 10px;
-    outline: 0;
-    border: 1px solid rgba(105, 105, 105, 0.397);
-    border-radius: 10px;
-    background-color: #fff;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-  }
-
-  .form label .input:focus {
-    border-color: #3b82f6;
-  }
-
-  .form label .textarea {
-    resize: none;
-    min-height: 100px;
-  }
-
-  .form label .input + span {
-    position: absolute;
-    left: 10px;
-    top: 15px;
-    color: grey;
-    font-size: 0.9em;
-    cursor: text;
-    transition: 0.3s ease;
-    pointer-events: none;
-  }
-
-  .form label .input:placeholder-shown + span {
-    top: 15px;
-    font-size: 0.9em;
-  }
-
-  .form label .input:focus + span,.form label .input:valid + span {
-    top: 30px;
-    font-size: 0.7em;
-    font-weight: 600;
-    color: #3b82f6;
-  }
-
-  .form label .input:valid + span {
-    color: #10b981;
-  }
-
-  .char-count {
-    position: absolute;
-    bottom: 5px;
-    right: 10px;
-    font-size: 0.7em;
-    color: grey;
-    pointer-events: none;
-  }
-
-  .select-wrapper {
-    position: relative;
-  }
-
-  .select-input {
-    width: 100%;
-    padding: 10px 10px 20px 10px;
-    outline: 0;
-    border: 1px solid rgba(105, 105, 105, 0.397);
-    border-radius: 10px;
-    background-color: #fff;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-    cursor: pointer;
-  }
-
-  .select-input:focus {
-    border-color: #3b82f6;
-  }
-
-  .select-label {
-    position: absolute;
-    left: 10px;
-    top: 15px;
-    color: grey;
-    font-size: 0.9em;
-    cursor: text;
-    transition: 0.3s ease;
-    pointer-events: none;
-  }
-
-  .select-input:focus + .select-label,
-  .select-input:valid + .select-label {
-    top: 30px;
-    font-size: 0.7em;
-    font-weight: 600;
-    color: #3b82f6;
-  }
-
-  .button-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .submit {
-    border: none;
-    outline: none;
-    background-color: #3b82f6;
-    padding: 12px 20px;
-    border-radius: 10px;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .submit:hover:not(:disabled) {
-    background-color: #2563eb;
-  }
-
-  .submit:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-  }
-
-  .cancel-btn {
-    border: 1px solid rgba(105, 105, 105, 0.397);
-    outline: none;
-    background-color: transparent;
-    padding: 12px 20px;
-    border-radius: 10px;
-    color: #374151;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    flex: 1;
-  }
-
-  .cancel-btn:hover:not(:disabled) {
-    background-color: #f3f4f6;
-    border-color: #6b7280;
-  }
-
-  .cancel-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  @keyframes pulse {
-    from {
-      transform: scale(0.9);
-      opacity: 1;
-    }
-
-    to {
-      transform: scale(1.8);
-      opacity: 0;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .button-group {
-      flex-direction: column;
-    }
-    
-    .submit, .cancel-btn {
-      width: 100%;
-    }
-  }
-`;

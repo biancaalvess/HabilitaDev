@@ -75,6 +75,10 @@ export function AnswerForm({
         setSuccess(true);
         setContent("");
         setAuthorName("");
+        
+        // Disparar evento customizado para recarregar respostas
+        window.dispatchEvent(new CustomEvent('answer-created'));
+        
         if (onSuccess) {
           onSuccess();
         }

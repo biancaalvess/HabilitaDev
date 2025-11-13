@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   MessageSquare,
   Clock,
@@ -8,15 +7,20 @@ import {
   AlertCircle,
   Lightbulb,
 } from "lucide-react";
+import { useEffect } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
+import { config } from "@/lib/config-simple";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Comment } from "@/lib/types";
-// import { useComments } from "@/lib/comments" // Removido - implementação simplificada
 
 interface CommentListProps {
   questionId: number;
 }
+
+const API_BASE_URL = config.api.baseUrl;
 
 const commentTypeIcons = {
   correction: AlertCircle,
@@ -34,58 +38,30 @@ const commentTypeLabels = {
 };
 
 export function CommentList({ questionId }: CommentListProps) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Usar SWR para buscar comentários
+  const { data: comments = [], error, isLoading, mutate } = useSWR<Comment[]>(
+    questionId ? `${API_BASE_URL}/proxy/questions/${questionId}/comments` : null,
+    fetcher,
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: 10000, // Recarregar a cada 10 segundos
+      dedupingInterval: 2000,
+    }
+  );
 
+  // Ouvir eventos de criação de comentários para revalidação imediata
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchComments = async () => {
-      if (!isMounted) return;
-      
-      try {
-        setLoading(true);
-        const { apiService } = await import("@/lib/api");
-        const response = await apiService.getComments(questionId);
-        if (isMounted) {
-          setComments(response.data || []);
-        }
-      } catch (error) {
-        console.error("Error fetching comments:", error);
-        if (isMounted) {
-          setComments([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+    const handleCommentCreated = () => {
+      mutate(); // Recarregar comentários quando um novo for criado
     };
 
-    fetchComments();
-    
-    // Ouvir eventos de criação de comentários
-    const handleCommentCreated = () => {
-      if (isMounted) {
-        fetchComments();
-      }
-    };
-    
     window.addEventListener('comment-created', handleCommentCreated);
     
-    // Recarregar comentários a cada 10 segundos para pegar novos comentários
-    const interval = setInterval(() => {
-      if (isMounted) {
-        fetchComments();
-      }
-    }, 10000);
-    
     return () => {
-      isMounted = false;
       window.removeEventListener('comment-created', handleCommentCreated);
-      clearInterval(interval);
     };
-  }, [questionId]);
+  }, [mutate]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -96,6 +72,31 @@ export function CommentList({ questionId }: CommentListProps) {
       minute: "2-digit",
     });
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Carregando comentários...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <MessageSquare className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <p className="text-red-400">Erro ao carregar comentários</p>
+          <p className="text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : 'Erro desconhecido'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (comments.length === 0) {
     return (

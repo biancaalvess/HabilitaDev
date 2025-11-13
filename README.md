@@ -2,26 +2,23 @@
 
 ## Plataforma de Treinamento para Entrevistas Técnicas
 
-HabilitaDev é uma plataforma web moderna e interativa desenvolvida para estudantes e profissionais de tecnologia que desejam se preparar para entrevistas técnicas, testes práticos e desafios de programação. A plataforma oferece um ambiente seguro onde é possível praticar, errar sem pressão e ganhar confiança através de questões reais utilizadas por grandes empresas de tecnologia.
+HabilitaDev é uma plataforma web moderna desenvolvida para estudantes e profissionais de tecnologia que desejam se preparar para entrevistas técnicas. A plataforma oferece questões reais de grandes empresas de tecnologia, com sistema de respostas da comunidade, comentários e feedback.
 
 ---
 
-## Índice
+## 📋 Índice
 
 - [Sobre o Projeto](#sobre-o-projeto)
-- [Principais Funcionalidades](#principais-funcionalidades)
+- [Arquitetura](#arquitetura)
+- [Funcionalidades Implementadas](#funcionalidades-implementadas)
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Arquitetura do Sistema](#arquitetura-do-sistema)
 - [Instalação e Configuração](#instalação-e-configuração)
-- [Como Usar](#como-usar)
+- [Variáveis de Ambiente](#variáveis-de-ambiente)
 - [Estrutura do Projeto](#estrutura-do-projeto)
-- [API e Endpoints](#api-e-endpoints)
-- [Componentes Principais](#componentes-principais)
+- [API Routes](#api-routes)
 - [Desenvolvimento](#desenvolvimento)
-- [Contribuindo](#contribuindo)
-- [Roadmap](#roadmap)
+- [Deploy](#deploy)
 - [Licença](#licença)
-- [Contato](#contato)
 
 ---
 
@@ -31,340 +28,240 @@ HabilitaDev é uma plataforma web moderna e interativa desenvolvida para estudan
 
 Criar um espaço acessível onde estudantes e profissionais possam praticar entrevistas técnicas, testes e desafios de tecnologia, aprendendo com os erros sem pressão e ganhando confiança para conquistar novas oportunidades.
 
-### Visão
+### Características Principais
 
-Ser a principal plataforma de preparação técnica em português, onde pessoas de diferentes níveis e áreas da tecnologia possam aprender juntas, ganhar confiança e crescer em comunidade.
-
-### Valores
-
-- **Acessibilidade**: Conhecimento técnico de alta qualidade disponível para todos
-- **Comunidade**: Ambiente colaborativo e de apoio mútuo
-- **Qualidade**: Questões reais e atualizadas de empresas renomadas
-- **Evolução Contínua**: Plataforma em constante melhoria e expansão
+- **Questões Reais**: Banco de questões de empresas como Itaú, Meta, X (Twitter), Google, Amazon
+- **Categorização**: Algoritmos, Estruturas de Dados, Design de Sistema, Bancos de Dados, Frontend, Backend, DevOps
+- **Níveis de Dificuldade**: Fácil, Médio, Difícil
+- **Comunidade**: Sistema de respostas, comentários e feedback
+- **Admin Panel**: Gerenciamento de questões, usuários e estatísticas
 
 ---
 
-## Principais Funcionalidades
+## Arquitetura
 
-### Sistema de Questões
+### Arquitetura de Dados
 
-#### Banco de Questões Completo
-- Questões reais de empresas como Itaú, Meta, X (Twitter), Google, Amazon e outras grandes techs
-- Categorização por área: Algoritmos, Estruturas de Dados, Design de Sistema, Bancos de Dados, Frontend, Backend, DevOps
-- Níveis de dificuldade: Fácil, Médio, Difícil
-- Soluções detalhadas e explicadas
-- Tags e palavras-chave para facilitar a busca
+```
+Frontend (Next.js) → API Routes (Proxy) → Backend Externo (Render)
+                      ↓
+                   SQLite (Opcional - apenas desenvolvimento local)
+```
 
-#### Sistema de Filtros Avançados
-- Filtro por dificuldade
-- Filtro por categoria
-- Busca por palavras-chave
-- Filtros combinados para pesquisas específicas
+### Fluxo de Dados
 
-### Sistema de Respostas da Comunidade
+1. **Frontend** (Next.js App Router)
+   - Componentes React com SWR para data-fetching
+   - Autenticação com cookies HttpOnly
+   - UI com Tailwind CSS e shadcn/ui
 
-#### Compartilhamento de Soluções
-- Usuários podem publicar suas próprias soluções
-- Nome do autor visível em cada resposta
-- Suporte a formatação de código com syntax highlighting
-- Marcação de soluções como "Solução Aprovada"
-- Cópia rápida de código
+2. **API Routes** (Next.js API Routes)
+   - Proxy para backend externo (`/api/proxy/*`)
+   - Autenticação (`/api/auth/*`)
+   - Admin (`/api/admin/*`)
 
-#### Recursos para Respostas
-- Editor de texto com suporte a Markdown
-- Blocos de código formatados
-- Explicação de complexidade (tempo e espaço)
-- Comparação de diferentes abordagens
+3. **Backend Externo** (Render)
+   - API REST completa
+   - Banco de dados PostgreSQL
+   - Endpoints: `/api/v1/*`
 
-### Sistema de Comentários
+### Sistema de Autenticação
 
-#### Feedback Colaborativo
-- Comentários de correção para apontar erros
-- Sugestões de melhorias
-- Nome do autor em cada comentário
-- Timestamps para rastreamento
+- **Cookies HttpOnly**: Tokens JWT armazenados em cookies HttpOnly (segurança XSS)
+- **OAuth**: Google e GitHub (redirecionamento automático)
+- **Verificação de Email**: Sistema completo de verificação
+- **Recuperação de Senha**: Fluxo completo de reset de senha
 
-#### Tipos de Comentários
-- **Correção**: Para reportar erros na questão ou resposta
-- **Sugestão**: Para propor melhorias no conteúdo
+---
 
-### Sistema de Feedback Formal
+## Funcionalidades Implementadas
 
-#### Canais de Comunicação
-- Feedback estruturado com tipos específicos
-- Status de acompanhamento: Pendente, Revisado, Implementado
-- Sistema de priorização
-- Histórico completo de feedbacks
+### ✅ Autenticação
 
-### Sistema de Contato
+- **Login** (`POST /api/auth/login`)
+  - Autenticação com email e senha
+  - Cookie HttpOnly com JWT
+  - Verificação de credenciais
 
-#### Modal de Contato Integrado
-- Formulário completo com validação
-- Tipos de contato: Reclamação, Sugestão, Reportar Bug, Nova Funcionalidade, Outro
-- Envio direto por email
-- Design moderno com gradientes e animações
+- **Registro** (`POST /api/auth/register`)
+  - Criação de conta com username, email e senha
+  - Validação de dados
+  - Envio de email de verificação
+  - Cookie HttpOnly com JWT
 
-### Interface e Experiência do Usuário
+- **Verificação de Email** (`GET /api/auth/verify-email`)
+  - Verificação de token de email
+  - Ativação de conta
+  - Redirecionamento após verificação
 
-#### Landing Page Moderna
-- Design futurista com elementos 3D
-- Animações suaves e interativas
-- Seção "Sobre" detalhada
-- Call-to-Actions estratégicos
-- Footer completo com links e contato
+- **Reenvio de Email de Verificação** (`POST /api/auth/resend-verification-email`)
+  - Reenvio de email de verificação
+  - Geração de novo token
 
-#### Sistema de Navegação
-- Sidebar lateral com categorias
-- Header com navegação principal
-- Breadcrumbs para localização
-- Transições suaves entre páginas
+- **Recuperação de Senha** (`POST /api/auth/forgot-password`)
+  - Solicitação de reset de senha
+  - Envio de email com token de reset
+  - Validação de email
 
-#### Tema e Estilização
-- Design system consistente
-- Paleta de cores profissional (azul e slate)
-- Modo escuro otimizado
-- Componentes reutilizáveis do shadcn/ui
-- Animações com Tailwind CSS
+- **Reset de Senha** (`POST /api/auth/reset-password`)
+  - Redefinição de senha com token
+  - Validação de token
+  - Atualização de senha
+
+- **Verificação de Sessão** (`POST /api/auth/verify`)
+  - Verificação de sessão via cookie
+  - Retorno de dados do usuário
+  - Validação de JWT
+
+- **Logout** (`POST /api/auth/logout`)
+  - Limpeza de cookie de autenticação
+  - Encerramento de sessão
+
+- **OAuth** (Google e GitHub)
+  - Redirecionamento para provider OAuth
+  - Callback automático (`GET /api/auth/oauth/callback`)
+  - Configuração de cookie HttpOnly
+  - Integração com backend externo
+
+### ✅ Sistema de Questões
+
+- **Listagem de Questões** (`GET /api/proxy/questions`)
+  - Busca de questões do backend
+  - Filtros por dificuldade, categoria, empresa
+  - Busca por palavras-chave
+  - Paginação (se suportado pelo backend)
+
+- **Detalhes de Questão** (`GET /api/proxy/questions/[id]`)
+  - Busca de questão específica
+  - Exibição de descrição, resposta e metadados
+
+- **Criação de Questão** (`POST /api/proxy/questions`)
+  - Criação de nova questão
+  - Validação de dados
+  - Envio para backend
+
+- **Atualização de Questão** (`PUT /api/proxy/questions/[id]`)
+  - Atualização de questão existente
+  - Validação de dados
+
+- **Exclusão de Questão** (`DELETE /api/proxy/questions/[id]`)
+  - Exclusão de questão
+  - Validação de permissões
+
+### ✅ Sistema de Respostas
+
+- **Listagem de Respostas** (`GET /api/proxy/questions/[id]/answers`)
+  - Busca de respostas de uma questão
+  - Ordenação por data
+  - Exibição de autor e conteúdo
+
+- **Criação de Resposta** (`POST /api/proxy/questions/[id]/answers`)
+  - Criação de nova resposta
+  - Validação de dados
+  - Suporte a formatação Markdown
+
+### ✅ Sistema de Comentários
+
+- **Listagem de Comentários** (`GET /api/proxy/questions/[id]/comments`)
+  - Busca de comentários de uma questão
+  - Tipos: Correção, Sugestão
+  - Ordenação por data
+
+- **Criação de Comentário** (`POST /api/proxy/questions/[id]/comments`)
+  - Criação de novo comentário
+  - Validação de dados
+  - Tipo de comentário
+
+### ✅ Sistema de Feedback
+
+- **Listagem de Feedback** (`GET /api/proxy/questions/[id]/feedback`)
+  - Busca de feedbacks de uma questão
+  - Tipos: Correção, Sugestão, Melhoria
+  - Status: Pendente, Revisado, Implementado
+
+- **Criação de Feedback** (`POST /api/proxy/questions/[id]/feedback`)
+  - Criação de novo feedback
+  - Validação de dados
+  - Tipo e status de feedback
+
+### ✅ Validação de Respostas
+
+- **Validação por IA** (`POST /api/proxy/questions/[id]/validate-answer`)
+  - Validação de resposta do usuário
+  - Integração com serviço de IA (opcional)
+  - Fallback para validação tradicional
+  - Feedback detalhado
+
+### ✅ Painel Administrativo
+
+- **Estatísticas** (`GET /api/admin/stats`)
+  - Total de usuários
+  - Total de questões
+  - Questões pendentes
+  - Questões aprovadas
+  - Total de feedbacks
+  - Taxa de aprovação
+
+- **Questões Pendentes** (`GET /api/admin/pending-questions`)
+  - Listagem de questões pendentes de aprovação
+  - Filtros e ordenação
+
+- **Gerenciamento de Usuários** (`GET /api/auth/users`, `PUT /api/auth/users`, `DELETE /api/auth/users`)
+  - Listagem de usuários
+  - Atualização de usuários
+  - Exclusão de usuários
+  - Alteração de roles
+
+### ✅ Sistema de Email
+
+- **Providers Suportados**:
+  - **Resend** (recomendado)
+  - **SendGrid** (alternativa)
+  - **Console** (desenvolvimento - logs no console)
+
+- **Templates**:
+  - Email de verificação
+  - Email de reset de senha
+  - HTML responsivo
+
+### ✅ Data Fetching
+
+- **SWR** (Stale-While-Revalidate)
+  - Cache automático
+  - Revalidação em foco
+  - Revalidação em reconexão
+  - Deduplicação de requisições
+  - Refresh automático (configurável)
 
 ---
 
 ## Tecnologias Utilizadas
 
-### Frontend Framework
+### Frontend
 
-#### Next.js 14.2.16
-- React 18 com Server Components
-- App Router para roteamento moderno
-- Static Site Generation (SSG)
-- Server-Side Rendering (SSR)
-- API Routes integradas
-- Fast Refresh para desenvolvimento
+- **Next.js 14.2.33**: Framework React com App Router
+- **React 18.3.1**: Biblioteca UI
+- **TypeScript 5.9.3**: Tipagem estática
+- **Tailwind CSS 4.1.17**: Framework CSS utility-first
+- **shadcn/ui**: Componentes UI acessíveis
+- **SWR 2.3.6**: Data fetching e cache
+- **Lucide React**: Ícones modernos
+- **React Hook Form**: Gerenciamento de formulários
+- **Zod**: Validação de schemas
 
-#### React 18
-- Hooks para gerenciamento de estado
-- Context API para estado global
-- Custom Hooks para lógica reutilizável
-- Componentes funcionais
-- Concurrent Features
+### Backend (API Routes)
 
-### Styling e UI
+- **Next.js API Routes**: API serverless
+- **bcryptjs**: Hash de senhas
+- **jsonwebtoken**: Autenticação JWT
+- **SQLite** (opcional): Banco de dados local (apenas desenvolvimento)
+- **Resend/SendGrid**: Envio de emails
 
-#### Tailwind CSS 4.1.9
-- Utility-first CSS framework
-- JIT (Just-In-Time) compiler
-- Custom configuration
-- Responsive design
-- Dark mode support
+### Infraestrutura
 
-#### shadcn/ui
-- Biblioteca de componentes acessíveis
-- Baseado em Radix UI
-- Totalmente customizável
-- TypeScript nativo
-- Componentes reutilizáveis:
-  - Dialog, Alert, Card, Button
-  - Input, Textarea, Select
-  - Tabs, Accordion, Tooltip
-  - Badge, Separator, Skeleton
-  - E muitos outros
-
-#### Lucide React
-- Ícones modernos e consistentes
-- SVG otimizados
-- Totalmente customizáveis
-- Tree-shakeable
-
-### Tipagem e Validação
-
-#### TypeScript 5
-- Tipagem estática forte
-- Interfaces e tipos customizados
-- IntelliSense aprimorado
-- Detecção de erros em tempo de desenvolvimento
-
-#### Zod 3.25.67
-- Schema validation
-- Type inference
-- Runtime type checking
-- Integração com React Hook Form
-
-### Gerenciamento de Estado
-
-#### Context API
-- Contextos para Authentication
-- Contextos para Feedback
-- Contextos para Comments
-- Contextos para Answers
-
-#### React Hook Form 7.60.0
-- Formulários performáticos
-- Validação integrada
-- Menor re-renderização
-- API simples e intuitiva
-
-### Fontes e Tipografia
-
-#### Geist Font Family
-- Geist Sans para textos
-- Geist Mono para código
-- Otimização de carregamento
-- Suporte a caracteres especiais
-
-### Animações e Efeitos
-
-#### Framer Motion (via components)
-- Animações declarativas
-- Gestos e interações
-- Transições de página
-- Scroll animations
-
-#### Tailwind Animate
-- Utilitários de animação
-- Keyframes customizados
-- Efeitos de hover
-- Loading states
-
-### Analytics e Monitoramento
-
-#### Vercel Analytics
-- Métricas de performance
-- Core Web Vitals
-- Rastreamento de usuários
-- Real-time analytics
-
-### Data Fetching
-
-#### Fetch API Nativa
-- Requisições HTTP
-- Integração com API backend
-- Error handling
-- Loading states
-
-### Backend Integration
-
-#### API REST
-- Base URL: https://habilitadev-backend.onrender.com
-- Endpoints RESTful
-- JSON responses
-- Error handling
-
----
-
-## Arquitetura do Sistema
-
-### Estrutura de Diretórios
-
-```
-HabilitaDev/
-├── app/                          # Next.js App Router
-│   ├── layout.tsx               # Layout raiz com providers
-│   ├── page.tsx                 # Landing page
-│   ├── globals.css              # Estilos globais
-│   ├── questoes/                # Página de questões
-│   │   └── page.tsx
-│   ├── contribuir/              # Página de contribuição
-│   │   └── page.tsx
-│   ├── admin/                   # Painel administrativo
-│   │   └── page.tsx
-│   └── sobre/                   # Página sobre
-│
-├── components/                   # Componentes React
-│   ├── ui/                      # Componentes shadcn/ui
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   ├── dialog.tsx
-│   │   ├── input.tsx
-│   │   └── ... (40+ componentes)
-│   │
-│   ├── answers/                 # Sistema de respostas
-│   │   ├── answer-form.tsx
-│   │   └── answer-list.tsx
-│   │
-│   ├── comments/                # Sistema de comentários
-│   │   ├── comment-form.tsx
-│   │   └── comment-list.tsx
-│   │
-│   ├── feedback/                # Sistema de feedback
-│   │   ├── feedback-form.tsx
-│   │   └── feedback-list.tsx
-│   │
-│   ├── admin/                   # Componentes admin
-│   │   ├── admin-sidebar.tsx
-│   │   ├── admin-stats.tsx
-│   │   ├── feedback-management.tsx
-│   │   └── questions-table.tsx
-│   │
-│   ├── auth/                    # Autenticação
-│   │   ├── auth-modal.tsx
-│   │   ├── login-form.tsx
-│   │   └── register-form.tsx
-│   │
-│   ├── hero-section.tsx         # Landing page hero
-│   ├── footer.tsx               # Footer global
-│   ├── header.tsx               # Header/Navbar
-│   ├── contact-modal.tsx        # Modal de contato
-│   ├── question-card.tsx        # Card de questão
-│   ├── question-detail.tsx      # Detalhes da questão
-│   ├── question-filters.tsx     # Filtros de questões
-│   ├── questoes-sidebar.tsx     # Sidebar de categorias
-│   └── questoes-header.tsx      # Header de questões
-│
-├── hooks/                        # Custom React Hooks
-│   ├── use-api.ts               # Hooks para API
-│   ├── use-mobile.ts            # Hook para mobile detection
-│   └── use-toast.ts             # Hook para notificações
-│
-├── lib/                          # Utilitários e configurações
-│   ├── api.ts                   # Serviço de API
-│   ├── types.ts                 # TypeScript types
-│   ├── utils.ts                 # Funções utilitárias
-│   ├── auth.tsx                 # Context de autenticação
-│   ├── answers.tsx              # Context de respostas
-│   ├── comments.tsx             # Context de comentários
-│   ├── feedback.tsx             # Context de feedback
-│   └── mock-data.ts             # Dados de exemplo
-│
-├── public/                       # Arquivos estáticos
-│   ├── placeholder-logo.svg
-│   └── ... (imagens e assets)
-│
-├── styles/                       # Estilos adicionais
-│   └── globals.css
-│
-├── package.json                  # Dependências do projeto
-├── tsconfig.json                # Configuração TypeScript
-├── tailwind.config.ts           # Configuração Tailwind
-├── next.config.mjs              # Configuração Next.js
-├── postcss.config.mjs           # Configuração PostCSS
-└── components.json              # Configuração shadcn/ui
-```
-
-### Fluxo de Dados
-
-#### 1. Carregamento Inicial
-```
-Usuario → Next.js App → API Service → Backend API → Response
-                                                         ↓
-Usuario ← React Component ← State Update ← Data Processing
-```
-
-#### 2. Interação com Questões
-```
-Usuario → Visualiza Questões → Aplica Filtros → Lista Atualizada
-          ↓
-          Seleciona Questão → Carrega Detalhes → Exibe Resposta
-                                                    ↓
-                                                  Respostas da Comunidade
-                                                  Comentários
-                                                  Feedback
-```
-
-#### 3. Sistema de Respostas
-```
-Usuario → Preenche Formulário → Valida Dados → Envia para API
-                                                     ↓
-Usuario ← Atualiza UI ← Recebe Confirmação ← API Response
-```
+- **Vercel**: Deploy e hospedagem
+- **Render**: Backend externo
+- **Vercel Analytics**: Analytics e métricas
 
 ---
 
@@ -372,9 +269,9 @@ Usuario ← Atualiza UI ← Recebe Confirmação ← API Response
 
 ### Pré-requisitos
 
-- Node.js 18.x ou superior
-- npm, yarn ou pnpm
-- Git
+- **Node.js 18.x** ou superior
+- **pnpm** (recomendado) ou npm/yarn
+- **Git**
 
 ### Passo 1: Clonar o Repositório
 
@@ -386,36 +283,25 @@ cd HabilitaDev
 ### Passo 2: Instalar Dependências
 
 ```bash
-# Usando npm
-npm install
-
-# Usando yarn
-yarn install
-
-# Usando pnpm
+# Usando pnpm (recomendado)
 pnpm install
+
+# Ou usando npm
+npm install
 ```
 
 ### Passo 3: Configurar Variáveis de Ambiente
 
-Crie um arquivo `.env.local` na raiz do projeto:
-
-```env
-# API Configuration
-NEXT_PUBLIC_API_URL=https://habilitadev-backend.onrender.com
-
-# Analytics (opcional)
-NEXT_PUBLIC_VERCEL_ANALYTICS=true
-```
+Crie um arquivo `.env.local` na raiz do projeto com as variáveis necessárias (veja seção [Variáveis de Ambiente](#variáveis-de-ambiente)).
 
 ### Passo 4: Executar em Desenvolvimento
 
 ```bash
 # Servidor de desenvolvimento (porta 3001)
-npm run dev
+pnpm run dev
 
 # Ou servidor local (porta 3000)
-npm run dev-local
+pnpm run dev-local
 ```
 
 Acesse `http://localhost:3001` no navegador.
@@ -424,229 +310,515 @@ Acesse `http://localhost:3001` no navegador.
 
 ```bash
 # Criar build otimizado
-npm run build
+pnpm run build
 
 # Iniciar servidor de produção
-npm start
+pnpm start
 ```
 
 ---
 
-## Como Usar
+## Variáveis de Ambiente
 
-### Para Estudantes e Profissionais
+Crie um arquivo `.env.local` na raiz do projeto com as seguintes variáveis:
 
-#### 1. Acessar a Plataforma
-- Abra o navegador e acesse a URL da aplicação
-- Navegue pela landing page para conhecer o projeto
+```env
+# ============================================
+# Configurações de Banco de Dados
+# ============================================
+# SQLite (apenas desenvolvimento local)
+DATABASE_URL="file:./dev.db"
 
-#### 2. Explorar Questões
-- Clique em "Questões" no menu ou no botão "Vamos Começar"
-- Use os filtros para encontrar questões específicas:
-  - Selecione a dificuldade desejada
-  - Escolha uma categoria
-  - Use a busca por palavras-chave
+# ============================================
+# Configurações de Autenticação
+# ============================================
+# Secret JWT (OBRIGATÓRIO em produção)
+# Gere uma chave segura: openssl rand -base64 32
+JWT_SECRET="your-super-secret-jwt-key-change-in-production"
 
-#### 3. Resolver uma Questão
-- Clique em "Ver detalhes" na questão desejada
-- Leia a descrição do problema
-- Analise a solução oficial
-- Compare com as respostas da comunidade
+# Tempo de expiração do JWT (padrão: 1d)
+JWT_EXPIRES_IN="7d"
 
-#### 4. Contribuir com Respostas
-- Clique no botão "Responder Questão"
-- Digite seu nome
-- Escreva sua solução (com código se necessário)
-- Use ``` para blocos de código
-- Clique em "Enviar Resposta"
+# Rounds do bcrypt (padrão: 10)
+BCRYPT_ROUNDS=10
 
-#### 5. Adicionar Comentários
-- Clique no botão "Comentar"
-- Escolha o tipo: Correção ou Sugestão
-- Escreva seu comentário
-- Envie para a comunidade
+# ============================================
+# Configurações da API
+# ============================================
+# URL da API (cliente)
+NEXT_PUBLIC_API_URL="/api"
 
-### Para Administradores
+# URL do Backend Externo (OBRIGATÓRIO)
+# Backend em Render: https://habilitadev-backend.onrender.com
+NEXT_PUBLIC_BACKEND_URL="https://habilitadev-backend.onrender.com"
 
-#### 1. Acessar Painel Admin
-- Navegue para `/admin`
-- Faça login com credenciais de administrador
+# Ou use BACKEND_URL apenas no servidor (alternativa)
+# BACKEND_URL="https://habilitadev-backend.onrender.com"
 
-#### 2. Gerenciar Questões
-- Visualize todas as questões cadastradas
-- Aprove ou rejeite novas questões
-- Edite questões existentes
-- Gerencie categorias e tags
+# Timeout das requisições (milissegundos)
+# Não é necessário configurar (padrão: 30000)
 
-#### 3. Moderar Conteúdo
-- Revise respostas da comunidade
-- Aprove ou remova comentários
-- Gerencie feedbacks recebidos
+# ============================================
+# Configurações de Desenvolvimento
+# ============================================
+# Ambiente (development, production, test)
+NODE_ENV="development"
+
+# URL da aplicação (cliente)
+NEXT_PUBLIC_APP_URL="http://localhost:3001"
+
+# Nome da aplicação (cliente)
+NEXT_PUBLIC_APP_NAME="HabilitaDev"
+
+# ============================================
+# Configurações de Email
+# ============================================
+# Provider de email: 'resend', 'sendgrid', 'console' (padrão: 'console')
+EMAIL_PROVIDER="resend"
+
+# Resend API Key (obtenha em https://resend.com/api-keys)
+RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# SendGrid API Key (se usar SendGrid)
+SENDGRID_API_KEY="SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Email do remetente
+FROM_EMAIL="noreply@habilitadev.com"
+
+# Nome do remetente
+FROM_NAME="HabilitaDev"
+
+# ============================================
+# Configurações de Rate Limiting (Opcional)
+# ============================================
+# Habilitar rate limiting (padrão: false)
+RATE_LIMIT_ENABLED="false"
+
+# Janela de tempo (milissegundos)
+RATE_LIMIT_WINDOW_MS=60000
+
+# Número máximo de requisições
+RATE_LIMIT_MAX_REQUESTS=100
+
+# ============================================
+# Configurações de Cache (Opcional)
+# ============================================
+# Habilitar cache (padrão: true)
+CACHE_ENABLED="true"
+
+# TTL do cache (segundos)
+CACHE_TTL_SECONDS=300
+
+# ============================================
+# Configurações de Validação por IA (Opcional)
+# ============================================
+# URL do serviço de validação por IA
+AI_VALIDATION_URL="http://localhost:5000"
+```
+
+### Variáveis Obrigatórias para Produção
+
+- `JWT_SECRET`: Secret JWT (gerar chave segura)
+- `NEXT_PUBLIC_BACKEND_URL`: URL do backend externo
+- `RESEND_API_KEY` ou `SENDGRID_API_KEY`: Chave de API de email (para envio de emails)
+
+### Variáveis Opcionais
+
+- `EMAIL_PROVIDER`: Provider de email (padrão: 'console')
+- `RATE_LIMIT_ENABLED`: Habilitar rate limiting
+- `AI_VALIDATION_URL`: URL do serviço de validação por IA
 
 ---
 
 ## Estrutura do Projeto
 
-### Componentes UI (shadcn/ui)
-
-A aplicação utiliza mais de 40 componentes do shadcn/ui, incluindo:
-
-- **Formulários**: Input, Textarea, Select, Checkbox, Radio, Switch
-- **Navegação**: Dialog, Dropdown, Menu, Tabs, Navigation Menu
-- **Feedback**: Alert, Toast, Progress, Skeleton
-- **Layout**: Card, Separator, Scroll Area, Resizable
-- **Interação**: Button, Tooltip, Popover, Hover Card
-- **Data Display**: Table, Badge, Avatar, Calendar
-
-### Hooks Customizados
-
-#### useQuestions
-```typescript
-const { questions, loading, error, refetch } = useQuestions();
 ```
-Gerencia o carregamento e estado das questões.
-
-#### useAnswers
-```typescript
-const { answers, loading, error, addAnswer } = useAnswers(questionId);
+HabilitaDev/
+├── app/                          # Next.js App Router
+│   ├── api/                      # API Routes
+│   │   ├── auth/                 # Autenticação
+│   │   │   ├── login/            # POST /api/auth/login
+│   │   │   ├── register/         # POST /api/auth/register
+│   │   │   ├── verify/           # POST /api/auth/verify
+│   │   │   ├── logout/           # POST /api/auth/logout
+│   │   │   ├── verify-email/     # GET /api/auth/verify-email
+│   │   │   ├── resend-verification-email/  # POST /api/auth/resend-verification-email
+│   │   │   ├── forgot-password/  # POST /api/auth/forgot-password
+│   │   │   ├── reset-password/   # POST /api/auth/reset-password
+│   │   │   ├── oauth/            # OAuth callbacks
+│   │   │   │   └── callback/     # GET /api/auth/oauth/callback
+│   │   │   └── users/            # GET, PUT, DELETE /api/auth/users
+│   │   ├── admin/                # Admin API
+│   │   │   ├── stats/            # GET /api/admin/stats
+│   │   │   └── pending-questions/  # GET /api/admin/pending-questions
+│   │   └── proxy/                # Proxy para backend externo
+│   │       ├── questions/        # GET, POST /api/proxy/questions
+│   │       │   └── [id]/         # GET, PUT, DELETE /api/proxy/questions/[id]
+│   │       │       ├── answers/  # GET, POST /api/proxy/questions/[id]/answers
+│   │       │       ├── comments/ # GET, POST /api/proxy/questions/[id]/comments
+│   │       │       ├── feedback/ # GET, POST /api/proxy/questions/[id]/feedback
+│   │       │       └── validate-answer/  # POST /api/proxy/questions/[id]/validate-answer
+│   │       └── health/           # GET /api/proxy/health
+│   ├── auth/                     # Páginas de autenticação
+│   │   └── callback/             # Página de callback OAuth
+│   ├── admin/                    # Painel administrativo
+│   │   └── page.tsx
+│   ├── questoes/                 # Página de questões
+│   │   └── page.tsx
+│   ├── forgot-password/          # Página de recuperação de senha
+│   │   └── page.tsx
+│   ├── reset-password/           # Página de reset de senha
+│   │   └── page.tsx
+│   ├── verify-email/             # Página de verificação de email
+│   │   └── page.tsx
+│   ├── layout.tsx                # Layout raiz
+│   ├── page.tsx                  # Landing page
+│   └── globals.css               # Estilos globais
+│
+├── components/                    # Componentes React
+│   ├── ui/                       # Componentes shadcn/ui
+│   ├── auth/                     # Componentes de autenticação
+│   ├── admin/                    # Componentes admin
+│   ├── answers/                  # Componentes de respostas
+│   ├── comments/                 # Componentes de comentários
+│   ├── feedback/                 # Componentes de feedback
+│   └── ...                       # Outros componentes
+│
+├── hooks/                         # Custom React Hooks
+│   ├── use-optimized-questions.ts  # Hook para questões (SWR)
+│   └── ...                       # Outros hooks
+│
+├── lib/                           # Utilitários e configurações
+│   ├── api.ts                    # Serviço de API
+│   ├── api-response.ts           # Helpers de resposta da API
+│   ├── auth.tsx                  # Context de autenticação
+│   ├── config-simple.ts          # Configurações
+│   ├── database-simple.ts          # Serviço de banco de dados (SQLite)
+│   ├── email-service.ts          # Serviço de email
+│   ├── email-templates.ts        # Templates de email
+│   ├── error-handler.ts          # Tratamento de erros
+│   ├── fetcher.ts                # Fetcher para SWR
+│   ├── jwt-helper.ts             # Helpers JWT
+│   └── types.ts                  # TypeScript types
+│
+├── public/                        # Arquivos estáticos
+│   └── ...                       # Imagens e assets
+│
+├── package.json                   # Dependências
+├── tsconfig.json                 # Configuração TypeScript
+├── next.config.mjs               # Configuração Next.js
+├── tailwind.config.ts            # Configuração Tailwind
+├── postcss.config.mjs            # Configuração PostCSS
+└── vercel.json                   # Configuração Vercel
 ```
-Gerencia respostas de uma questão específica.
-
-#### useComments
-```typescript
-const { comments, loading, error, addComment } = useComments(questionId);
-```
-Gerencia comentários de uma questão.
-
-#### useFeedback
-```typescript
-const { feedback, loading, error, addFeedback } = useFeedback(questionId);
-```
-Gerencia feedbacks de uma questão.
 
 ---
 
-## API e Endpoints
+## API Routes
 
-### Base URL
+### Autenticação
+
+#### `POST /api/auth/login`
+Autentica um usuário e retorna um cookie HttpOnly com JWT.
+
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
 ```
-https://habilitadev-backend.onrender.com
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "username": "user",
+      "email": "user@example.com",
+      "role": "user",
+      "created_at": "2024-01-01T00:00:00.000Z"
+    }
+  },
+  "message": "Login realizado com sucesso"
+}
 ```
 
-### Endpoints Disponíveis
+#### `POST /api/auth/register`
+Registra um novo usuário e envia email de verificação.
 
-#### Questões
+**Request:**
+```json
+{
+  "username": "user",
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
 
-**GET /questions**
-- Retorna todas as questões
-- Response: Array<Question>
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "username": "user",
+      "email": "user@example.com",
+      "role": "user",
+      "created_at": "2024-01-01T00:00:00.000Z"
+    },
+    "email_verification_required": true
+  },
+  "message": "Conta criada com sucesso! Verifique seu email para confirmar sua conta."
+}
+```
 
-**GET /questions/:id**
-- Retorna uma questão específica
-- Response: Question
+#### `GET /api/auth/verify-email`
+Verifica o email do usuário usando um token.
 
-**POST /questions**
-- Cria uma nova questão
-- Body: Omit<Question, 'id' | 'created_at'>
-- Response: Question
+**Query Parameters:**
+- `token`: Token de verificação
+- `redirect_url`: URL de redirecionamento (opcional)
 
-#### Respostas
+#### `POST /api/auth/resend-verification-email`
+Reenvia o email de verificação.
 
-**GET /questions/:questionId/answers**
-- Retorna respostas de uma questão
-- Response: Array<Answer>
+**Request:**
+```json
+{
+  "email": "user@example.com"
+}
+```
 
-**POST /questions/:questionId/answers**
-- Adiciona uma resposta
-- Body: { author_name, content, is_solution }
-- Response: Answer
+#### `POST /api/auth/forgot-password`
+Solicita reset de senha.
 
-#### Comentários
+**Request:**
+```json
+{
+  "email": "user@example.com"
+}
+```
 
-**GET /questions/:questionId/comments**
-- Retorna comentários de uma questão
-- Response: Array<Comment>
+#### `POST /api/auth/reset-password`
+Redefine a senha usando um token.
 
-**POST /questions/:questionId/comments**
-- Adiciona um comentário
-- Body: { author_name, comment_type, content }
-- Response: Comment
+**Request:**
+```json
+{
+  "token": "reset-token",
+  "password": "newpassword123"
+}
+```
 
-#### Feedback
+#### `POST /api/auth/verify`
+Verifica a sessão do usuário via cookie HttpOnly.
 
-**GET /questions/:questionId/feedback**
-- Retorna feedbacks de uma questão
-- Response: Array<Feedback>
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "username": "user",
+      "email": "user@example.com",
+      "role": "user",
+      "created_at": "2024-01-01T00:00:00.000Z"
+    }
+  }
+}
+```
 
-**POST /questions/:questionId/feedback**
-- Adiciona um feedback
-- Body: { user_id, feedback_type, content, status }
-- Response: Feedback
+#### `POST /api/auth/logout`
+Encerra a sessão do usuário e limpa o cookie.
 
-#### Health Check
+#### `GET /api/auth/oauth/callback`
+Callback OAuth para Google/GitHub. Recebe tokens e configura cookie HttpOnly.
 
-**GET /health**
-- Verifica status da API
-- Response: { status, timestamp }
+**Query Parameters:**
+- `access_token`: Token de acesso
+- `refresh_token`: Token de refresh (opcional)
+- `return_url`: URL de retorno (opcional)
+- `error`: Erro (se houver)
+- `error_description`: Descrição do erro (se houver)
 
----
+#### `GET /api/auth/users`
+Lista todos os usuários (admin apenas).
 
-## Componentes Principais
+#### `PUT /api/auth/users`
+Atualiza um usuário (admin apenas).
 
-### HeroSection
-Landing page com animações e elementos 3D.
+**Request:**
+```json
+{
+  "id": 1,
+  "username": "newusername",
+  "email": "newemail@example.com",
+  "role": "admin"
+}
+```
 
-**Recursos:**
-- Gradientes animados
-- Partículas tecnológicas
-- Wireframe hands
-- Call-to-actions
-- Seção sobre com missão, visão e valores
+#### `DELETE /api/auth/users`
+Exclui um usuário (admin apenas).
 
-### QuestionCard
-Card individual de questão na listagem.
+**Query Parameters:**
+- `id`: ID do usuário
 
-**Recursos:**
-- Badge de dificuldade
-- Badge de categoria
-- Empresa (se disponível)
-- Botões de ação
-- Hover effects
+### Admin
 
-### QuestionDetail
-Visualização completa de uma questão.
+#### `GET /api/admin/stats`
+Retorna estatísticas do sistema.
 
-**Recursos:**
-- Descrição completa
-- Solução oficial
-- Tags e metadados
-- Sistema de respostas
-- Sistema de comentários
-- Sistema de feedback
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalUsers": 100,
+    "totalQuestions": 500,
+    "pendingQuestions": 10,
+    "approvedQuestions": 490,
+    "totalFeedback": 50,
+    "totalAnswers": 200
+  }
+}
+```
 
-### ContactModal
-Modal moderno para contato.
+#### `GET /api/admin/pending-questions`
+Retorna questões pendentes de aprovação.
 
-**Recursos:**
-- Formulário completo
-- Validação de campos
-- Tipos de contato
-- Integração com email
-- Design com gradientes
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "Question Title",
+      "description": "Question Description",
+      "answer": "Answer",
+      "difficulty": "medium",
+      "category": "algorithms",
+      "approved": false,
+      "created_at": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
 
-### Footer
-Rodapé completo com informações.
+### Proxy (Backend Externo)
 
-**Recursos:**
-- Links rápidos
-- Categorias
-- Redes sociais
-- Modal de contato
-- Créditos da desenvolvedora
+#### `GET /api/proxy/questions`
+Busca questões do backend externo.
+
+**Query Parameters:**
+- `difficulty`: Filtro por dificuldade (easy, medium, hard)
+- `category`: Filtro por categoria
+- `company`: Filtro por empresa
+- `search`: Busca por palavras-chave
+
+#### `POST /api/proxy/questions`
+Cria uma nova questão no backend externo.
+
+#### `GET /api/proxy/questions/[id]`
+Busca uma questão específica do backend externo.
+
+#### `PUT /api/proxy/questions/[id]`
+Atualiza uma questão no backend externo.
+
+#### `DELETE /api/proxy/questions/[id]`
+Exclui uma questão do backend externo.
+
+#### `GET /api/proxy/questions/[id]/answers`
+Busca respostas de uma questão.
+
+#### `POST /api/proxy/questions/[id]/answers`
+Cria uma nova resposta.
+
+#### `GET /api/proxy/questions/[id]/comments`
+Busca comentários de uma questão.
+
+#### `POST /api/proxy/questions/[id]/comments`
+Cria um novo comentário.
+
+#### `GET /api/proxy/questions/[id]/feedback`
+Busca feedbacks de uma questão.
+
+#### `POST /api/proxy/questions/[id]/feedback`
+Cria um novo feedback.
+
+#### `POST /api/proxy/questions/[id]/validate-answer`
+Valida uma resposta do usuário (com IA opcional).
+
+**Request:**
+```json
+{
+  "user_answer": "User's answer",
+  "correct_answer": "Correct answer",
+  "question_context": "Question context"
+}
+```
+
+#### `GET /api/proxy/health`
+Verifica o status do backend externo e banco local.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "services": {
+    "frontend": {
+      "status": "healthy",
+      "timestamp": "2024-01-01T00:00:00.000Z",
+      "version": "1.0.0"
+    },
+    "backend": {
+      "status": "healthy",
+      "url": "https://habilitadev-backend.onrender.com",
+      "lastChecked": "2024-01-01T00:00:00.000Z"
+    },
+    "database": {
+      "status": "healthy",
+      "lastChecked": "2024-01-01T00:00:00.000Z",
+      "type": "sqlite"
+    }
+  }
+}
+```
 
 ---
 
 ## Desenvolvimento
+
+### Scripts Disponíveis
+
+```bash
+# Desenvolvimento
+pnpm run dev          # Inicia servidor (porta 3001)
+pnpm run dev-local    # Inicia servidor local (porta 3000)
+
+# Produção
+pnpm run build        # Cria build otimizado
+pnpm start            # Inicia servidor de produção
+
+# Qualidade
+pnpm run lint         # Executa ESLint
+
+# Ambiente
+pnpm run setup-env    # Configura variáveis de ambiente
+pnpm run env:init     # Inicializa .env.local
+pnpm run env:validate # Valida variáveis de ambiente
+pnpm run env:list     # Lista variáveis de ambiente
+
+# Dependências
+pnpm run check-deps   # Verifica dependências não utilizadas
+pnpm run clean-deps   # Remove dependências não utilizadas
+```
 
 ### Estrutura de Commits
 
@@ -669,106 +841,55 @@ chore: tarefas de manutenção
 - Siga o padrão de nomenclatura camelCase
 - Mantenha componentes pequenos e focados
 - Documente funções complexas
-- Use hooks customizados para lógica reutilizável
+- Use SWR para data-fetching
+- Use Tailwind CSS para estilização
 
 #### Estilização
-- Use Tailwind CSS para estilos
+- Use Tailwind CSS (não styled-components)
 - Mantenha classes organizadas
 - Use componentes shadcn/ui quando possível
 - Siga o design system estabelecido
 
 #### Performance
-- Use React.memo para componentes pesados
+- Use SWR para cache e revalidação
 - Implemente lazy loading quando apropriado
 - Otimize imagens e assets
 - Minimize re-renderizações desnecessárias
 
-### Scripts Disponíveis
-
-```bash
-# Desenvolvimento
-npm run dev          # Inicia servidor (porta 3001)
-npm run dev-local    # Inicia servidor local (porta 3000)
-
-# Produção
-npm run build        # Cria build otimizado
-npm start            # Inicia servidor de produção
-
-# Qualidade
-npm run lint         # Executa ESLint
-```
-
 ---
 
-## Contribuindo
+## Deploy
 
-### Como Contribuir
+### Vercel (Recomendado)
 
-1. Faça um Fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/NovaFuncionalidade`)
-3. Commit suas mudanças (`git commit -m 'feat: adicionar nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/NovaFuncionalidade`)
-5. Abra um Pull Request
+1. **Conectar Repositório**
+   - Conecte seu repositório GitHub ao Vercel
+   - Configure variáveis de ambiente
 
-### Diretrizes de Contribuição
+2. **Variáveis de Ambiente**
+   - `JWT_SECRET`: Secret JWT (gerar chave segura)
+   - `NEXT_PUBLIC_BACKEND_URL`: URL do backend externo
+   - `RESEND_API_KEY`: Chave de API do Resend
+   - `FROM_EMAIL`: Email do remetente
+   - `FROM_NAME`: Nome do remetente
 
-- Siga os padrões de código estabelecidos
-- Adicione testes quando apropriado
-- Atualize a documentação se necessário
-- Descreva claramente as mudanças no PR
-- Certifique-se de que o código passa no linting
+3. **Build**
+   - Vercel detecta automaticamente Next.js
+   - Build é executado automaticamente
+   - Deploy é feito automaticamente
 
-### Reportando Bugs
+### Netlify
 
-Use o modal de contato na plataforma ou crie uma issue no GitHub com:
-- Descrição clara do bug
-- Passos para reproduzir
-- Comportamento esperado vs atual
-- Screenshots se aplicável
-- Informações do ambiente (navegador, OS, etc.)
+1. **Conectar Repositório**
+   - Conecte seu repositório GitHub ao Netlify
+   - Configure variáveis de ambiente
 
----
+2. **Build Settings**
+   - Build command: `pnpm run build`
+   - Publish directory: `.next`
 
-## Roadmap
-
-### Versão 1.1
-- Sistema de autenticação completo
-- Perfis de usuários
-- Sistema de pontuação e rankings
-- Histórico de respostas
-- Estatísticas pessoais
-
-### Versão 1.2
-- Editor de código integrado
-- Execução de código em tempo real
-- Testes automatizados para soluções
-- Sistema de badges e conquistas
-
-### Versão 1.3
-- Mode competitivo
-- Desafios semanais
-- Sistema de mentoria
-- Certificados de conclusão
-
-### Versão 2.0
-- Aplicativo mobile (React Native)
-- Modo offline
-- Notificações push
-- Integração com GitHub
-- API pública
-
----
-
-## Tecnologias Futuras
-
-### Planejado para Implementação
-
-- **GraphQL**: Para queries mais eficientes
-- **Redis**: Para caching
-- **WebSockets**: Para features em tempo real
-- **Docker**: Para containerização
-- **Kubernetes**: Para orquestração
-- **CI/CD**: Pipeline automatizado
+3. **Variáveis de Ambiente**
+   - Mesmas variáveis do Vercel
 
 ---
 
@@ -792,55 +913,6 @@ Fullstack Developer especializada em TypeScript, React, Node.js e tecnologias mo
 - **Email**: bianca.alvessdasilva@gmail.com
 - **Portfolio**: [devbianca.tech](https://devbianca.tech)
 
-### Suporte
-
-Para dúvidas, sugestões ou reportar problemas:
-
-1. Use o modal de contato na plataforma
-2. Envie um email para bianca.alvessdasilva@gmail.com
-3. Abra uma issue no GitHub
-
----
-
-## Agradecimentos
-
-- Comunidade Next.js pela framework incrível
-- Equipe do shadcn/ui pelos componentes
-- Vercel pela hospedagem e analytics
-- Todos os contribuidores e usuários da plataforma
-
----
-
-## Stack Completo
-
-### Frontend
-- Next.js 14.2.16
-- React 18
-- TypeScript 5
-- Tailwind CSS 4.1.9
-- shadcn/ui
-- Radix UI
-- Lucide React
-- React Hook Form
-- Zod
-
-### Backend (Integração)
-- API REST
-- JSON responses
-- Error handling
-- CORS enabled
-
-### Ferramentas de Desenvolvimento
-- ESLint
-- Prettier
-- Git
-- npm/yarn/pnpm
-
-### Deploy e Hospedagem
-- Vercel (recomendado)
-- Vercel Analytics
-- Edge Functions
-
 ---
 
 **Desenvolvido com dedicação por Bianca Alves**
@@ -849,5 +921,5 @@ Para dúvidas, sugestões ou reportar problemas:
 
 ---
 
-Última atualização: Setembro 2025
+Última atualização: Janeiro 2025
 Versão: 1.0.0

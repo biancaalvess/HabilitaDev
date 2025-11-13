@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   MessageSquare,
   Clock,
@@ -9,15 +8,20 @@ import {
   AlertCircle,
   Lightbulb,
 } from "lucide-react";
+import { useEffect } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
+import { config } from "@/lib/config-simple";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Feedback } from "@/lib/types";
-// import { useFeedback } from "@/lib/feedback" // Removido - implementação simplificada
 
 interface FeedbackListProps {
   questionId: number;
 }
+
+const API_BASE_URL = config.api.baseUrl;
 
 const feedbackTypeIcons = {
   correction: AlertCircle,
@@ -44,58 +48,30 @@ const statusLabels = {
 };
 
 export function FeedbackList({ questionId }: FeedbackListProps) {
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Usar SWR para buscar feedbacks
+  const { data: feedbacks = [], error, isLoading, mutate } = useSWR<Feedback[]>(
+    questionId ? `${API_BASE_URL}/proxy/questions/${questionId}/feedback` : null,
+    fetcher,
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: 10000, // Recarregar a cada 10 segundos
+      dedupingInterval: 2000,
+    }
+  );
 
+  // Ouvir eventos de criação de feedbacks para revalidação imediata
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchFeedbacks = async () => {
-      if (!isMounted) return;
-      
-      try {
-        setLoading(true);
-        const { apiService } = await import("@/lib/api");
-        const response = await apiService.getFeedback(questionId);
-        if (isMounted) {
-          setFeedbacks(response.data || []);
-        }
-      } catch (error) {
-        console.error("Error fetching feedbacks:", error);
-        if (isMounted) {
-          setFeedbacks([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+    const handleFeedbackCreated = () => {
+      mutate(); // Recarregar feedbacks quando um novo for criado
     };
 
-    fetchFeedbacks();
-    
-    // Ouvir eventos de criação de feedbacks
-    const handleFeedbackCreated = () => {
-      if (isMounted) {
-        fetchFeedbacks();
-      }
-    };
-    
     window.addEventListener('feedback-created', handleFeedbackCreated);
     
-    // Recarregar feedbacks a cada 10 segundos para pegar novos feedbacks
-    const interval = setInterval(() => {
-      if (isMounted) {
-        fetchFeedbacks();
-      }
-    }, 10000);
-    
     return () => {
-      isMounted = false;
       window.removeEventListener('feedback-created', handleFeedbackCreated);
-      clearInterval(interval);
     };
-  }, [questionId]);
+  }, [mutate]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -106,6 +82,31 @@ export function FeedbackList({ questionId }: FeedbackListProps) {
       minute: "2-digit",
     });
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Carregando feedbacks...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <MessageSquare className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <p className="text-red-400">Erro ao carregar feedbacks</p>
+          <p className="text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : 'Erro desconhecido'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (feedbacks.length === 0) {
     return (

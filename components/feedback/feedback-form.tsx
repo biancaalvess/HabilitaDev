@@ -2,8 +2,10 @@
 
 import type React from "react";
 import { useState } from "react";
-import styled from "styled-components";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
@@ -12,6 +14,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import type { Feedback } from "@/lib/types";
 
@@ -121,7 +130,7 @@ export function FeedbackForm({
           </DialogDescription>
         </DialogHeader>
 
-        <StyledWrapper>
+        <div className="w-full">
           {success ? (
             <Alert className="border-green-500/20 bg-green-500/10">
               <AlertDescription className="text-green-400">
@@ -129,11 +138,11 @@ export function FeedbackForm({
               </AlertDescription>
             </Alert>
           ) : (
-            <form className="form" onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {error && (
                 <Alert
                   variant="destructive"
-                  className="border-red-500/20 bg-red-500/10 mb-4"
+                  className="border-red-500/20 bg-red-500/10"
                 >
                   <AlertDescription className="text-red-400 font-medium">
                     {error}
@@ -141,66 +150,62 @@ export function FeedbackForm({
                 </Alert>
               )}
 
-              <p className="title">Enviar Feedback</p>
-              <p className="message">
-                Ajude-nos a melhorar esta questão com seu feedback. Sua
-                contribuição é valiosa para a comunidade.
-              </p>
-
-              <div className="select-wrapper">
-                <select
+              <div className="space-y-2">
+                <Label htmlFor="feedbackType">Tipo de Feedback</Label>
+                <Select
                   value={feedbackType}
-                  onChange={(e) =>
-                    setFeedbackType(e.target.value as Feedback["feedback_type"])
-                  }
+                  onValueChange={(value) => setFeedbackType(value as Feedback["feedback_type"])}
                   disabled={loading}
-                  className="select-input"
                   required
                 >
-                  <option value="">Selecione o tipo...</option>
-                  {Object.entries(feedbackTypeLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label} -{" "}
-                      {
-                        feedbackTypeDescriptions[
-                          key as keyof typeof feedbackTypeDescriptions
-                        ]
-                      }
-                    </option>
-                  ))}
-                </select>
-                <span className="select-label">Tipo de Feedback</span>
+                  <SelectTrigger id="feedbackType">
+                    <SelectValue placeholder="Selecione o tipo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(feedbackTypeLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label} - {feedbackTypeDescriptions[key as keyof typeof feedbackTypeDescriptions]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <label>
-                <textarea
-                  required
-                  placeholder=" "
-                  className="input textarea"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  disabled={loading}
-                  rows={4}
-                />
-                <span>Conteúdo</span>
-                <div className="char-count">
-                  {content.length}/500 caracteres
+              <div className="space-y-2">
+                <Label htmlFor="content">Conteúdo</Label>
+                <div className="relative">
+                  <Textarea
+                    id="content"
+                    placeholder="Digite seu feedback..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    disabled={loading}
+                    rows={4}
+                    required
+                    minLength={10}
+                    maxLength={500}
+                    className="pr-20"
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                    {content.length}/500
+                  </div>
                 </div>
-              </label>
+              </div>
 
-              <div className="button-group">
-                <button
+              <div className="flex gap-3 sm:flex-row flex-col">
+                <Button
                   type="button"
-                  className="cancel-btn"
+                  variant="outline"
                   onClick={handleClose}
                   disabled={loading}
+                  className="flex-1"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="submit"
                   disabled={loading || !feedbackType || !content.trim()}
+                  className="flex-1"
                 >
                   {loading ? (
                     <>
@@ -213,244 +218,12 @@ export function FeedbackForm({
                       Enviar
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           )}
-        </StyledWrapper>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
-
-const StyledWrapper = styled.div`
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-width: 100%;
-    background-color: transparent;
-    padding: 0;
-    border-radius: 20px;
-    position: relative;
-  }
-
-  .title {
-    font-size: 28px;
-    color: #10b981;
-    font-weight: 600;
-    letter-spacing: -1px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding-left: 30px;
-    margin: 0 0 10px 0;
-  }
-
-  .title::before,
-  .title::after {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    border-radius: 50%;
-    left: 0px;
-    background-color: #10b981;
-  }
-
-  .title::before {
-    width: 18px;
-    height: 18px;
-    background-color: #10b981;
-  }
-
-  .title::after {
-    width: 18px;
-    height: 18px;
-    animation: pulse 1s linear infinite;
-  }
-
-  .message {
-    color: rgba(88, 87, 87, 0.822);
-    font-size: 14px;
-    margin: 0 0 15px 0;
-  }
-
-  .form label {
-    position: relative;
-  }
-
-  .form label .input {
-    width: 100%;
-    padding: 10px 10px 20px 10px;
-    outline: 0;
-    border: 1px solid rgba(105, 105, 105, 0.397);
-    border-radius: 10px;
-    background-color: #fff;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-  }
-
-  .form label .input:focus {
-    border-color: #10b981;
-  }
-
-  .form label .textarea {
-    resize: none;
-    min-height: 100px;
-  }
-
-  .form label .input + span {
-    position: absolute;
-    left: 10px;
-    top: 15px;
-    color: grey;
-    font-size: 0.9em;
-    cursor: text;
-    transition: 0.3s ease;
-    pointer-events: none;
-  }
-
-  .form label .input:placeholder-shown + span {
-    top: 15px;
-    font-size: 0.9em;
-  }
-
-  .form label .input:focus + span,
-  .form label .input:valid + span {
-    top: 30px;
-    font-size: 0.7em;
-    font-weight: 600;
-    color: #10b981;
-  }
-
-  .form label .input:valid + span {
-    color: #10b981;
-  }
-
-  .char-count {
-    position: absolute;
-    bottom: 5px;
-    right: 10px;
-    font-size: 0.7em;
-    color: grey;
-    pointer-events: none;
-  }
-
-  .select-wrapper {
-    position: relative;
-  }
-
-  .select-input {
-    width: 100%;
-    padding: 10px 10px 20px 10px;
-    outline: 0;
-    border: 1px solid rgba(105, 105, 105, 0.397);
-    border-radius: 10px;
-    background-color: #fff;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-    cursor: pointer;
-  }
-
-  .select-input:focus {
-    border-color: #10b981;
-  }
-
-  .select-label {
-    position: absolute;
-    left: 10px;
-    top: 15px;
-    color: grey;
-    font-size: 0.9em;
-    cursor: text;
-    transition: 0.3s ease;
-    pointer-events: none;
-  }
-
-  .select-input:focus + .select-label,
-  .select-input:valid + .select-label {
-    top: 30px;
-    font-size: 0.7em;
-    font-weight: 600;
-    color: #10b981;
-  }
-
-  .button-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .submit {
-    border: none;
-    outline: none;
-    background-color: #10b981;
-    padding: 12px 20px;
-    border-radius: 10px;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .submit:hover:not(:disabled) {
-    background-color: #059669;
-  }
-
-  .submit:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-  }
-
-  .cancel-btn {
-    border: 1px solid rgba(105, 105, 105, 0.397);
-    outline: none;
-    background-color: transparent;
-    padding: 12px 20px;
-    border-radius: 10px;
-    color: #374151;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    flex: 1;
-  }
-
-  .cancel-btn:hover:not(:disabled) {
-    background-color: #f3f4f6;
-    border-color: #6b7280;
-  }
-
-  .cancel-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  @keyframes pulse {
-    from {
-      transform: scale(0.9);
-      opacity: 1;
-    }
-
-    to {
-      transform: scale(1.8);
-      opacity: 0;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .button-group {
-      flex-direction: column;
-    }
-
-    .submit,
-    .cancel-btn {
-      width: 100%;
-    }
-  }
-`;

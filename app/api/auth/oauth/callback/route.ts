@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { config, validateConfig } from '@/lib/config-simple';
 
+// Forçar rota dinâmica (não pode ser pré-renderizada estaticamente)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Validar configurações na inicialização
 validateConfig();
 

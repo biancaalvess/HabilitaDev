@@ -1,5 +1,4 @@
 // ✅ SOLUÇÃO: Usar proxy Next.js (resolve CORS e funciona sem backend local)
-import { cacheService } from './cache';
 import { config } from './config-simple';
 
 const API_BASE_URL = config.api.baseUrl;
@@ -63,18 +62,6 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
-    const cacheKey = `api_${endpoint}_${JSON.stringify(options)}`;
-    
-    // Verificar cache primeiro
-    const cachedData = cacheService.get<T>(cacheKey);
-    if (cachedData) {
-      console.log('📦 Cache hit for:', endpoint);
-      return {
-        success: true,
-        data: cachedData,
-        message: 'Success (cached)'
-      };
-    }
     
     const defaultHeaders = {
       'Content-Type': 'application/json',
@@ -153,11 +140,6 @@ class ApiService {
         processedData = data.data;
       } else {
         processedData = data;
-      }
-      
-      // Armazenar no cache (apenas para GET requests)
-      if (!options.method || options.method === 'GET') {
-        cacheService.set(cacheKey, processedData, 5 * 60 * 1000); // 5 minutos
       }
       
       return {

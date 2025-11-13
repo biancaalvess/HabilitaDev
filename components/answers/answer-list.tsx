@@ -2,73 +2,56 @@
 
 import { Code, Clock, User, CheckCircle, Copy, Check } from "lucide-react";
 import { useState, useEffect } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
+import { config } from "@/lib/config-simple";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-// import { useAnswers } from "@/hooks/use-api"; // Removido - implementação simplificada
 
 interface AnswerListProps {
   questionId: number;
 }
 
+const API_BASE_URL = config.api.baseUrl;
+
+interface Answer {
+  id: number;
+  question_id: number;
+  author_name: string;
+  content: string;
+  created_at: string;
+  is_solution: boolean;
+}
+
 export function AnswerList({ questionId }: AnswerListProps) {
-  const [answers, setAnswers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [copiedAnswerId, setCopiedAnswerId] = useState<number | null>(null);
 
+  // Usar SWR para buscar respostas
+  const { data: answers = [], error, isLoading, mutate } = useSWR<Answer[]>(
+    questionId ? `${API_BASE_URL}/proxy/questions/${questionId}/answers` : null,
+    fetcher,
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: 10000, // Recarregar a cada 10 segundos
+      dedupingInterval: 2000,
+    }
+  );
+
+  // Ouvir eventos de criação de respostas para revalidação imediata
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchAnswers = async () => {
-      if (!isMounted) return;
-      
-      try {
-        setLoading(true);
-        setError(null);
-        const { apiService } = await import("@/lib/api");
-        const response = await apiService.getAnswers(questionId);
-        if (isMounted) {
-          setAnswers(response.data || []);
-        }
-      } catch (error) {
-        console.error("Error fetching answers:", error);
-        if (isMounted) {
-          setError("Erro ao carregar respostas");
-          setAnswers([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+    const handleAnswerCreated = () => {
+      mutate(); // Recarregar respostas quando uma nova for criada
     };
 
-    fetchAnswers();
-    
-    // Ouvir eventos de criação de respostas
-    const handleAnswerCreated = () => {
-      if (isMounted) {
-        fetchAnswers();
-      }
-    };
-    
     window.addEventListener('answer-created', handleAnswerCreated);
     
-    // Recarregar respostas a cada 10 segundos para pegar novas respostas
-    const interval = setInterval(() => {
-      if (isMounted) {
-        fetchAnswers();
-      }
-    }, 10000);
-    
     return () => {
-      isMounted = false;
       window.removeEventListener('answer-created', handleAnswerCreated);
-      clearInterval(interval);
     };
-  }, [questionId]);
+  }, [mutate]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -115,7 +98,7 @@ export function AnswerList({ questionId }: AnswerListProps) {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Card>
         <CardContent className="py-8 text-center">
@@ -132,7 +115,9 @@ export function AnswerList({ questionId }: AnswerListProps) {
         <CardContent className="py-8 text-center">
           <Code className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-400">Erro ao carregar respostas</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : 'Erro desconhecido'}
+          </p>
         </CardContent>
       </Card>
     );
