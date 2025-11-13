@@ -8,18 +8,28 @@ import { createError, ERROR_CODES } from '@/lib/error-handler';
 // Validar configurações na inicialização
 validateConfig();
 
+// Nome do cookie de autenticação
+const AUTH_COOKIE_NAME = 'habilitadev_token';
+
 export async function POST(request: NextRequest) {
   try {
     // Conectar ao banco de dados
     await databaseService.connect();
     
-    const authHeader = request.headers.get('authorization');
+    // Tentar obter token do cookie primeiro (preferencial)
+    let token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Fallback: tentar obter do header Authorization (para compatibilidade)
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7); // Remove 'Bearer '
+      }
+    }
+    
+    if (!token) {
       throw createError('AUTH_UNAUTHORIZED', 'Token não fornecido');
     }
-
-    const token = authHeader.substring(7); // Remove 'Bearer '
 
     try {
       const decoded = verifyJWT(token, config.auth.jwtSecret);

@@ -27,8 +27,7 @@ interface AuthContextType {
     email: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  verifyToken: (token: string) => Promise<void>;
+  logout: () => Promise<void>;
   loading: boolean;
   isAdmin: boolean;
 }
@@ -42,53 +41,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === "admin";
 
   useEffect(() => {
-    // Check for stored user session
-    const storedToken = localStorage.getItem("habilitadev_token");
-    if (storedToken) {
+    // Verificar se há sessão de usuário via cookie
+    // O cookie é enviado automaticamente pelo navegador
+    const verifySession = async () => {
       try {
-        // Verify token with backend
-        verifyToken(storedToken);
+        const response = await fetch("/api/auth/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Importante: incluir cookies na requisição
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData.data?.user || userData.user);
+        } else {
+          // Não há sessão válida
+          setUser(null);
+        }
       } catch (error) {
-        console.error("Error verifying token:", error);
-        localStorage.removeItem("habilitadev_token");
-        localStorage.removeItem("habilitadev_refresh_token");
+        console.error("Error verifying session:", error);
+        setUser(null);
+      } finally {
         setLoading(false);
       }
-    } else {
-      setLoading(false);
-    }
+    };
+
+    verifySession();
   }, []);
-
-  const verifyToken = async (token: string) => {
-    try {
-      const response = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData.user || userData.data?.user);
-        return;
-      } else {
-        // Token inválido
-        localStorage.removeItem("habilitadev_token");
-        localStorage.removeItem("habilitadev_refresh_token");
-        throw new Error("Token inválido ou expirado");
-      }
-    } catch (error) {
-      console.error("Token verification failed:", error);
-      localStorage.removeItem("habilitadev_token");
-      localStorage.removeItem("habilitadev_refresh_token");
-      throw error;
-    } finally {
-      // Não alterar loading aqui, pois pode estar sendo chamado de fora do useEffect inicial
-      // O loading será gerenciado pelo useEffect e pela função que chama verifyToken
-    }
-  };
 
   const login = async (
     email: string,
@@ -103,13 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
+        credentials: "include", // Importante: incluir cookies na requisição
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
+        // Cookie é definido automaticamente pelo servidor
         setUser(data.data?.user || data.user);
-        localStorage.setItem("habilitadev_token", data.data?.token || data.token);
         setLoading(false);
         return { success: true };
       } else {
@@ -150,13 +132,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, email, password }),
+        credentials: "include", // Importante: incluir cookies na requisição
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
+        // Cookie é definido automaticamente pelo servidor
         setUser(data.data?.user || data.user);
-        localStorage.setItem("habilitadev_token", data.data?.token || data.token);
         setLoading(false);
         return { success: true };
       } else {
@@ -185,21 +168,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const token = localStorage.getItem("habilitadev_token");
-      if (token) {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }
+      // Chamar endpoint de logout para limpar cookie
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Importante: incluir cookies na requisição
+      });
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      // Limpar estado do usuário
       setUser(null);
-      localStorage.removeItem("habilitadev_token");
-      localStorage.removeItem("habilitadev_refresh_token");
     }
   };
 
@@ -210,7 +191,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
-        verifyToken,
         loading,
         isAdmin,
       }}

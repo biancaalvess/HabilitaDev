@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { databaseService } from '@/lib/database-simple';
@@ -18,6 +18,27 @@ import { createError, ERROR_CODES } from '@/lib/error-handler';
 
 // Validar configurações na inicialização
 validateConfig();
+
+// Nome do cookie de autenticação
+const AUTH_COOKIE_NAME = 'habilitadev_token';
+
+// Função para calcular Max-Age em segundos (7 dias)
+function getCookieMaxAge(): number {
+  // Converter jwtExpiresIn (ex: "1d", "7d") para segundos
+  const expiresIn = config.auth.jwtExpiresIn;
+  if (expiresIn.endsWith('d')) {
+    const days = parseInt(expiresIn.replace('d', ''));
+    return days * 24 * 60 * 60; // dias * horas * minutos * segundos
+  } else if (expiresIn.endsWith('h')) {
+    const hours = parseInt(expiresIn.replace('h', ''));
+    return hours * 60 * 60; // horas * minutos * segundos
+  } else if (expiresIn.endsWith('m')) {
+    const minutes = parseInt(expiresIn.replace('m', ''));
+    return minutes * 60; // minutos * segundos
+  }
+  // Default: 7 dias
+  return 7 * 24 * 60 * 60;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,10 +109,10 @@ export async function POST(request: NextRequest) {
     // Retornar dados do usuário (sem senha)
     const { password: _, ...userWithoutPassword } = newUser;
 
-    return createSuccessResponse(
+    // Criar resposta de sucesso (já retorna NextResponse)
+    const response = createSuccessResponse(
       {
         user: userWithoutPassword,
-        token,
         email_verification_required: true,
       },
       'Conta criada com sucesso! Verifique seu email para confirmar sua conta.',
@@ -101,6 +122,20 @@ export async function POST(request: NextRequest) {
         requestId: crypto.randomUUID(),
       }
     );
+
+    // Determinar se estamos em produção
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // Configurar cookie HttpOnly
+    response.cookies.set(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: isProduction, // Apenas HTTPS em produção
+      sameSite: 'lax', // Proteção contra CSRF
+      path: '/',
+      maxAge: getCookieMaxAge(),
+    });
+
+    return response;
 
   } catch (error) {
     return handleApiError(error, 'POST /api/auth/register');

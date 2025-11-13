@@ -75,18 +75,15 @@ export function LoginModalPT({
     setOauthLoading(provider);
     setError("");
 
-    // Construir URL de callback
-    const callbackUrl = `${window.location.origin}/auth/callback`;
+    // Construir URL de callback com return_url como query parameter
+    const returnUrl = window.location.href;
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    callbackUrl.searchParams.set("return_url", returnUrl);
 
     // URL do backend OAuth com callback
     const oauthUrl = `${backendUrl}/api/v1/auth/${provider}?redirect_uri=${encodeURIComponent(
-      callbackUrl
+      callbackUrl.toString()
     )}`;
-
-    // Salvar URL de retorno para depois do callback
-    const returnUrl = window.location.href;
-    localStorage.setItem("oauth_return_url", returnUrl);
-    localStorage.setItem("oauth_provider", provider);
 
     // Redirecionar para OAuth
     window.location.href = oauthUrl;

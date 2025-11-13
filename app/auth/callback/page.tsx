@@ -3,12 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
-import { useAuth } from "@/lib/auth";
 
 export default function AuthCallbackPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { verifyToken } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Processando autenticação...");
   const processedRef = useRef(false);
@@ -19,10 +17,11 @@ export default function AuthCallbackPage() {
     processedRef.current = true;
 
     const processOAuthCallback = async () => {
-      const accessToken = searchParams.get("access_token");
-      const refreshToken = searchParams.get("refresh_token");
       const error = searchParams.get("error");
       const errorDescription = searchParams.get("error_description");
+      const accessToken = searchParams.get("access_token");
+      const refreshToken = searchParams.get("refresh_token");
+      const returnUrl = searchParams.get("return_url") || "/";
 
       // Verificar se há erro
       if (error) {
@@ -32,66 +31,77 @@ export default function AuthCallbackPage() {
           "Erro na autenticação. Tente novamente."
         );
         
-        // Limpar dados OAuth
-        localStorage.removeItem("oauth_return_url");
-        localStorage.removeItem("oauth_provider");
-        
         setTimeout(() => {
           router.push("/");
         }, 3000);
         return;
       }
 
-      // Verificar se temos tokens
-      if (accessToken && refreshToken) {
+      // Se temos tokens na URL, redirecionar para a rota de callback do servidor
+      // que configurará o cookie
+      if (accessToken) {
         try {
-          // Salvar tokens
-          localStorage.setItem("habilitadev_token", accessToken);
-          localStorage.setItem("habilitadev_refresh_token", refreshToken);
+          // Construir URL para a rota de callback do servidor
+          const callbackUrl = new URL("/api/auth/oauth/callback", window.location.origin);
+          callbackUrl.searchParams.set("access_token", accessToken);
+          if (refreshToken) {
+            callbackUrl.searchParams.set("refresh_token", refreshToken);
+          }
+          if (returnUrl) {
+            callbackUrl.searchParams.set("return_url", returnUrl);
+          }
 
-          // Verificar token com backend para obter dados do usuário
-          await verifyToken(accessToken);
-
-          setStatus("success");
-          setMessage("Login realizado com sucesso! Redirecionando...");
-
-          // Obter URL de retorno e limpar
-          const returnUrl = localStorage.getItem("oauth_return_url") || "/";
-          localStorage.removeItem("oauth_return_url");
-          localStorage.removeItem("oauth_provider");
-
-          // Redirecionar após 1 segundo
-          setTimeout(() => {
-            router.push(returnUrl);
-            // Recarregar para atualizar estado do usuário
-            window.location.reload();
-          }, 1000);
+          // Redirecionar para a rota de callback do servidor
+          window.location.href = callbackUrl.toString();
+          return;
         } catch (error) {
           console.error("Erro ao processar callback OAuth:", error);
           setStatus("error");
           setMessage("Erro ao processar autenticação. Tente novamente.");
-          
-          // Limpar dados
-          localStorage.removeItem("habilitadev_token");
-          localStorage.removeItem("habilitadev_refresh_token");
-          localStorage.removeItem("oauth_return_url");
-          localStorage.removeItem("oauth_provider");
           
           setTimeout(() => {
             router.push("/");
           }, 3000);
         }
       } else {
-        setStatus("error");
-        setMessage("Token não recebido. Tente novamente.");
-        
-        // Limpar dados OAuth
-        localStorage.removeItem("oauth_return_url");
-        localStorage.removeItem("oauth_provider");
-        
-        setTimeout(() => {
-          router.push("/");
-        }, 3000);
+        // Não há token na URL, isso significa que já voltamos da rota de callback do servidor
+        // Verificar se a sessão foi configurada corretamente
+        try {
+          const response = await fetch("/api/auth/verify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            setStatus("success");
+            setMessage("Login realizado com sucesso! Redirecionando...");
+
+            // Redirecionar após 1 segundo
+            setTimeout(() => {
+              router.push(returnUrl || "/");
+              // Recarregar para atualizar estado do usuário
+              window.location.reload();
+            }, 1000);
+          } else {
+            setStatus("error");
+            setMessage("Erro ao verificar sessão. Tente novamente.");
+            
+            setTimeout(() => {
+              router.push("/");
+            }, 3000);
+          }
+        } catch (error) {
+          console.error("Erro ao verificar sessão:", error);
+          setStatus("error");
+          setMessage("Erro ao processar autenticação. Tente novamente.");
+          
+          setTimeout(() => {
+            router.push("/");
+          }, 3000);
+        }
       }
     };
 
