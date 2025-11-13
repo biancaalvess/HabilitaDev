@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// ✅ USANDO BACKEND DE PRODUÇÃO NO RENDER (sempre disponível)
 import { config } from '@/lib/config-simple';
+
 const BACKEND_URL = config.api.backendUrl;
-const AI_VALIDATION_URL = process.env.AI_VALIDATION_URL || 'http://localhost:5000'; // URL da sua IA
+const AI_VALIDATION_URL = process.env.AI_VALIDATION_URL || 'http://localhost:5000';
 
 export async function POST(
   request: NextRequest,
@@ -63,36 +62,100 @@ export async function POST(
 
     // Fallback: usar backend tradicional
     if (!BACKEND_URL) {
+      console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
-        { error: 'Backend não configurado. Configure BACKEND_URL no .env' },
-        { status: 503 }
+        { 
+          error: 'Service Unavailable',
+          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
       );
     }
 
     console.log(`[AI VALIDATION] Tentando backend tradicional: ${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`);
     
-    const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log('[AI VALIDATION] Resultado do backend:', data);
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          ...data,
-          validation_method: 'backend'
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
         },
-        message: 'Validação realizada pelo backend'
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[AI VALIDATION] Resultado do backend:', data);
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            ...data,
+            validation_method: 'backend'
+          },
+          message: 'Validação realizada pelo backend'
+        }, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        // Repassar status e mensagem do backend
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
+        
+        return NextResponse.json(
+          { 
+            success: false,
+            error: 'Backend Error',
+            message: errorData.message || errorData.error || 'Erro ao validar resposta',
+            details: errorData.details || undefined,
+          },
+          { 
+            status: response.status,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      
+      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      
+      // Fallback final: Erro - IA e Backend indisponíveis
+      return NextResponse.json({
+        success: false,
+        error: 'Service Unavailable',
+        message: isTimeout 
+          ? 'Backend timeout. Tente novamente mais tarde.' 
+          : 'Não foi possível validar a resposta. IA e Backend estão indisponíveis.',
+        details: errorMessage,
       }, {
-        status: 200,
+        status: 503,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -100,23 +163,6 @@ export async function POST(
         },
       });
     }
-
-    // Fallback final: Erro - IA e Backend indisponíveis
-    console.error('[AI VALIDATION] Todos os serviços de validação estão indisponíveis');
-    
-    return NextResponse.json({
-      success: false,
-      error: 'Serviços de validação indisponíveis',
-      message: 'Não foi possível validar a resposta. IA e Backend estão offline.',
-      details: 'Por favor, tente novamente mais tarde ou entre em contato com o suporte.'
-    }, {
-      status: 503,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
 
   } catch (error) {
     console.error('[AI VALIDATION] Erro geral:', error);
@@ -147,7 +193,4 @@ export async function OPTIONS(request: NextRequest) {
     },
   });
 }
-
-// Removido: Função validateAnswerLocally() - 100% validação por IA ou Backend real
-// Sistema agora retorna erro 503 quando IA e Backend estão indisponíveis
 

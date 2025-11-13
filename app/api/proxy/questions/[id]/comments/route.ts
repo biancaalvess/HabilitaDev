@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { config } from '@/lib/config-simple';
-import { databaseService } from '@/lib/database-simple';
 
 const BACKEND_URL = config.api.backendUrl;
 
@@ -9,21 +8,44 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Verificar se BACKEND_URL está configurado
+    if (!BACKEND_URL) {
+      console.error('❌ BACKEND_URL não configurado');
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
+
     const questionId = params.id;
+    const url = `${BACKEND_URL}/api/v1/questions/${questionId}/comments`;
     
-    // 1. Tentar buscar do backend externo
+    console.log('🌐 Fetching comments from backend:', url);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    
     try {
-      const url = `${BACKEND_URL}/api/v1/questions/${questionId}/comments`;
-      console.log('🌐 Fetching comments from backend:', url);
-      
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'HabilitaDev-Frontend/1.0',
         },
-        signal: AbortSignal.timeout(config.api.timeout),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -39,55 +61,58 @@ export async function GET(
           },
         });
       } else {
-        console.warn(`⚠️ Backend returned ${response.status} for comments`);
-      }
-    } catch (backendError) {
-      console.warn('⚠️ Backend unavailable for comments:', backendError instanceof Error ? backendError.message : 'Unknown error');
-    }
-
-    // 2. Tentar buscar do banco local
-    try {
-      console.log('💾 Attempting to fetch comments from local database');
-      await databaseService.connect();
-      const localComments = await databaseService.getComments(parseInt(questionId));
-      
-      if (localComments && localComments.length > 0) {
-        console.log('✅ Successfully fetched comments from local database');
+        // Repassar status e mensagem do backend
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         
-        return NextResponse.json(localComments, {
-          status: 200,
+        return NextResponse.json(
+          { 
+            error: 'Backend Error',
+            message: errorData.message || errorData.error || 'Erro ao buscar comentários',
+            details: errorData.details || undefined,
+          },
+          { 
+            status: response.status,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      
+      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: isTimeout 
+            ? 'Backend timeout. Tente novamente mais tarde.' 
+            : 'Backend indisponível. Tente novamente mais tarde.',
+          details: errorMessage,
+        },
+        { 
+          status: 503,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'X-Data-Source': 'local-database',
           },
-        });
-      }
-    } catch (dbError) {
-      console.warn('⚠️ Local database unavailable for comments:', dbError instanceof Error ? dbError.message : 'Unknown error');
+        }
+      );
     }
-
-    // 3. Retornar array vazio se nenhuma fonte estiver disponível
-    console.log('📦 No comments available from backend or local database');
-    
-    return NextResponse.json([], {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'X-Data-Source': 'none',
-      },
-    });
-
   } catch (error) {
     console.error('❌ Error in comments route:', error);
     
     return NextResponse.json(
       { 
-        error: 'Internal server error',
-        message: 'Unable to fetch comments',
+        error: 'Internal Server Error',
+        message: 'Erro interno ao processar requisição',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { 
@@ -107,82 +132,15 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const questionId = params.id;
-    const body = await request.json();
-    
-    // 1. Tentar enviar para o backend externo
-    try {
-      const url = `${BACKEND_URL}/api/v1/questions/${questionId}/comments`;
-      console.log('🌐 Posting comment to backend:', url);
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'HabilitaDev-Frontend/1.0',
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(config.api.timeout),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Successfully posted comment to backend');
-        
-        return NextResponse.json(data, {
-          status: 201,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'X-Data-Source': 'backend',
-          },
-        });
-      } else {
-        console.warn(`⚠️ Backend returned ${response.status} for comment post`);
-      }
-    } catch (backendError) {
-      console.warn('⚠️ Backend unavailable for comment post:', backendError instanceof Error ? backendError.message : 'Unknown error');
-    }
-
-    // 2. Salvar no banco local
-    try {
-      console.log('💾 Saving comment to local database');
-      await databaseService.connect();
-      const newComment = await databaseService.createComment({
-        question_id: parseInt(questionId),
-        author_name: body.author_name || 'Anônimo',
-        comment_type: body.comment_type,
-        content: body.content,
-      });
-      
-      console.log('✅ Successfully saved comment to local database');
-      
-      return NextResponse.json({
-        success: true,
-        message: 'Comment posted successfully',
-        data: newComment,
-      }, {
-        status: 201,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'X-Data-Source': 'local-database',
-        },
-      });
-    } catch (dbError) {
-      console.warn('⚠️ Local database unavailable for comment post:', dbError instanceof Error ? dbError.message : 'Unknown error');
-      
-      // 3. Retornar erro se não conseguir salvar
+    // Verificar se BACKEND_URL está configurado
+    if (!BACKEND_URL) {
+      console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
         { 
-          success: false,
-          error: 'Failed to save comment',
-          message: 'Unable to save comment. Please try again later.',
-          details: dbError instanceof Error ? dbError.message : 'Unknown error'
+          error: 'Service Unavailable',
+          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
         },
-        {
+        { 
           status: 503,
           headers: {
             'Access-Control-Allow-Origin': '*',
@@ -193,13 +151,94 @@ export async function POST(
       );
     }
 
+    const questionId = params.id;
+    const body = await request.json();
+    const url = `${BACKEND_URL}/api/v1/questions/${questionId}/comments`;
+    
+    console.log('🌐 Posting comment to backend:', url);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully posted comment to backend');
+        
+        return NextResponse.json(data, {
+          status: response.status,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        // Repassar status e mensagem do backend
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
+        
+        return NextResponse.json(
+          { 
+            error: 'Backend Error',
+            message: errorData.message || errorData.error || 'Erro ao criar comentário',
+            details: errorData.details || undefined,
+          },
+          { 
+            status: response.status,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      
+      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: isTimeout 
+            ? 'Backend timeout. Tente novamente mais tarde.' 
+            : 'Backend indisponível. Tente novamente mais tarde.',
+          details: errorMessage,
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
   } catch (error) {
     console.error('❌ Error posting comment:', error);
     
     return NextResponse.json(
       { 
-        error: 'Internal server error',
-        message: 'Unable to post comment',
+        error: 'Internal Server Error',
+        message: 'Erro interno ao processar requisição',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { 
@@ -212,4 +251,15 @@ export async function POST(
       }
     );
   }
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

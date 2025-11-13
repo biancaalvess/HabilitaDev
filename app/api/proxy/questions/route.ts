@@ -1,113 +1,116 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databaseService } from '@/lib/database-simple';
 import { config } from '@/lib/config-simple';
 
 const BACKEND_URL = config.api.backendUrl;
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const queryString = searchParams.toString();
-    
-    // 1. Tentar buscar do backend externo (com timeout reduzido para fallback mais rápido)
-    if (BACKEND_URL) {
-      try {
-        const url = `${BACKEND_URL}/api/v1/questions${queryString ? `?${queryString}` : ''}`;
-        console.log('🌐 Attempting to fetch from backend:', url);
-      
-      // Usar timeout menor para fallback mais rápido (10 segundos)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
-      
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
+    // Verificar se BACKEND_URL está configurado
+    if (!BACKEND_URL) {
+      console.error('❌ BACKEND_URL não configurado');
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
+        },
+        { 
+          status: 503,
           headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'HabilitaDev-Frontend/1.0',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Successfully fetched from backend');
-          
-          return NextResponse.json(data, {
-            status: 200,
-            headers: {
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-              'X-Data-Source': 'backend',
-            },
-          });
-        } else {
-          console.warn(`⚠️ Backend returned ${response.status}: ${response.statusText}`);
         }
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-        throw fetchError;
-      }
-      } catch (backendError) {
-        const errorMessage = backendError instanceof Error ? backendError.message : 'Unknown error';
-        const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
-
-        if (isTimeout) {
-          console.warn('⚠️ Backend timeout - falling back to local database');
-        } else {
-          console.warn('⚠️ Backend unavailable:', errorMessage);
-        }
-      }
-    } else {
-      console.log('ℹ️ BACKEND_URL não configurado, usando apenas banco local');
+      );
     }
 
-    // 2. Tentar buscar do banco local
+    const { searchParams } = new URL(request.url);
+    const queryString = searchParams.toString();
+    const url = `${BACKEND_URL}/api/v1/questions${queryString ? `?${queryString}` : ''}`;
+    
+    console.log('🌐 Fetching questions from backend:', url);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    
     try {
-      console.log('💾 Attempting to fetch from local database');
-      await databaseService.connect();
-      const localQuestions = await databaseService.getQuestions();
-      
-      if (localQuestions && localQuestions.length > 0) {
-        console.log('✅ Successfully fetched from local database');
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully fetched questions from backend');
         
-        return NextResponse.json(localQuestions, {
+        return NextResponse.json(data, {
           status: 200,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'X-Data-Source': 'local-database',
+            'X-Data-Source': 'backend',
           },
         });
+      } else {
+        // Repassar status e mensagem do backend
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
+        
+        return NextResponse.json(
+          { 
+            error: 'Backend Error',
+            message: errorData.message || errorData.error || 'Erro ao buscar questões',
+            details: errorData.details || undefined,
+          },
+          { 
+            status: response.status,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
       }
-    } catch (dbError) {
-      console.warn('⚠️ Local database unavailable:', dbError instanceof Error ? dbError.message : 'Unknown error');
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      
+      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: isTimeout 
+            ? 'Backend timeout. Tente novamente mais tarde.' 
+            : 'Backend indisponível. Tente novamente mais tarde.',
+          details: errorMessage,
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
     }
-
-    // 3. Retornar array vazio se nenhuma fonte estiver disponível
-    console.log('📦 No data available from backend or local database');
-    
-    return NextResponse.json([], {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'X-Data-Source': 'none',
-      },
-    });
-
   } catch (error) {
     console.error('❌ Error in questions route:', error);
     
     return NextResponse.json(
       { 
-        error: 'Internal server error',
-        message: 'Unable to fetch questions from any source',
+        error: 'Internal Server Error',
+        message: 'Erro interno ao processar requisição',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { 
@@ -122,30 +125,54 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Removido: Função getMockQuestions() - 100% dados reais do backend
-
 export async function POST(request: NextRequest) {
   try {
+    // Verificar se BACKEND_URL está configurado
+    if (!BACKEND_URL) {
+      console.error('❌ BACKEND_URL não configurado');
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
+
     const body = await request.json();
+    const url = `${BACKEND_URL}/api/v1/questions`;
     
-    // 1. Tentar enviar para o backend externo
-    if (BACKEND_URL) {
-      try {
-        const response = await fetch(`${BACKEND_URL}/api/v1/questions`, {
+    console.log('🌐 Creating question on backend:', url);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    
+    try {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
         },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(30000), // Timeout de 30 segundos
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Successfully created question on backend');
         
         return NextResponse.json(data, {
-          status: 201,
+          status: response.status,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -154,76 +181,68 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        console.warn(`⚠️ Backend returned ${response.status} for question creation`);
+        // Repassar status e mensagem do backend
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
+        
+        return NextResponse.json(
+          { 
+            error: 'Backend Error',
+            message: errorData.message || errorData.error || 'Erro ao criar questão',
+            details: errorData.details || undefined,
+          },
+          { 
+            status: response.status,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
       }
-    } catch (backendError) {
-      console.warn('⚠️ Backend unavailable for question creation:', backendError instanceof Error ? backendError.message : 'Unknown error');
-    }
-    } else {
-      console.log('ℹ️ BACKEND_URL não configurado, salvando apenas no banco local');
-    }
-
-    // 2. Salvar no banco local
-    try {
-      console.log('💾 Saving question to local database');
-      await databaseService.connect();
-      const newQuestion = await databaseService.createQuestion({
-        title: body.title,
-        description: body.description || body.title,
-        answer: body.answer || '',
-        difficulty: body.difficulty,
-        category: body.category,
-        company: body.company,
-        tags: body.tags || [],
-      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
       
-      console.log('✅ Successfully saved question to local database');
+      console.error(`❌ Backend unavailable: ${errorMessage}`);
       
-      return NextResponse.json({
-        success: true,
-        message: 'Question created successfully',
-        data: newQuestion,
-      }, {
-        status: 201,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'X-Data-Source': 'local-database',
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: isTimeout 
+            ? 'Backend timeout. Tente novamente mais tarde.' 
+            : 'Backend indisponível. Tente novamente mais tarde.',
+          details: errorMessage,
         },
-      });
-    } catch (dbError) {
-      console.warn('⚠️ Local database unavailable for question creation:', dbError instanceof Error ? dbError.message : 'Unknown error');
-      
-      return NextResponse.json({
-        success: false,
-        error: 'Falha ao criar questão',
-        message: 'Não foi possível salvar a questão. Tente novamente mais tarde.',
-        details: dbError instanceof Error ? dbError.message : 'Unknown error'
-      }, {
-        status: 503,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        },
-      });
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
     }
   } catch (error) {
     console.error('❌ Error creating question:', error);
-    return NextResponse.json({
-      success: false,
-      error: 'Falha na conexão com o backend',
-      message: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: 'Verifique se o backend está online e acessível'
-    }, {
-      status: 503,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    return NextResponse.json(
+      { 
+        error: 'Internal Server Error',
+        message: 'Erro interno ao processar requisição',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
-    });
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
   }
 }
 

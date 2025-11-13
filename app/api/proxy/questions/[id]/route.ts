@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databaseService } from '@/lib/database-simple';
 import { config } from '@/lib/config-simple';
 
 const BACKEND_URL = config.api.backendUrl;
@@ -9,22 +8,44 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Verificar se BACKEND_URL está configurado
+    if (!BACKEND_URL) {
+      console.error('❌ BACKEND_URL não configurado');
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
+
     const questionId = params.id;
+    const url = `${BACKEND_URL}/api/v1/questions/${questionId}`;
     
-    // 1. Tentar buscar do backend externo
-    if (BACKEND_URL) {
-      try {
-        const url = `${BACKEND_URL}/api/v1/questions/${questionId}`;
-      console.log('🌐 Fetching question from backend:', url);
-      
+    console.log('🌐 Fetching question from backend:', url);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    
+    try {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'HabilitaDev-Frontend/1.0',
         },
-        signal: AbortSignal.timeout(config.api.timeout),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -40,63 +61,58 @@ export async function GET(
           },
         });
       } else {
-        console.warn(`⚠️ Backend returned ${response.status} for question ${questionId}`);
-      }
-    } catch (backendError) {
-      console.warn('⚠️ Backend unavailable for question:', backendError instanceof Error ? backendError.message : 'Unknown error');
-    }
-    } else {
-      console.log('ℹ️ BACKEND_URL não configurado, usando apenas banco local');
-    }
-
-    // 2. Tentar buscar do banco local
-    try {
-      console.log('💾 Attempting to fetch question from local database');
-      await databaseService.connect();
-      const localQuestion = await databaseService.getQuestionById(parseInt(questionId));
-      
-      if (localQuestion) {
-        console.log('✅ Successfully fetched question from local database');
+        // Repassar status e mensagem do backend
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         
-        return NextResponse.json(localQuestion, {
-          status: 200,
+        return NextResponse.json(
+          { 
+            error: 'Backend Error',
+            message: errorData.message || errorData.error || `Question with ID ${questionId} not found`,
+            details: errorData.details || undefined,
+          },
+          { 
+            status: response.status,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      
+      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: isTimeout 
+            ? 'Backend timeout. Tente novamente mais tarde.' 
+            : 'Backend indisponível. Tente novamente mais tarde.',
+          details: errorMessage,
+        },
+        { 
+          status: 503,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'X-Data-Source': 'local-database',
           },
-        });
-      }
-    } catch (dbError) {
-      console.warn('⚠️ Local database unavailable for question:', dbError instanceof Error ? dbError.message : 'Unknown error');
+        }
+      );
     }
-
-    // 3. Retornar erro 404 se questão não encontrada
-    console.log('📦 Question not found in backend or local database');
-    
-    return NextResponse.json(
-      { 
-        error: 'Question not found',
-        message: `Question with ID ${questionId} not found in any available source`,
-      },
-      { 
-        status: 404,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        },
-      }
-    );
-
   } catch (error) {
     console.error('❌ Error in question route:', error);
     
     return NextResponse.json(
       { 
-        error: 'Internal server error',
-        message: 'Unable to fetch question',
+        error: 'Internal Server Error',
+        message: 'Erro interno ao processar requisição',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { 
@@ -116,26 +132,113 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await databaseService.connect();
-    const questionId = parseInt(params.id);
+    // Verificar se BACKEND_URL está configurado
+    if (!BACKEND_URL) {
+      console.error('❌ BACKEND_URL não configurado');
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
+
+    const questionId = params.id;
     const body = await request.json();
+    const url = `${BACKEND_URL}/api/v1/questions/${questionId}`;
+    
+    console.log('🌐 Updating question on backend:', url);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
 
-    // Atualizar questão no banco local
-    const updatedQuestion = await databaseService.updateQuestion(questionId, body);
+      clearTimeout(timeoutId);
 
-    return NextResponse.json(updatedQuestion, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Successfully updated question on backend');
+        
+        return NextResponse.json(data, {
+          status: response.status,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        // Repassar status e mensagem do backend
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
+        
+        return NextResponse.json(
+          { 
+            error: 'Backend Error',
+            message: errorData.message || errorData.error || 'Erro ao atualizar questão',
+            details: errorData.details || undefined,
+          },
+          { 
+            status: response.status,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      
+      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: isTimeout 
+            ? 'Backend timeout. Tente novamente mais tarde.' 
+            : 'Backend indisponível. Tente novamente mais tarde.',
+          details: errorMessage,
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
   } catch (error) {
+    console.error('❌ Error updating question:', error);
+    
     return NextResponse.json(
       { 
-        error: 'Internal server error',
-        message: 'Unable to update question',
+        error: 'Internal Server Error',
+        message: 'Erro interno ao processar requisição',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { 
@@ -155,27 +258,111 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await databaseService.connect();
-    const questionId = parseInt(params.id);
-
-    await databaseService.deleteQuestion(questionId);
-
-    return NextResponse.json(
-      { success: true, message: 'Question deleted successfully' },
-      {
-        status: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    // Verificar se BACKEND_URL está configurado
+    if (!BACKEND_URL) {
+      console.error('❌ BACKEND_URL não configurado');
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
         },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
+
+    const questionId = params.id;
+    const url = `${BACKEND_URL}/api/v1/questions/${questionId}`;
+    
+    console.log('🌐 Deleting question on backend:', url);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'HabilitaDev-Frontend/1.0',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json().catch(() => ({ success: true, message: 'Question deleted successfully' }));
+        console.log('✅ Successfully deleted question on backend');
+        
+        return NextResponse.json(data, {
+          status: response.status,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else {
+        // Repassar status e mensagem do backend
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
+        
+        return NextResponse.json(
+          { 
+            error: 'Backend Error',
+            message: errorData.message || errorData.error || 'Erro ao deletar questão',
+            details: errorData.details || undefined,
+          },
+          { 
+            status: response.status,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
       }
-    );
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      
+      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: isTimeout 
+            ? 'Backend timeout. Tente novamente mais tarde.' 
+            : 'Backend indisponível. Tente novamente mais tarde.',
+          details: errorMessage,
+        },
+        { 
+          status: 503,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
   } catch (error) {
+    console.error('❌ Error deleting question:', error);
+    
     return NextResponse.json(
       { 
-        error: 'Internal server error',
-        message: 'Unable to delete question',
+        error: 'Internal Server Error',
+        message: 'Erro interno ao processar requisição',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { 
@@ -188,4 +375,15 @@ export async function DELETE(
       }
     );
   }
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
