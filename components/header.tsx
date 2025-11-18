@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FuturisticInput } from "@/components/ui/futuristic-input";
 import { AuthModalV2 } from "./auth/auth-modal-v2";
 import { UserMenu } from "./user-menu";
 import { useAuth } from "@/lib/auth";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface HeaderProps {
   onSearch: (query: string) => void;
@@ -15,7 +16,21 @@ interface HeaderProps {
 
 export function Header({ onSearch, searchQuery }: HeaderProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [searchInput, setSearchInput] = useState(searchQuery);
   const { user } = useAuth();
+  
+  // Debounce do valor de busca (500ms de delay)
+  const debouncedSearch = useDebounce(searchInput, 500);
+
+  // Atualizar busca quando o valor debounced mudar
+  useEffect(() => {
+    onSearch(debouncedSearch);
+  }, [debouncedSearch, onSearch]);
+
+  // Sincronizar searchInput quando searchQuery mudar externamente
+  useEffect(() => {
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
 
   return (
     <>
@@ -35,8 +50,8 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
           <div className="flex-1 max-w-md mx-2 sm:mx-4 md:mx-8 hidden sm:block">
             <FuturisticInput
               placeholder="Buscar questões..."
-              value={searchQuery}
-              onChange={(e) => onSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               showSearchIcon={true}
               showFilterIcon={false}
             />
@@ -70,8 +85,8 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
         <div className="sm:hidden px-3 pb-3">
           <FuturisticInput
             placeholder="Buscar questões..."
-            value={searchQuery}
-            onChange={(e) => onSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             showSearchIcon={true}
             showFilterIcon={false}
           />

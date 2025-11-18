@@ -14,6 +14,7 @@ export interface User {
   email: string;
   created_at: string;
   role?: "user" | "admin";
+  is_verified?: boolean;
 }
 
 interface AuthContextType {
@@ -34,6 +35,67 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Chave para armazenar cache do perfil no localStorage
+const USER_CACHE_KEY = "habilitadev_user_cache";
+const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutos
+
+interface CachedUserData {
+  user: User;
+  timestamp: number;
+}
+
+// Função para salvar perfil no cache local
+function saveUserToCache(user: User): void {
+  if (typeof window === "undefined") return;
+  
+  try {
+    const cacheData: CachedUserData = {
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        created_at: user.created_at,
+        role: user.role,
+        is_verified: user.is_verified,
+      },
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(cacheData));
+  } catch (error) {
+    console.warn("Erro ao salvar cache do usuário:", error);
+  }
+}
+
+// Função para recuperar perfil do cache local
+function getUserFromCache(): User | null {
+  if (typeof window === "undefined") return null;
+  
+  try {
+    const cached = localStorage.getItem(USER_CACHE_KEY);
+    if (!cached) return null;
+    
+    const cacheData: CachedUserData = JSON.parse(cached);
+    
+    // Verificar se o cache expirou
+    if (Date.now() - cacheData.timestamp > CACHE_EXPIRY_MS) {
+      localStorage.removeItem(USER_CACHE_KEY);
+      return null;
+    }
+    
+    return cacheData.user;
+  } catch (error) {
+    console.warn("Erro ao recuperar cache do usuário:", error);
+    localStorage.removeItem(USER_CACHE_KEY);
+    return null;
+  }
+}
+
+// Função para limpar cache do usuário
+function clearUserCache(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(USER_CACHE_KEY);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,6 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === "admin";
 
   useEffect(() => {
+    // Tentar recuperar do cache primeiro para UX mais rápida
+    const cachedUser = getUserFromCache();
+    if (cachedUser) {
+      setUser(cachedUser);
+      setLoading(false);
+    }
+
     // Verificar se há sessão de usuário via cookie
     // O cookie é enviado automaticamente pelo navegador
     const verifySession = async () => {
@@ -55,14 +124,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (response.ok) {
           const userData = await response.json();
-          setUser(userData.data?.user || userData.user);
+          const user = userData.data?.user || userData.user;
+          setUser(user);
+          // Salvar no cache após verificação bem-sucedida
+          if (user) {
+            saveUserToCache(user);
+          }
         } else {
-          // Não há sessão válida
+          // 401 é esperado quando não há sessão válida - não é um erro
+          if (response.status !== 401) {
+            console.warn("Erro ao verificar sessão:", response.status, response.statusText);
+          }
+          // Não há sessão válida - limpar cache
           setUser(null);
+          clearUserCache();
         }
       } catch (error) {
-        console.error("Error verifying session:", error);
+        // Apenas logar erros que não sejam relacionados a falta de autenticação
+        if (error instanceof Error && !error.message.includes('401')) {
+          console.error("Error verifying session:", error);
+        }
         setUser(null);
+        clearUserCache();
       } finally {
         setLoading(false);
       }
@@ -91,7 +174,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok && data.success) {
         // Cookie é definido automaticamente pelo servidor
-        setUser(data.data?.user || data.user);
+        const user = data.data?.user || data.user;
+        setUser(user);
+        // Salvar no cache após login bem-sucedido
+        if (user) {
+          saveUserToCache(user);
+        }
         setLoading(false);
         return { success: true };
       } else {
@@ -139,7 +227,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok && data.success) {
         // Cookie é definido automaticamente pelo servidor
-        setUser(data.data?.user || data.user);
+        const user = data.data?.user || data.user;
+        setUser(user);
+        // Salvar no cache após registro bem-sucedido
+        if (user) {
+          saveUserToCache(user);
+        }
         setLoading(false);
         return { success: true };
       } else {
@@ -169,18 +262,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       // Chamar endpoint de logout para limpar cookie
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
           "Content-Type": "application/json",
-        },
+          },
         credentials: "include", // Importante: incluir cookies na requisição
-      });
+        });
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Limpar estado do usuário
+      // Limpar estado do usuário e cache
       setUser(null);
+      clearUserCache();
     }
   };
 

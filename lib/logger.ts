@@ -84,8 +84,62 @@ class Logger {
   }
 
   private sendToMonitoring(entry: LogEntry) {
-    // TODO: Integrar com Sentry, LogRocket, DataDog, etc.
+    // Integração com serviços de monitoramento em produção
     if (entry.level === 'error' && entry.error) {
+      // Sentry (se configurado)
+      if (config.monitoring.provider === 'sentry') {
+        try {
+          // Importação dinâmica para evitar problemas de bundle
+          if (typeof window !== 'undefined') {
+            // Client-side: usar @sentry/browser
+            import('@sentry/browser').then((Sentry) => {
+              Sentry.captureException(entry.error, {
+                level: 'error',
+                tags: {
+                  context: entry.context,
+                },
+                extra: entry.data,
+              });
+            }).catch(() => {
+              // Sentry não está instalado ou configurado
+            });
+          } else {
+            // Server-side: usar @sentry/node
+            import('@sentry/node').then((Sentry) => {
+              Sentry.captureException(entry.error, {
+                level: 'error',
+                tags: {
+                  context: entry.context,
+                },
+                extra: entry.data,
+              });
+            }).catch(() => {
+              // Sentry não está instalado ou configurado
+            });
+          }
+        } catch (error) {
+          // Erro ao importar Sentry - silenciosamente ignorar
+        }
+      }
+      
+      // LogRocket (se configurado)
+      if (config.monitoring.provider === 'logrocket' && typeof window !== 'undefined') {
+        try {
+          const LogRocket = (window as any).LogRocket;
+          if (LogRocket) {
+            LogRocket.captureException(entry.error, {
+              tags: {
+                context: entry.context,
+              },
+              extra: entry.data,
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao enviar para LogRocket:', error);
+        }
+      }
+      
+      // Fallback: log no console (útil para debugging em produção)
       console.error('Production error monitoring:', entry);
     }
   }

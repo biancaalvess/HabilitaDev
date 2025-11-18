@@ -19,6 +19,33 @@ export const config = {
     timeout: 30000, // 30 segundos
   },
   
+  // Validação de configuração de produção
+  validateProductionConfig() {
+    const nodeEnv = process.env.NODE_ENV || 'development';
+    
+    if (nodeEnv === 'production') {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL;
+      
+      if (!backendUrl) {
+        console.error('❌ ERRO CRÍTICO: NEXT_PUBLIC_BACKEND_URL não está configurado em produção!');
+        return false;
+      }
+      
+      // Verificar se a URL é HTTPS em produção
+      if (!backendUrl.startsWith('https://')) {
+        console.warn('⚠️ AVISO: NEXT_PUBLIC_BACKEND_URL deve usar HTTPS em produção!');
+      }
+      
+      // Verificar se não está usando localhost em produção
+      if (backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1')) {
+        console.error('❌ ERRO CRÍTICO: NEXT_PUBLIC_BACKEND_URL não pode apontar para localhost em produção!');
+        return false;
+      }
+    }
+    
+    return true;
+  },
+  
   // Configurações de Rate Limiting
   rateLimit: {
     enabled: process.env.RATE_LIMIT_ENABLED === 'true',
@@ -87,6 +114,14 @@ export function validateConfig() {
   
   if (config.development.nodeEnv === 'production' && config.database.url.includes('dev.db')) {
     errors.push("DATABASE_URL não deve usar arquivo de desenvolvimento em produção");
+  }
+  
+  // Validar configuração de produção
+  if (config.development.nodeEnv === 'production') {
+    const isValid = config.validateProductionConfig();
+    if (!isValid) {
+      errors.push("Configuração de produção inválida - verifique NEXT_PUBLIC_BACKEND_URL");
+    }
   }
   
   if (errors.length > 0) {

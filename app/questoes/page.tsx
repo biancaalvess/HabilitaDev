@@ -69,6 +69,9 @@ export default function QuestoesPage() {
   }, [questions, searchQuery, filters, selectedCategory]);
 
   const handleViewDetails = (id: number) => {
+    if (!Array.isArray(questions)) {
+      return;
+    }
     const question = questions.find((q) => q.id === id);
     if (question) {
       setSelectedQuestion(question);

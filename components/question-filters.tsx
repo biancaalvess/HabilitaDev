@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { type QuestionFilter, CATEGORY_LABELS } from "@/lib/types";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface QuestionFiltersProps {
   filters: QuestionFilter;
@@ -24,11 +26,36 @@ export function QuestionFilters({
   onFilterChange,
   totalQuestions,
 }: QuestionFiltersProps) {
-  const handleFilterChange = (key: keyof QuestionFilter, value: string) => {
+  // Estado local para o campo de busca (para permitir digitação imediata)
+  const [searchInput, setSearchInput] = useState(filters.search || "");
+  
+  // Debounce do valor de busca (500ms de delay)
+  const debouncedSearch = useDebounce(searchInput, 500);
+
+  // Atualizar filtros quando o valor debounced mudar
+  useEffect(() => {
     onFilterChange({
       ...filters,
-      [key]: value || undefined,
+      search: debouncedSearch || undefined,
     });
+  }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sincronizar searchInput quando filters.search mudar externamente
+  useEffect(() => {
+    setSearchInput(filters.search || "");
+  }, [filters.search]);
+
+  const handleFilterChange = (key: keyof QuestionFilter, value: string) => {
+    if (key === "search") {
+      // Para busca, atualizar apenas o estado local (debounce cuidará do resto)
+      setSearchInput(value);
+    } else {
+      // Para outros filtros, atualizar imediatamente
+      onFilterChange({
+        ...filters,
+        [key]: value || undefined,
+      });
+    }
   };
 
   const clearFilters = () => {
@@ -113,7 +140,7 @@ export function QuestionFilters({
             <input
               type="text"
               placeholder="Buscar questões..."
-              value={filters.search || ""}
+              value={searchInput}
               onChange={(e) => handleFilterChange("search", e.target.value)}
               className="w-full px-3 py-2 bg-muted/50 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             />

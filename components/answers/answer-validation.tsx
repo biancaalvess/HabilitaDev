@@ -8,6 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+interface ValidationResult {
+  is_correct?: boolean;
+  isCorrect?: boolean;
+  score: number;
+  feedback: string;
+  detailed_feedback?: string;
+  suggestions?: string[];
+  strengths?: string[];
+  weaknesses?: string[];
+  details?: string[];
+  validation_method?: "ai" | "backend" | "local_fallback" | "emergency_fallback";
+  confidence?: number;
+  time_taken?: number;
+  [key: string]: any; // Para campos adicionais do JSON
+}
+
 interface AnswerValidationProps {
   questionId: number;
   userAnswer: string;
@@ -23,12 +39,7 @@ export function AnswerValidation({
   questionContext = "Questão de entrevista técnica",
   onValidationComplete,
 }: AnswerValidationProps) {
-  const [validationResult, setValidationResult] = useState<{
-    isCorrect: boolean;
-    score: number;
-    feedback: string;
-    details: string[];
-  } | null>(null);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(true);
 
   useEffect(() => {
@@ -61,10 +72,26 @@ export function AnswerValidation({
           const result = await response.json();
           console.log("[AnswerValidation] Resultado recebido:", result);
 
-          if (result.success) {
-            setValidationResult(result.data);
+          if (result.success && result.data) {
+            // Normalizar campos do resultado (suportar diferentes formatos)
+            const normalizedResult: ValidationResult = {
+              ...result.data,
+              isCorrect: result.data.is_correct ?? result.data.isCorrect ?? false,
+              score: result.data.score ?? 0,
+              feedback: result.data.feedback || result.data.detailed_feedback || "Sem feedback disponível",
+              detailed_feedback: result.data.detailed_feedback || result.data.feedback,
+              suggestions: result.data.suggestions || [],
+              strengths: result.data.strengths || [],
+              weaknesses: result.data.weaknesses || [],
+              details: result.data.details || [],
+              validation_method: result.data.validation_method,
+              confidence: result.data.confidence,
+              time_taken: result.data.time_taken,
+            };
+            
+            setValidationResult(normalizedResult);
             setIsValidating(false);
-            onValidationComplete(result.data.is_correct);
+            onValidationComplete(normalizedResult.isCorrect);
             return;
           }
         }
@@ -118,7 +145,16 @@ export function AnswerValidation({
 
   if (!validationResult) return null;
 
-  const { isCorrect, score, feedback, details } = validationResult;
+  const isCorrect = validationResult.isCorrect ?? validationResult.is_correct ?? false;
+  const score = validationResult.score ?? 0;
+  const feedback = validationResult.feedback || validationResult.detailed_feedback || "Sem feedback disponível";
+  const detailedFeedback = validationResult.detailed_feedback;
+  const suggestions = validationResult.suggestions || [];
+  const strengths = validationResult.strengths || [];
+  const weaknesses = validationResult.weaknesses || [];
+  const details = validationResult.details || [];
+  const confidence = validationResult.confidence;
+  const timeTaken = validationResult.time_taken;
 
   return (
     <Card
@@ -192,21 +228,113 @@ export function AnswerValidation({
           </AlertDescription>
         </Alert>
 
-        {details.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-bold text-lg text-gray-800 dark:text-gray-200">
-              📋 Análise Detalhada:
+        {/* Feedback Detalhado */}
+        {detailedFeedback && detailedFeedback !== feedback && (
+          <div className="space-y-2">
+            <h4 className="font-bold text-base text-gray-800 dark:text-gray-200">
+              📝 Feedback Detalhado:
             </h4>
-            <ul className="space-y-2">
-              {details.map((detail, index) => (
+            <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+              {detailedFeedback}
+            </div>
+          </div>
+        )}
+
+        {/* Pontos Fortes */}
+        {strengths.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-bold text-base text-green-700 dark:text-green-300">
+              ✅ Pontos Fortes:
+            </h4>
+            <ul className="space-y-1.5">
+              {strengths.map((strength, index) => (
                 <li
                   key={index}
-                  className="text-base flex items-start gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800"
+                  className="text-sm flex items-start gap-2 p-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200"
                 >
-                  <span className="text-lg">{detail}</span>
+                  <span className="text-green-600 dark:text-green-400">✓</span>
+                  <span>{strength}</span>
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Pontos Fracos */}
+        {weaknesses.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-bold text-base text-orange-700 dark:text-orange-300">
+              ⚠️ Pontos a Melhorar:
+            </h4>
+            <ul className="space-y-1.5">
+              {weaknesses.map((weakness, index) => (
+                <li
+                  key={index}
+                  className="text-sm flex items-start gap-2 p-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200"
+                >
+                  <span className="text-orange-600 dark:text-orange-400">•</span>
+                  <span>{weakness}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Sugestões */}
+        {suggestions.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-bold text-base text-blue-700 dark:text-blue-300">
+              💡 Sugestões de Melhoria:
+            </h4>
+            <ul className="space-y-1.5">
+              {suggestions.map((suggestion, index) => (
+                <li
+                  key={index}
+                  className="text-sm flex items-start gap-2 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200"
+                >
+                  <span className="text-blue-600 dark:text-blue-400">💡</span>
+                  <span>{suggestion}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Análise Detalhada (fallback para details) */}
+        {details.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-bold text-base text-gray-800 dark:text-gray-200">
+              📋 Análise Detalhada:
+            </h4>
+            <ul className="space-y-1.5">
+              {details.map((detail, index) => (
+                <li
+                  key={index}
+                  className="text-sm flex items-start gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                >
+                  <span className="text-gray-500 dark:text-gray-400">•</span>
+                  <span>{detail}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Informações Adicionais */}
+        {(confidence !== undefined || timeTaken !== undefined) && (
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-400">
+              {confidence !== undefined && (
+                <span>
+                  <strong>Confiança:</strong> {Math.round(confidence * 100)}%
+                </span>
+              )}
+              {timeTaken !== undefined && (
+                <span>
+                  <strong>Tempo de análise:</strong> {timeTaken}ms
+                </span>
+              )}
+            </div>
           </div>
         )}
 

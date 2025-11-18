@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Mail, Loader2 } from "lucide-react";
+import { Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface EmailVerificationNoticeProps {
   email: string;
@@ -24,13 +25,38 @@ export function EmailVerificationNotice({ email }: EmailVerificationNoticeProps)
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email }),
+        credentials: "include",
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         setSuccess(true);
+        // Mostrar toast de sucesso robusto
+        toast({
+          title: "✅ Email enviado com sucesso!",
+          description: "Verifique sua caixa de entrada e a pasta de spam. O link de verificação expira em 24 horas.",
+          variant: "default",
+          duration: 5000,
+        });
+      } else {
+        // Mostrar toast de erro
+        const errorMessage = data.error?.message || data.message || "Erro ao reenviar email. Tente novamente.";
+        toast({
+          title: "❌ Erro ao reenviar email",
+          description: errorMessage,
+          variant: "destructive",
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error("Error resending verification email:", error);
+      toast({
+        title: "❌ Erro de conexão",
+        description: "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
+        variant: "destructive",
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -58,9 +84,15 @@ export function EmailVerificationNotice({ email }: EmailVerificationNoticeProps)
                 Enviando...
               </>
             ) : success ? (
-              "Email Enviado!"
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
+                Email Enviado!
+              </>
             ) : (
-              "Reenviar Email"
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                Reenviar Email
+              </>
             )}
           </Button>
         </div>
