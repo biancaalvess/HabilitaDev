@@ -1,10 +1,5 @@
 // Configuração simples sem validação Zod
 export const config = {
-  // Configurações de Banco de Dados
-  database: {
-    url: process.env.DATABASE_URL || 'file:./dev.db',
-  },
-  
   // Configurações de Autenticação
   auth: {
     jwtSecret: process.env.JWT_SECRET || 'xm9enPt2Gi3QYuiMalZ4CtlHB0p4rRtk6ThJt93CUcI=',
@@ -110,10 +105,6 @@ export function validateConfig() {
   
   if (config.auth.bcryptRounds < 10) {
     errors.push("BCRYPT_ROUNDS deve ser pelo menos 10");
-  }
-  
-  if (config.development.nodeEnv === 'production' && config.database.url.includes('dev.db')) {
-    errors.push("DATABASE_URL não deve usar arquivo de desenvolvimento em produção");
   }
   
   // Validar configuração de produção

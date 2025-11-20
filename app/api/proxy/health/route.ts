@@ -16,12 +16,6 @@ interface HealthStatus {
     response?: any;
     error?: string;
   };
-  database: {
-    status: string;
-    lastChecked: string;
-    type?: string;
-    error?: string;
-  };
 }
 
 export async function GET(request: NextRequest) {
@@ -35,10 +29,6 @@ export async function GET(request: NextRequest) {
       backend: {
         status: 'unknown',
         url: BACKEND_URL,
-        lastChecked: new Date().toISOString(),
-      },
-      database: {
-        status: 'unknown',
         lastChecked: new Date().toISOString(),
       },
     };
@@ -94,29 +84,9 @@ export async function GET(request: NextRequest) {
       console.log('ℹ️ BACKEND_URL não configurado, pulando verificação de backend');
     }
 
-    // 2. Verificar status do banco local
-    try {
-      const { databaseService } = await import('@/lib/database-simple');
-      await databaseService.connect();
-      healthStatus.database = {
-        status: 'healthy',
-        lastChecked: new Date().toISOString(),
-        type: 'sqlite',
-      };
-      console.log('✅ Local database is healthy');
-    } catch (dbError) {
-      healthStatus.database = {
-        status: 'unhealthy',
-        lastChecked: new Date().toISOString(),
-        error: dbError instanceof Error ? dbError.message : 'Unknown error',
-      };
-      console.warn('⚠️ Local database is unhealthy:', dbError instanceof Error ? dbError.message : 'Unknown error');
-    }
-
     // Determinar status geral
     const overallStatus = 
-      healthStatus.backend.status === 'healthy' || 
-      healthStatus.database.status === 'healthy' 
+      healthStatus.backend.status === 'healthy' 
         ? 'healthy' 
         : 'degraded';
 

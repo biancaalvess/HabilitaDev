@@ -1,21 +1,14 @@
 import { NextRequest } from 'next/server';
-import { databaseService } from '@/lib/database-simple';
-import { validateConfig } from '@/lib/config-simple';
 import { 
   createSuccessResponse, 
   handleApiError 
 } from '@/lib/api-response';
 
-validateConfig();
-
 export async function GET(request: NextRequest) {
   try {
-    await databaseService.connect();
-    
-    const questions = await databaseService.getPendingQuestions();
-    
+    // Banco de dados removido - retornar array vazio
     return createSuccessResponse(
-      questions,
+      [],
       'Questões pendentes obtidas com sucesso',
       200
     );
@@ -23,4 +16,3 @@ export async function GET(request: NextRequest) {
     return handleApiError(error, 'GET /api/admin/pending-questions');
   }
 }
-

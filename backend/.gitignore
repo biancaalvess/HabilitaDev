@@ -1,0 +1,35 @@
+# Binários
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+habilitadev-backend
+
+# Arquivos de teste
+*.test
+*.out
+
+# Banco de dados
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Dependências
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Arquivos temporários
+tmp/
+temp/
+

@@ -1,18 +1,20 @@
 import { NextRequest } from 'next/server';
-import { databaseService } from '@/lib/database-simple';
-import { validateConfig } from '@/lib/config-simple';
 import { 
   createSuccessResponse, 
   handleApiError 
 } from '@/lib/api-response';
 
-validateConfig();
-
 export async function GET(request: NextRequest) {
   try {
-    await databaseService.connect();
-    
-    const stats = await databaseService.getStats();
+    // Banco de dados removido - retornar estatísticas vazias
+    const stats = {
+      totalUsers: 0,
+      totalQuestions: 0,
+      pendingQuestions: 0,
+      approvedQuestions: 0,
+      totalFeedback: 0,
+      totalAnswers: 0,
+    };
     
     return createSuccessResponse(
       stats,
@@ -23,4 +25,3 @@ export async function GET(request: NextRequest) {
     return handleApiError(error, 'GET /api/admin/stats');
   }
 }
-

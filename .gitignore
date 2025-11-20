@@ -26,6 +26,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Backend Go
+backend/data/
+backend/*.exe
+backend/habilitadev-backend
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+
 # database
 *.db
 *.db-journal
