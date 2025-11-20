@@ -91,7 +91,7 @@ export function AnswerValidation({
             
             setValidationResult(normalizedResult);
             setIsValidating(false);
-            onValidationComplete(normalizedResult.isCorrect);
+            onValidationComplete(normalizedResult.isCorrect ?? false);
             return;
           }
         }

@@ -40,11 +40,11 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
     }
     // Se data não é um array, pode ser um objeto de resposta da API
     // Verificar se tem uma propriedade 'data' ou 'questions' que seja um array
-    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
-      return data.data;
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as any).data)) {
+      return (data as any).data;
     }
-    if (data && typeof data === 'object' && 'questions' in data && Array.isArray(data.questions)) {
-      return data.questions;
+    if (data && typeof data === 'object' && 'questions' in data && Array.isArray((data as any).questions)) {
+      return (data as any).questions;
     }
     // Se nada funcionar, retornar array vazio
     return [];

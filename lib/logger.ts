@@ -86,13 +86,14 @@ class Logger {
   private sendToMonitoring(entry: LogEntry) {
     // Integração com serviços de monitoramento em produção
     if (entry.level === 'error' && entry.error) {
-      // Sentry (se configurado)
+      // Sentry (se configurado e instalado)
       if (config.monitoring.provider === 'sentry') {
         try {
-          // Importação dinâmica para evitar problemas de bundle
+          // Verificar se Sentry está disponível globalmente (configurado via sentry.client.config.ts)
           if (typeof window !== 'undefined') {
-            // Client-side: usar @sentry/browser
-            import('@sentry/browser').then((Sentry) => {
+            // Client-side: verificar se Sentry está disponível no window
+            const Sentry = (window as any).Sentry;
+            if (Sentry && typeof Sentry.captureException === 'function') {
               Sentry.captureException(entry.error, {
                 level: 'error',
                 tags: {
@@ -100,25 +101,15 @@ class Logger {
                 },
                 extra: entry.data,
               });
-            }).catch(() => {
-              // Sentry não está instalado ou configurado
-            });
+            }
           } else {
-            // Server-side: usar @sentry/node
-            import('@sentry/node').then((Sentry) => {
-              Sentry.captureException(entry.error, {
-                level: 'error',
-                tags: {
-                  context: entry.context,
-                },
-                extra: entry.data,
-              });
-            }).catch(() => {
-              // Sentry não está instalado ou configurado
-            });
+            // Server-side: Sentry requer configuração via @sentry/nextjs
+            // Para habilitar, instale @sentry/nextjs e configure sentry.server.config.ts
+            // Por enquanto, apenas logamos no console (não há importação dinâmica)
+            // Isso evita erros de build quando o Sentry não está instalado
           }
         } catch (error) {
-          // Erro ao importar Sentry - silenciosamente ignorar
+          // Erro ao usar Sentry - silenciosamente ignorar
         }
       }
       
@@ -126,7 +117,7 @@ class Logger {
       if (config.monitoring.provider === 'logrocket' && typeof window !== 'undefined') {
         try {
           const LogRocket = (window as any).LogRocket;
-          if (LogRocket) {
+          if (LogRocket && typeof LogRocket.captureException === 'function') {
             LogRocket.captureException(entry.error, {
               tags: {
                 context: entry.context,

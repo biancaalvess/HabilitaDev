@@ -13,7 +13,8 @@
     "setup-env": "node scripts/setup-env.js",
     "env:init": "node scripts/setup-env.js init",
     "env:validate": "node scripts/setup-env.js validate",
-    "env:list": "node scripts/setup-env.js list"
+    "env:list": "node scripts/setup-env.js list",
+    "check-backend": "node scripts/check-backend-config.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

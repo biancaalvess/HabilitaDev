@@ -146,10 +146,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    // Tentar fazer parse do body com tratamento de erro
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError) {
+      console.error('❌ Error parsing request body:', jsonError);
+      return NextResponse.json(
+        { 
+          error: 'Bad Request',
+          message: 'Erro ao processar o corpo da requisição. Verifique se o JSON está válido.',
+          details: jsonError instanceof Error ? jsonError.message : 'Unknown error',
+        },
+        { 
+          status: 400,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        }
+      );
+    }
     const url = `${BACKEND_URL}/api/v1/questions`;
     
     console.log('🌐 Creating question on backend:', url);
+    console.log('📦 Request body:', JSON.stringify(body, null, 2));
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
@@ -164,6 +186,8 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+      
+      console.log(`📡 Backend response status: ${response.status} ${response.statusText}`);
 
       clearTimeout(timeoutId);
 
@@ -182,14 +206,50 @@ export async function POST(request: NextRequest) {
         });
       } else {
         // Repassar status e mensagem do backend
-        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        let errorData: any = { error: response.statusText };
+        try {
+          const responseText = await response.text();
+          if (responseText) {
+            try {
+              errorData = JSON.parse(responseText);
+            } catch {
+              errorData = { error: responseText || response.statusText };
+            }
+          }
+        } catch (readError) {
+          console.error('❌ Error reading backend error response:', readError);
+        }
+        
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
+        console.error('📋 Backend error details:', JSON.stringify(errorData, null, 2));
+        
+        // Mensagem mais específica para diferentes status codes
+        let errorMessage = 'Erro ao criar questão';
+        
+        if (response.status === 400) {
+          // 400: Bad Request - geralmente erro de validação
+          errorMessage = errorData.message || errorData.error || 'Dados inválidos. Verifique os campos preenchidos.';
+          if (errorData.details) {
+            errorMessage += ` Detalhes: ${JSON.stringify(errorData.details)}`;
+          }
+          console.error('❌ 400 - Bad Request. Verifique os dados enviados:', JSON.stringify(body, null, 2));
+        } else if (response.status === 404) {
+          errorMessage = `Endpoint não encontrado no backend (${url}). Verifique se:
+1. O backend está rodando em ${BACKEND_URL}
+2. O endpoint POST /api/v1/questions existe no backend
+3. A variável NEXT_PUBLIC_BACKEND_URL está configurada corretamente`;
+          console.error('❌ 404 - Endpoint não encontrado:', url);
+          console.error('📋 Verifique se o backend Go tem a rota POST /api/v1/questions implementada');
+        } else {
+          errorMessage = errorData.message || errorData.error || `Erro do backend (${response.status})`;
+        }
         
         return NextResponse.json(
           { 
-            error: 'Backend Error',
-            message: errorData.message || errorData.error || 'Erro ao criar questão',
-            details: errorData.details || undefined,
+            error: response.status === 400 ? 'Bad Request' : 'Backend Error',
+            message: errorMessage,
+            details: errorData.details || errorData.errors || undefined,
+            status: response.status,
           },
           { 
             status: response.status,

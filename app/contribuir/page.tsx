@@ -92,6 +92,11 @@ export default function ContribuirPage() {
         approved: false,
       };
 
+      // Log dos dados sendo enviados (apenas em desenvolvimento)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📤 Enviando questão:', JSON.stringify(questionData, null, 2));
+      }
+
       const result = await apiService.createQuestion(questionData);
 
       if (result.success) {
@@ -102,26 +107,36 @@ export default function ContribuirPage() {
         
         // Disparar evento para recarregar questões
         window.dispatchEvent(new CustomEvent('question-created'));
+        
+        // Limpar formulário após sucesso
+        setFormData({
+          nome: "",
+          email: "",
+          questao: "",
+          resposta: "",
+          nivel: "",
+          categoria: "",
+          fonte: "",
+          referencia: "",
+          isOriginal: false,
+          isAI: false,
+        });
       } else {
-        alert("Erro ao enviar questão. Tente novamente.");
+        const errorMsg = result.message || "Erro ao enviar questão. Tente novamente.";
+        alert(errorMsg);
       }
-
-      // Limpar formulário
-      setFormData({
-        nome: "",
-        email: "",
-        questao: "",
-        resposta: "",
-        nivel: "",
-        categoria: "",
-        fonte: "",
-        referencia: "",
-        isOriginal: false,
-        isAI: false,
-      });
     } catch (error) {
       console.error("Erro ao enviar questão:", error);
-      alert("Erro ao enviar questão. Tente novamente.");
+      // Extrair mensagem de erro mais específica
+      let errorMessage = "Erro ao enviar questão. Tente novamente.";
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+        // Se a mensagem contém detalhes, mostrar
+        if (errorMessage.includes('Detalhes:')) {
+          console.error("📋 Detalhes do erro:", errorMessage);
+        }
+      }
+      alert(errorMessage);
     }
   };
 

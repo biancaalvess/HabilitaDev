@@ -141,29 +141,85 @@ class ApiService {
           throw new Error('Permissão insuficiente para realizar esta ação.');
         }
         
+        if (response.status === 404) {
+          // 404: Endpoint não encontrado - pode ser backend offline ou endpoint não existe
+          const errorMessage = 'Serviço temporariamente indisponível. O backend pode estar offline ou o endpoint não está disponível.';
+          if (isDevelopment()) {
+            console.error('❌ 404 - Endpoint não encontrado. Verifique se o backend está rodando e se o endpoint existe.');
+          }
+          throw new Error(errorMessage);
+        }
+        
+        if (response.status === 503) {
+          // 503: Service Unavailable - Backend não configurado ou offline
+          throw new Error('Backend indisponível. Verifique se o servidor está rodando e se NEXT_PUBLIC_BACKEND_URL está configurado.');
+        }
+        
+        // Clonar response antes de ler para poder usar depois se necessário
+        const responseClone = response.clone();
         let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorDetails: any = null;
+        let rawResponseText: string = '';
         
         try {
           // Ler o corpo da resposta como texto primeiro para poder fazer parse depois
-          const responseText = await response.text();
+          rawResponseText = await response.text();
           
-          if (responseText) {
+          if (rawResponseText) {
             try {
-              const errorData = JSON.parse(responseText);
+              const errorData = JSON.parse(rawResponseText);
+              errorDetails = errorData;
               
-              // Extrair mensagem de erro de diferentes formatos
-              if (errorData.error) {
-                if (typeof errorData.error === 'object') {
-                  errorMessage = errorData.error.message || errorData.error.code || errorMessage;
-                } else if (typeof errorData.error === 'string') {
-                  errorMessage = errorData.error;
-                }
-              } else if (errorData.message) {
+              // Extrair mensagem de erro de diferentes formatos possíveis
+              // Prioridade: message > error (string) > error (object) > msg > statusText
+              if (errorData.message) {
                 errorMessage = typeof errorData.message === 'string' ? errorData.message : errorMessage;
+              } else if (errorData.error) {
+                if (typeof errorData.error === 'string') {
+                  errorMessage = errorData.error;
+                } else if (typeof errorData.error === 'object') {
+                  errorMessage = errorData.error.message || errorData.error.code || errorMessage;
+                }
+              } else if (errorData.msg) {
+                errorMessage = typeof errorData.msg === 'string' ? errorData.msg : errorMessage;
+              } else if (errorData.detail) {
+                errorMessage = typeof errorData.detail === 'string' ? errorData.detail : errorMessage;
+                }
+              
+              // Para erros 400, incluir detalhes de validação se disponíveis
+              if (response.status === 400) {
+                // Tentar extrair detalhes de validação de diferentes formatos
+                const validationErrors = errorData.details || errorData.errors || errorData.validation_errors;
+                if (validationErrors) {
+                  let detailsStr = '';
+                  if (typeof validationErrors === 'string') {
+                    detailsStr = validationErrors;
+                  } else if (Array.isArray(validationErrors)) {
+                    detailsStr = validationErrors.join(', ');
+                  } else if (typeof validationErrors === 'object') {
+                    // Formato de objeto com campos e mensagens
+                    const errorFields = Object.keys(validationErrors).map(key => {
+                      const value = validationErrors[key];
+                      return `${key}: ${Array.isArray(value) ? value.join(', ') : value}`;
+                    });
+                    detailsStr = errorFields.join('; ');
+                  }
+                  
+                  if (detailsStr) {
+                    errorMessage += `\n\nDetalhes: ${detailsStr}`;
+                  }
+                }
+                
+                // Se ainda não temos uma mensagem específica, usar o texto completo
+                if (errorMessage === `HTTP error! status: ${response.status}` && rawResponseText) {
+                  errorMessage = rawResponseText.length > 200 
+                    ? rawResponseText.substring(0, 200) + '...' 
+                    : rawResponseText;
+                }
               }
             } catch (parseError) {
               // Se não for JSON válido, usar o texto diretamente
-              errorMessage = responseText || errorMessage;
+              errorMessage = rawResponseText || errorMessage;
             }
           }
         } catch (readError) {
@@ -178,6 +234,12 @@ class ApiService {
         // 503 (Service Unavailable) é esperado quando backend não está configurado
         if (response.status !== 503 && isDevelopment()) {
           console.error('❌ API Error:', response.status, errorMessage);
+          if (errorDetails) {
+            console.error('📋 Error details (parsed):', JSON.stringify(errorDetails, null, 2));
+          }
+          if (rawResponseText && !errorDetails) {
+            console.error('📋 Error details (raw):', rawResponseText);
+          }
         }
         throw new Error(errorMessage);
       }
