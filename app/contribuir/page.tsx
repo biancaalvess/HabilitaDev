@@ -32,7 +32,6 @@ const CATEGORIAS = [
 export default function ContribuirPage() {
   const [formData, setFormData] = useState({
     nome: "",
-    email: "",
     questao: "",
     resposta: "",
     nivel: "",
@@ -81,15 +80,19 @@ export default function ContribuirPage() {
       // Enviar para API real
       const { apiService } = await import("@/lib/api");
 
-      const questionData = {
+      // Preparar dados da questão - apenas os campos necessários: nome, questão, resposta, nível, categoria, fonte
+      // Nota: email não é armazenado, apenas nome, questão, resposta, nível, categoria e fonte
+      const questionData: any = {
         title: formData.questao,
         description: formData.questao,
         answer: formData.resposta,
-        difficulty: formData.nivel as any,
-        category: formData.categoria as any,
-        company: formData.fonte,
+        difficulty: formData.nivel,
+        category: formData.categoria,
+        company: formData.fonte || undefined,
         tags: formData.referencia ? [formData.referencia] : [],
         approved: false,
+        // Incluir nome do autor (campo extra que o backend pode aceitar)
+        author_name: formData.nome || undefined,
       };
 
       // Log dos dados sendo enviados (apenas em desenvolvimento)
@@ -111,7 +114,6 @@ export default function ContribuirPage() {
         // Limpar formulário após sucesso
         setFormData({
           nome: "",
-          email: "",
           questao: "",
           resposta: "",
           nivel: "",
@@ -182,13 +184,6 @@ export default function ContribuirPage() {
                   Ajude a comunidade compartilhando suas questões técnicas e
                   soluções.
                 </p>
-                <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4">
-                  <p className="text-blue-200 text-sm">
-                    <strong>Importante:</strong> Sua questão será analisada pela
-                    nossa equipe antes de ser publicada. Isso garante a
-                    qualidade e relevância do conteúdo para toda a comunidade.
-                  </p>
-                </div>
               </div>
 
               {/* Form */}
@@ -201,37 +196,20 @@ export default function ContribuirPage() {
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Informações Pessoais */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="nome" className="text-white">
-                          Nome *
-                        </Label>
-                        <Input
-                          id="nome"
-                          value={formData.nome}
-                          onChange={(e) =>
-                            handleInputChange("nome", e.target.value)
-                          }
-                          placeholder="Seu nome"
-                          className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/60"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-white">
-                          Email (opcional)
-                        </Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) =>
-                            handleInputChange("email", e.target.value)
-                          }
-                          placeholder="seu@email.com"
-                          className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/60"
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nome" className="text-white">
+                        Nome *
+                      </Label>
+                      <Input
+                        id="nome"
+                        value={formData.nome}
+                        onChange={(e) =>
+                          handleInputChange("nome", e.target.value)
+                        }
+                        placeholder="Seu nome"
+                        className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/60"
+                        required
+                      />
                     </div>
 
                     {/* Questão */}
