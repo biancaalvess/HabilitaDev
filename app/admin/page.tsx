@@ -1,76 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/lib/auth";
+import { useState } from "react";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminStats } from "@/components/admin/admin-stats";
 import { QuestionsTable } from "@/components/admin/questions-table";
 import { FeedbackManagement } from "@/components/admin/feedback-management";
 import { UsersTable } from "@/components/admin/users-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { AuthModal } from "@/components/auth/auth-modal";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user, isAdmin } = useAuth();
-
-  useEffect(() => {
-    if (!user) {
-      setShowAuthModal(true);
-    }
-  }, [user]);
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Acesso Restrito</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Você precisa estar logado para acessar o painel administrativo.
-            </p>
-            <Button onClick={() => setShowAuthModal(true)} className="w-full">
-              Fazer Login
-            </Button>
-          </CardContent>
-        </Card>
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Acesso Negado</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertDescription>
-                Você não tem permissão para acessar o painel administrativo.
-              </AlertDescription>
-            </Alert>
-            <Button
-              onClick={() => (window.location.href = "/")}
-              className="w-full mt-4"
-            >
-              Voltar ao Site
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const renderContent = () => {
     switch (activeTab) {

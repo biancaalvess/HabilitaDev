@@ -3,7 +3,6 @@
 import { BarChart3, BookOpen, MessageSquare, Users, Settings, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useAuth } from "@/lib/auth"
 
 interface AdminSidebarProps {
   activeTab: string
@@ -11,24 +10,14 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
-  const { user, isAdmin } = useAuth()
-
-  // Menu items com controle de acesso baseado em role
-  const allMenuItems = [
-    { icon: BarChart3, label: "Dashboard", id: "dashboard", adminOnly: false },
-    { icon: BookOpen, label: "Questões", id: "questions", adminOnly: false },
-    { icon: MessageSquare, label: "Feedbacks", id: "feedbacks", adminOnly: false },
-    { icon: Users, label: "Usuários", id: "users", adminOnly: true },
-    { icon: Settings, label: "Configurações", id: "settings", adminOnly: true },
+  // Menu items - todos disponíveis sem autenticação
+  const menuItems = [
+    { icon: BarChart3, label: "Dashboard", id: "dashboard" },
+    { icon: BookOpen, label: "Questões", id: "questions" },
+    { icon: MessageSquare, label: "Feedbacks", id: "feedbacks" },
+    { icon: Users, label: "Usuários", id: "users" },
+    { icon: Settings, label: "Configurações", id: "settings" },
   ]
-
-  // Filtrar itens baseado no role do usuário
-  const menuItems = allMenuItems.filter(item => {
-    if (item.adminOnly) {
-      return isAdmin
-    }
-    return true
-  })
 
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border h-screen sticky top-0 flex flex-col">

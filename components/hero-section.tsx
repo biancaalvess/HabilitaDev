@@ -14,23 +14,16 @@ import {
   Target,
   Users,
   Heart,
-  LogIn,
-  User,
 } from "lucide-react";
 import Image from "next/image";
 
 import { ParticlesBackground } from "@/components/particles-background";
-import { AuthModalV2 } from "@/components/auth/auth-modal-v2";
-import { useAuth } from "@/lib/auth";
-import { UserMenu } from "@/components/user-menu";
 
 interface HeroSectionProps {
   onStartTraining: () => void;
 }
 
 export default function HeroSection({ onStartTraining }: HeroSectionProps) {
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user } = useAuth();
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden scroll-smooth">
@@ -90,22 +83,8 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
           </a>
         </div>
 
-        {/* Login Button - Canto direito */}
-        <div className="flex-1 flex justify-end items-center">
-          {user ? (
-            <UserMenu />
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAuthModal(true)}
-              className="text-white/80 hover:text-white hover:bg-blue-500/20 transition-colors flex items-center gap-2"
-            >
-              <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">Login</span>
-            </Button>
-          )}
-        </div>
+        {/* Espaço vazio à direita para balancear */}
+        <div className="flex-1"></div>
       </nav>
 
       {/* Main Content */}
@@ -267,12 +246,6 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
 
       {/* Footer */}
       <Footer />
-
-      {/* Auth Modal */}
-      <AuthModalV2
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
     </div>
   );
 }

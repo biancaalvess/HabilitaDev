@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/lib/auth";
 import type { Feedback } from "@/lib/types";
 
 interface FeedbackFormProps {
@@ -54,7 +53,6 @@ export function FeedbackForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +76,6 @@ export function FeedbackForm({
         feedback_type: feedbackType as any,
         content: content.trim(),
         status: "pending" as any,
-        user_id: user?.id, // Permite feedback anônimo
       });
 
       if (result.success) {

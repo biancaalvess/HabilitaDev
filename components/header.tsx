@@ -1,12 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, User, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FuturisticInput } from "@/components/ui/futuristic-input";
-import { AuthModalV2 } from "./auth/auth-modal-v2";
-import { UserMenu } from "./user-menu";
-import { useAuth } from "@/lib/auth";
 import { useDebounce } from "@/hooks/use-debounce";
 
 interface HeaderProps {
@@ -15,9 +12,7 @@ interface HeaderProps {
 }
 
 export function Header({ onSearch, searchQuery }: HeaderProps) {
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchInput, setSearchInput] = useState(searchQuery);
-  const { user } = useAuth();
   
   // Debounce do valor de busca (500ms de delay)
   const debouncedSearch = useDebounce(searchInput, 500);
@@ -62,19 +57,6 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
               Contribuir
             </Button>
 
-            {user ? (
-              <UserMenu />
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowAuthModal(true)}
-                className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10"
-              >
-                <User className="h-4 w-4" />
-              </Button>
-            )}
-
             <Button variant="ghost" size="icon" className="sm:hidden h-8 w-8">
               <Menu className="h-4 w-4" />
             </Button>
@@ -92,11 +74,6 @@ export function Header({ onSearch, searchQuery }: HeaderProps) {
           />
         </div>
       </header>
-
-      <AuthModalV2
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
     </>
   );
 }
