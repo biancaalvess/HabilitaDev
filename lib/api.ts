@@ -1,4 +1,8 @@
-// ✅ SOLUÇÃO: Usar proxy Next.js (resolve CORS e funciona sem backend local)
+/**
+ * Cliente HTTP → rotas Next (`/api/proxy/...`), que fazem proxy ao Spring Boot em `/api/v1/...`.
+ * O backend serializa JSON em snake_case (Jackson); os tipos abaixo já usam created_at, author_name, etc.
+ * Sem header Authorization nesta API. Content-Type: application/json em POST/PUT.
+ */
 import { config } from './config-simple';
 
 const API_BASE_URL = config.api.baseUrl;
@@ -68,7 +72,7 @@ export interface Feedback {
   id: number;
   question_id: number;
   user_id?: number;
-  feedback_type: 'correction' | 'suggestion' | 'improvement';
+  feedback_type: 'correction' | 'suggestion' | 'improvement' | 'deletion';
   content: string;
   status: 'pending' | 'reviewed' | 'implemented';
   created_at: string;
@@ -190,7 +194,7 @@ class ApiService {
         
         if (response.status === 503) {
           // 503: Service Unavailable - Backend não configurado ou offline
-          throw new Error('Backend indisponível. Verifique se o servidor está rodando e se NEXT_PUBLIC_BACKEND_URL está configurado.');
+          throw new Error('Backend indisponível. Verifique se o servidor está rodando e se NEXT_PUBLIC_API_URL (Java) ou NEXT_PUBLIC_BACKEND_URL está configurado.');
         }
         
         // Clonar response antes de ler para poder usar depois se necessário

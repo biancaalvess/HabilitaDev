@@ -1,9 +1,43 @@
 // Configuração simples sem validação Zod
+//
+// Integração Spring Boot (JSON snake_case em /api/v1/...):
+// - URL pública do Java: use NEXT_PUBLIC_API_URL=https://... (sem barra no fim) — preferido no spec.
+//   Se NEXT_PUBLIC_API_URL for um path (ex. /api), o Java fica em NEXT_PUBLIC_BACKEND_URL ou BACKEND_URL.
+// - O browser chama o Next em `baseUrl` + /proxy/...; as Route Handlers fazem fetch a `backendUrl` + /api/v1/...
+// - Não envie Authorization (API pública actual). CORS: configurar no Render (CORS_ALLOWED_ORIGINS).
 
-/** URL do backend Java (Render). Sem barra no fim. Usada só nas API Routes (servidor) → fetch(`${backendUrl}/api/v1/...`). */
+/** URL do backend Java. Sem barra no fim. */
 function normalizeBackendBase(url: string): string {
   if (!url) return ''
   return url.replace(/\/+$/, '')
+}
+
+function isRemoteHttpUrl(value: string | undefined): boolean {
+  return !!value && /^https?:\/\//i.test(value.trim())
+}
+
+/** Base do Java (Render). Ordem: NEXT_PUBLIC_API_URL se for https?://, senão NEXT_PUBLIC_BACKEND_URL, senão BACKEND_URL. */
+export function resolveJavaApiBaseUrl(): string {
+  const pub = process.env.NEXT_PUBLIC_API_URL?.trim()
+  if (isRemoteHttpUrl(pub)) {
+    return normalizeBackendBase(pub!)
+  }
+  return normalizeBackendBase(
+    (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '').trim()
+  )
+}
+
+/** Prefixo das rotas Next usadas pelo cliente (ex. /api → /api/proxy/...). Se NEXT_PUBLIC_API_URL for URL do Java, usa NEXT_PUBLIC_APP_API_BASE ou /api. */
+export function resolveNextClientApiBase(): string {
+  const pub = process.env.NEXT_PUBLIC_API_URL?.trim()
+  if (pub && !isRemoteHttpUrl(pub)) {
+    return (pub.replace(/\/+$/, '') || '/api')
+  }
+  const explicit = process.env.NEXT_PUBLIC_APP_API_BASE?.trim()
+  if (explicit) {
+    return explicit.replace(/\/+$/, '') || '/api'
+  }
+  return '/api'
 }
 
 export const config = {
@@ -16,10 +50,10 @@ export const config = {
   
   // Configurações da API
   api: {
-    baseUrl: (process.env.NEXT_PUBLIC_API_URL || '/api').replace(/\/+$/, '') || '/api',
-    backendUrl: normalizeBackendBase(
-      process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || ''
-    ),
+    /** Base para fetch do browser → Next (BFF). Não confundir com a URL do Java. */
+    baseUrl: resolveNextClientApiBase(),
+    /** Base do Spring Boot: GET ${backendUrl}/health, GET ${backendUrl}/api/v1/questions, etc. */
+    backendUrl: resolveJavaApiBaseUrl(),
     timeout: 30000, // 30 segundos
   },
   
@@ -28,21 +62,19 @@ export const config = {
     const nodeEnv = process.env.NODE_ENV || 'development';
     
     if (nodeEnv === 'production') {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL;
+      const backendUrl = resolveJavaApiBaseUrl();
       
       if (!backendUrl) {
-        console.error('❌ ERRO CRÍTICO: NEXT_PUBLIC_BACKEND_URL não está configurado em produção!');
+        console.error('❌ ERRO CRÍTICO: URL do backend Java em falta. Defina NEXT_PUBLIC_API_URL=https://... ou NEXT_PUBLIC_BACKEND_URL em produção.');
         return false;
       }
       
-      // Verificar se a URL é HTTPS em produção
       if (!backendUrl.startsWith('https://')) {
-        console.warn('⚠️ AVISO: NEXT_PUBLIC_BACKEND_URL deve usar HTTPS em produção!');
+        console.warn('⚠️ AVISO: A URL do backend Java deve usar HTTPS em produção.');
       }
       
-      // Verificar se não está usando localhost em produção
       if (backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1')) {
-        console.error('❌ ERRO CRÍTICO: NEXT_PUBLIC_BACKEND_URL não pode apontar para localhost em produção!');
+        console.error('❌ ERRO CRÍTICO: o backend Java em produção não pode apontar para localhost.');
         return false;
       }
     }
@@ -120,7 +152,7 @@ export function validateConfig() {
   if (config.development.nodeEnv === 'production') {
     const isValid = config.validateProductionConfig();
     if (!isValid) {
-      errors.push("Configuração de produção inválida - verifique NEXT_PUBLIC_BACKEND_URL");
+      errors.push("Configuração de produção inválida - verifique NEXT_PUBLIC_API_URL (Java) ou NEXT_PUBLIC_BACKEND_URL");
     }
   }
   

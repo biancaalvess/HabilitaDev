@@ -25,6 +25,7 @@ export interface User {
   created_at: string
 }
 
+/** Alinhado ao POST /api/v1/questions/{id}/feedback (Spring, snake_case no wire). */
 export interface Feedback {
   id: number
   question_id: number
