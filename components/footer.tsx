@@ -91,7 +91,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/sobre"
+                  href="/#sobre"
                   className="text-white/70 hover:text-blue-400 transition-colors text-sm"
                 >
                   Sobre

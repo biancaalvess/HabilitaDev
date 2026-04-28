@@ -20,12 +20,13 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
     `${API_BASE_URL}/proxy/questions?limit=500&page=1`,
     fetcher,
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 2000, // 2 segundos - evitar requisições duplicadas
-      refreshInterval: 0, // Desabilitar refresh automático (pode ser habilitado se necessário)
-      errorRetryCount: 3,
-      errorRetryInterval: 5000,
+      dedupingInterval: 10_000,
+      refreshInterval: 0,
+      errorRetryCount: 2,
+      errorRetryInterval: 4000,
+      shouldRetryOnError: (err) => (err as { status?: number })?.status !== 404,
     }
   );
 
@@ -47,7 +48,12 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
     if (data && typeof data === 'object' && 'questions' in data && Array.isArray((data as any).questions)) {
       return (data as any).questions;
     }
-    // Se nada funcionar, retornar array vazio
+    if (data && typeof data === 'object' && 'content' in data && Array.isArray((data as any).content)) {
+      return (data as any).content;
+    }
+    if (data && typeof data === 'object' && 'items' in data && Array.isArray((data as any).items)) {
+      return (data as any).items;
+    }
     return [];
   }, [data]);
 

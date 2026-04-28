@@ -1,4 +1,11 @@
 // Configuração simples sem validação Zod
+
+/** URL do backend Java (Render). Sem barra no fim. Usada só nas API Routes (servidor) → fetch(`${backendUrl}/api/v1/...`). */
+function normalizeBackendBase(url: string): string {
+  if (!url) return ''
+  return url.replace(/\/+$/, '')
+}
+
 export const config = {
   // Configurações de Autenticação
   auth: {
@@ -9,8 +16,10 @@ export const config = {
   
   // Configurações da API
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
-    backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '',
+    baseUrl: (process.env.NEXT_PUBLIC_API_URL || '/api').replace(/\/+$/, '') || '/api',
+    backendUrl: normalizeBackendBase(
+      process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || ''
+    ),
     timeout: 30000, // 30 segundos
   },
   

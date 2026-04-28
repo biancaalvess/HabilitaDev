@@ -26,15 +26,16 @@ interface QuestoesSidebarProps {
   onToggleMinimize?: () => void;
 }
 
+/* ids alinhados a Question.category (API) */
 const categories = [
   { id: "all", name: "Todas", icon: BookOpen },
-  { id: "Algoritmos", name: "Algoritmos", icon: Code },
-  { id: "Estruturas de Dados", name: "Estruturas de Dados", icon: Database },
-  { id: "Design de Sistema", name: "Design de Sistema", icon: Cpu },
-  { id: "Bancos de Dados", name: "Bancos de Dados", icon: Database },
-  { id: "Frontend", name: "Frontend", icon: Globe },
-  { id: "Backend", name: "Backend", icon: Server },
-  { id: "Devops", name: "DevOps", icon: Wrench },
+  { id: "algorithms", name: "Algoritmos", icon: Code },
+  { id: "data_structures", name: "Estruturas de Dados", icon: Database },
+  { id: "system_design", name: "Design de Sistema", icon: Cpu },
+  { id: "databases", name: "Bancos de Dados", icon: Database },
+  { id: "frontend", name: "Frontend", icon: Globe },
+  { id: "backend", name: "Backend", icon: Server },
+  { id: "devops", name: "DevOps", icon: Wrench },
 ];
 
 export function QuestoesSidebar({

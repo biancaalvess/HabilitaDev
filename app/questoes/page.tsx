@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { QuestoesHeader } from "@/components/questoes-header";
 import { QuestoesSidebar } from "@/components/questoes-sidebar";
 import { QuestionCard } from "@/components/question-card";
@@ -8,7 +9,9 @@ import { QuestionFilters } from "@/components/question-filters";
 import { QuestionDetail } from "@/components/question-detail";
 import { useOptimizedQuestions } from "@/hooks/use-optimized-questions";
 import type { QuestionFilter, Question } from "@/lib/types";
+import { CATEGORY_LABELS } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
   SheetContent,
@@ -19,7 +22,30 @@ import {
 import { Menu, Filter } from "lucide-react";
 import { ParticlesBackground } from "@/components/particles-background";
 
-export default function QuestoesPage() {
+function QuestaoGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-lg border border-blue-400/10 bg-slate-800/30 p-4 sm:p-6 space-y-3"
+        >
+          <Skeleton className="h-5 w-3/4 bg-slate-600/50" />
+          <Skeleton className="h-4 w-full bg-slate-600/40" />
+          <Skeleton className="h-4 w-5/6 bg-slate-600/40" />
+          <div className="flex gap-2 pt-2">
+            <Skeleton className="h-6 w-16 bg-slate-600/50" />
+            <Skeleton className="h-6 w-20 bg-slate-600/50" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function QuestoesPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<QuestionFilter>({});
   const [selectedCategory, setSelectedCategory] = useState<
@@ -28,7 +54,6 @@ export default function QuestoesPage() {
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(
     null
   );
-  const [showFeedback, setShowFeedback] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -36,6 +61,13 @@ export default function QuestoesPage() {
     useOptimizedQuestions({
       enableCache: true,
     });
+
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    if (cat) {
+      setSelectedCategory(cat);
+    }
+  }, [searchParams]);
 
   const filteredQuestions = useMemo(() => {
     // Verificar se questions é um array válido
@@ -82,30 +114,14 @@ export default function QuestoesPage() {
     setSelectedQuestion(null);
   };
 
-  const handleFeedback = () => {
-    setShowFeedback(true);
-  };
-
   // Combine search query with filters for the filter component
   const combinedFilters = { ...filters, search: searchQuery };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-        <QuestoesHeader />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-              <p className="text-white/80 text-sm sm:text-base">
-                Carregando questões...
-              </p>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  const categoryTitle = selectedCategory
+    ? CATEGORY_LABELS[
+        selectedCategory as keyof typeof CATEGORY_LABELS
+      ] ?? selectedCategory
+    : null;
 
   if (error) {
     return (
@@ -155,14 +171,14 @@ export default function QuestoesPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <Button
-                  onClick={refresh}
+                  onClick={() => void refresh()}
                   variant="outline"
                   className="w-full sm:w-auto"
                 >
                   Tentar novamente
                 </Button>
                 <Button
-                  onClick={() => (window.location.href = "/")}
+                  onClick={() => router.push("/")}
                   variant="ghost"
                   className="w-full sm:w-auto"
                 >
@@ -191,7 +207,7 @@ export default function QuestoesPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* Particles Background */}
       <ParticlesBackground
-        particleCount={60}
+        particleCount={40}
         speed={0.3}
         color="rgba(59, 130, 246, 0.3)"
       />
@@ -270,8 +286,8 @@ export default function QuestoesPage() {
           <main className="flex-1 p-4 sm:p-6 lg:p-8">
             <div className="mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 leading-tight">
-                {selectedCategory
-                  ? `Questões de ${selectedCategory}`
+                {categoryTitle
+                  ? `Questões de ${categoryTitle}`
                   : "Treine para Entrevistas Técnicas"}
               </h2>
               <p className="text-blue-300/80 text-base sm:text-lg md:text-xl max-w-3xl">
@@ -286,28 +302,53 @@ export default function QuestoesPage() {
               totalQuestions={filteredQuestions.length}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {filteredQuestions.map((question) => (
-                <QuestionCard
-                  key={question.id}
-                  question={question}
-                  onViewDetails={handleViewDetails}
-                />
-              ))}
-            </div>
-
-            {filteredQuestions.length === 0 && (
-              <div className="text-center py-12">
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-400/20">
-                  <p className="text-white/80 text-lg">
-                    Nenhuma questão encontrada com os filtros aplicados.
-                  </p>
+            {loading ? (
+              <QuestaoGridSkeleton />
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                  {filteredQuestions.map((question) => (
+                    <QuestionCard
+                      key={question.id}
+                      question={question}
+                      onViewDetails={handleViewDetails}
+                    />
+                  ))}
                 </div>
-              </div>
+
+                {filteredQuestions.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-400/20">
+                      <p className="text-white/80 text-lg">
+                        Nenhuma questão encontrada com os filtros aplicados.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </main>
         </div>
       </div>
     </div>
+  );
+}
+
+function QuestoesPageFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <QuestoesHeader />
+      <div className="container mx-auto px-4 py-8">
+        <QuestaoGridSkeleton />
+      </div>
+    </div>
+  );
+}
+
+export default function QuestoesPage() {
+  return (
+    <Suspense fallback={<QuestoesPageFallback />}>
+      <QuestoesPageContent />
+    </Suspense>
   );
 }

@@ -72,7 +72,7 @@ const ErrorState = memo(({ error, onRefresh, isOffline }: {
           Tentar novamente
         </Button>
         {isOffline && (
-          <Button variant="ghost" onClick={() => window.location.reload()}>
+          <Button variant="ghost" onClick={onRefresh}>
             <Wifi className="w-4 h-4 mr-2" />
             Verificar conexão
           </Button>

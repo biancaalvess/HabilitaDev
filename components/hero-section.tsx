@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { WireframeHands } from "@/components/ui/wireframe-hands";
@@ -23,13 +22,16 @@ interface HeroSectionProps {
   onStartTraining: () => void;
 }
 
-export default function HeroSection({ onStartTraining }: HeroSectionProps) {
+export default function HeroSection(_props: HeroSectionProps) {
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden scroll-smooth">
+    <div
+      id="inicio"
+      className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden scroll-smooth"
+    >
       {/* Particles Background */}
       <ParticlesBackground
-        particleCount={80}
+        particleCount={45}
         speed={0.4}
         color="rgba(59, 130, 246, 0.4)"
       />
@@ -67,14 +69,15 @@ export default function HeroSection({ onStartTraining }: HeroSectionProps) {
             href="#inicio"
             className="text-white/80 hover:text-white transition-colors text-sm sm:text-base"
           >
-            Inicio
+            Início
           </a>
-          <a
-            href="questoes"
+          <Link
+            href="/questoes"
             className="text-white/80 hover:text-white transition-colors text-sm sm:text-base"
+            prefetch
           >
             Questões
-          </a>
+          </Link>
           <a
             href="#sobre"
             className="text-white/80 hover:text-white transition-colors text-sm sm:text-base"
