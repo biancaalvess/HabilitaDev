@@ -31,7 +31,7 @@ if (!backendUrl) {
   console.log('\nPara desenvolvimento local, adicione ao .env.local:');
   console.log('   NEXT_PUBLIC_BACKEND_URL=http://localhost:8080');
   console.log('\nPara produção, use:');
-  console.log('   NEXT_PUBLIC_BACKEND_URL=https://habilitadev-backend.onrender.com');
+  console.log('   NEXT_PUBLIC_BACKEND_URL=https://habilitadev-backendd.onrender.com');
   process.exit(1);
 }
 

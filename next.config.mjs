@@ -17,7 +17,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'habilitadev-backend.onrender.com',
+        hostname: 'habilitadev-backendd.onrender.com',
         pathname: '/**',
       },
     ],

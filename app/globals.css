@@ -131,6 +131,45 @@
     animation-delay: -2.8s;
   }
 
+  /* Custom Scrollbar Styles - VISÍVEL E FUNCIONAL */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 #1e293b;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 14px !important;
+    height: 14px !important;
+    -webkit-appearance: none !important;
+    display: block !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background-color: #1e293b !important;
+    border-radius: 10px !important;
+    border: 1px solid #334155 !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #64748b !important;
+    border-radius: 10px !important;
+    border: 2px solid #1e293b !important;
+    min-height: 40px !important;
+    background-clip: padding-box !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8 !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:active {
+    background-color: #cbd5e1 !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-corner {
+    background-color: #1e293b !important;
+  }
+
   /* Futuristic Input Styles */
   .futuristic-input-wrapper {
     position: relative;

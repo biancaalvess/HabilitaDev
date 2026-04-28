@@ -15,8 +15,9 @@ interface UseOptimizedQuestionsOptions {
 
 export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}) {
   // SWR configuration
+  // Lista paginada no backend (default ~50): pedir até 500 (máx. documentado) para o filtro local continuar completo
   const { data, error, isLoading, mutate } = useSWR<Question[]>(
-    `${API_BASE_URL}/proxy/questions`,
+    `${API_BASE_URL}/proxy/questions?limit=500&page=1`,
     fetcher,
     {
       revalidateOnFocus: true,

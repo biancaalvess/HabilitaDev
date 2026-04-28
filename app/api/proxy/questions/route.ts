@@ -3,6 +3,11 @@ import { config } from '@/lib/config-simple';
 
 const BACKEND_URL = config.api.backendUrl;
 
+// Helper para verificar se estamos em desenvolvimento
+const isDevelopment = () => {
+  return process.env.NODE_ENV === 'development';
+};
+
 export async function GET(request: NextRequest) {
   try {
     // Verificar se BACKEND_URL está configurado
@@ -29,9 +34,13 @@ export async function GET(request: NextRequest) {
     const url = `${BACKEND_URL}/api/v1/questions${queryString ? `?${queryString}` : ''}`;
     
     console.log('🌐 Fetching questions from backend:', url);
+    console.log('🔍 Backend URL configurada:', BACKEND_URL);
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    const timeoutId = setTimeout(() => {
+      console.error(`⏱️ Timeout atingido após ${config.api.timeout}ms para GET ${url}`);
+      controller.abort();
+    }, config.api.timeout);
     
     try {
       const response = await fetch(url, {
@@ -44,6 +53,30 @@ export async function GET(request: NextRequest) {
       });
 
       clearTimeout(timeoutId);
+      
+      // Verificar se a resposta é um erro 502 (Bad Gateway)
+      if (response.status === 502) {
+        console.error('❌ 502 Bad Gateway - Backend não está respondendo corretamente');
+        return NextResponse.json(
+          { 
+            error: 'Bad Gateway',
+            message: `O backend em ${BACKEND_URL} não está respondendo corretamente. Verifique se o servidor está rodando e acessível.`,
+            details: isDevelopment() ? {
+              backendUrl: BACKEND_URL,
+              attemptedUrl: url,
+              suggestion: 'Verifique se o backend está rodando: go run main.go'
+            } : undefined,
+          },
+          { 
+            status: 502,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+          }
+        );
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -82,20 +115,58 @@ export async function GET(request: NextRequest) {
     } catch (fetchError) {
       clearTimeout(timeoutId);
       const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
-      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      const errorName = fetchError instanceof Error ? fetchError.name : 'Unknown';
+      const isTimeout = errorName === 'AbortError' || errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      const isConnectionRefused = errorMessage.includes('ERR_CONNECTION_REFUSED') || 
+                                  errorMessage.includes('ECONNREFUSED') ||
+                                  errorMessage.includes('Connection refused');
+      const isNetworkError = errorMessage.includes('Failed to fetch') || 
+                            errorMessage.includes('NetworkError') || 
+                            errorMessage.includes('ENOTFOUND') ||
+                            errorMessage.includes('Network request failed');
       
-      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      console.error(`❌ Erro ao conectar com backend:`, {
+        error: errorMessage,
+        name: errorName,
+        url: url,
+        backendUrl: BACKEND_URL,
+        isTimeout: isTimeout,
+        isConnectionRefused: isConnectionRefused,
+        isNetworkError: isNetworkError
+      });
+      
+      let userMessage = 'Backend indisponível. Verifique se o servidor está rodando.';
+      let statusCode = 503;
+      
+      if (isConnectionRefused) {
+        userMessage = `Não foi possível conectar ao backend em ${BACKEND_URL}. O servidor pode não estar rodando. Verifique se o backend está iniciado na porta 8080.`;
+        statusCode = 503; // Service Unavailable
+      } else if (isNetworkError) {
+        userMessage = `Não foi possível conectar ao backend em ${BACKEND_URL}. Verifique se o servidor está rodando e acessível.`;
+        statusCode = 502; // Bad Gateway
+      } else if (isTimeout) {
+        userMessage = `A requisição demorou mais de ${config.api.timeout / 1000} segundos. O backend pode estar sobrecarregado ou não está respondendo.`;
+      }
       
       return NextResponse.json(
         { 
-          error: 'Service Unavailable',
-          message: isTimeout 
-            ? 'Backend timeout. Tente novamente mais tarde.' 
-            : 'Backend indisponível. Tente novamente mais tarde.',
-          details: errorMessage,
+          error: statusCode === 502 ? 'Bad Gateway' : 'Service Unavailable',
+          message: userMessage,
+          details: isDevelopment() ? {
+            error: errorMessage,
+            errorName: errorName,
+            backendUrl: BACKEND_URL,
+            attemptedUrl: url,
+            troubleshooting: [
+              'Verifique se o backend está rodando: go run main.go',
+              `Verifique se a porta 8080 está acessível: curl http://localhost:8080/health`,
+              'Verifique a variável NEXT_PUBLIC_BACKEND_URL no arquivo .env.local',
+              'Se estiver usando Docker, verifique se os containers estão rodando: docker-compose ps'
+            ]
+          } : undefined,
         },
         { 
-          status: 503,
+          status: statusCode,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -172,9 +243,15 @@ export async function POST(request: NextRequest) {
     
     console.log('🌐 Creating question on backend:', url);
     console.log('📦 Request body:', JSON.stringify(body, null, 2));
+    console.log('⏱️ Timeout configurado:', config.api.timeout, 'ms');
     
+    // Timeout maior para criação (60 segundos)
+    const timeoutDuration = config.api.timeout * 2;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+    const timeoutId = setTimeout(() => {
+      console.error(`⏱️ Timeout atingido após ${timeoutDuration}ms para POST ${url}`);
+      controller.abort();
+    }, timeoutDuration);
     
     try {
       const response = await fetch(url, {
@@ -191,8 +268,41 @@ export async function POST(request: NextRequest) {
 
       clearTimeout(timeoutId);
 
+      // Verificar Content-Type antes de processar
+      const contentType = response.headers.get('content-type') || '';
+      const isHTML = contentType.includes('text/html') || contentType.includes('application/xhtml');
+      
+      // Ler resposta como texto primeiro para verificar se é HTML
+      const responseText = await response.text();
+      const isHTMLResponse = isHTML || responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html');
+
       if (response.ok) {
-        const data = await response.json();
+        // Se a resposta for HTML, algo está errado
+        if (isHTMLResponse) {
+          console.error('❌ Backend retornou HTML em vez de JSON. Backend pode estar offline ou com erro.');
+          return NextResponse.json(
+            { 
+              error: 'Bad Gateway',
+              message: 'O backend retornou uma resposta HTML em vez de JSON. Isso geralmente indica que o servidor está offline ou com problemas. Se estiver usando Render, verifique os logs do serviço.',
+              details: isDevelopment() ? {
+                backendUrl: BACKEND_URL,
+                attemptedUrl: url,
+                contentType: contentType,
+                suggestion: 'O backend pode estar hospedado no Render e não está respondendo corretamente. Verifique os logs do Render.'
+              } : undefined,
+            },
+            { 
+              status: 502,
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+              },
+            }
+          );
+        }
+        
+        const data = JSON.parse(responseText);
         console.log('✅ Successfully created question on backend');
         
         return NextResponse.json(data, {
@@ -207,17 +317,21 @@ export async function POST(request: NextRequest) {
       } else {
         // Repassar status e mensagem do backend
         let errorData: any = { error: response.statusText };
-        try {
-          const responseText = await response.text();
-          if (responseText) {
-            try {
-              errorData = JSON.parse(responseText);
-            } catch {
-              errorData = { error: responseText || response.statusText };
-            }
+        
+        // Se a resposta for HTML (página de erro), tratar especialmente
+        if (isHTMLResponse) {
+          console.error('❌ Backend retornou página HTML de erro:', response.status);
+          errorData = {
+            error: 'Bad Gateway',
+            message: 'O backend retornou uma página HTML de erro. O servidor pode estar offline ou com problemas. Se estiver usando Render, verifique os logs do serviço.',
+            htmlResponse: isDevelopment() ? responseText.substring(0, 500) : undefined
+          };
+        } else if (responseText) {
+          try {
+            errorData = JSON.parse(responseText);
+          } catch {
+            errorData = { error: responseText || response.statusText };
           }
-        } catch (readError) {
-          console.error('❌ Error reading backend error response:', readError);
         }
         
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
@@ -264,17 +378,31 @@ export async function POST(request: NextRequest) {
     } catch (fetchError) {
       clearTimeout(timeoutId);
       const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
-      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      const errorName = fetchError instanceof Error ? fetchError.name : 'Unknown';
+      const isTimeout = errorName === 'AbortError' || errorMessage.includes('timeout') || errorMessage.includes('aborted');
+      const isNetworkError = errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError');
       
-      console.error(`❌ Backend unavailable: ${errorMessage}`);
+      console.error(`❌ Erro ao conectar com backend:`, {
+        error: errorMessage,
+        name: errorName,
+        url: url,
+        isTimeout: isTimeout,
+        isNetworkError: isNetworkError,
+        backendUrl: BACKEND_URL
+      });
+      
+      let userMessage = 'Backend indisponível. Tente novamente mais tarde.';
+      if (isTimeout) {
+        userMessage = `A requisição demorou mais de ${timeoutDuration / 1000} segundos. Verifique se o backend está rodando em ${BACKEND_URL}`;
+      } else if (isNetworkError) {
+        userMessage = `Não foi possível conectar ao backend em ${BACKEND_URL}. Verifique se o servidor está rodando.`;
+      }
       
       return NextResponse.json(
         { 
           error: 'Service Unavailable',
-          message: isTimeout 
-            ? 'Backend timeout. Tente novamente mais tarde.' 
-            : 'Backend indisponível. Tente novamente mais tarde.',
-          details: errorMessage,
+          message: userMessage,
+          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
         },
         { 
           status: 503,

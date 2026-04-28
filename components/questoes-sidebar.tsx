@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Code,
+  AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -27,13 +28,13 @@ interface QuestoesSidebarProps {
 
 const categories = [
   { id: "all", name: "Todas", icon: BookOpen },
-  { id: "algorithms", name: "Algoritmos", icon: Code },
-  { id: "data_structures", name: "Estruturas de Dados", icon: Database },
-  { id: "system_design", name: "Design de Sistema", icon: Cpu },
-  { id: "databases", name: "Bancos de Dados", icon: Database },
-  { id: "frontend", name: "Frontend", icon: Globe },
-  { id: "backend", name: "Backend", icon: Server },
-  { id: "devops", name: "DevOps", icon: Wrench },
+  { id: "Algoritmos", name: "Algoritmos", icon: Code },
+  { id: "Estruturas de Dados", name: "Estruturas de Dados", icon: Database },
+  { id: "Design de Sistema", name: "Design de Sistema", icon: Cpu },
+  { id: "Bancos de Dados", name: "Bancos de Dados", icon: Database },
+  { id: "Frontend", name: "Frontend", icon: Globe },
+  { id: "Backend", name: "Backend", icon: Server },
+  { id: "Devops", name: "DevOps", icon: Wrench },
 ];
 
 export function QuestoesSidebar({
@@ -157,6 +158,25 @@ export function QuestoesSidebar({
             />
             {!isMinimized && (
               <span className="ml-2 sm:ml-3 truncate">Contribuir</span>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/solicitar-correcao")}
+            className={`w-full ${
+              isMinimized
+                ? "justify-center px-2 sm:px-3 h-10 sm:h-11"
+                : "justify-start h-8 sm:h-9 lg:h-10"
+            } text-white/80 hover:text-white hover:bg-blue-500/20 text-xs sm:text-sm`}
+            title="Solicitar Correção"
+          >
+            <AlertCircle
+              className={`${
+                isMinimized ? "h-4 w-4 sm:h-5 sm:w-5" : "h-3 w-3 sm:h-4 sm:w-4"
+              }`}
+            />
+            {!isMinimized && (
+              <span className="ml-2 sm:ml-3 truncate">Solicitar</span>
             )}
           </Button>
         </nav>

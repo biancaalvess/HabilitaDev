@@ -349,11 +349,11 @@ BCRYPT_ROUNDS=10
 NEXT_PUBLIC_API_URL="/api"
 
 # URL do Backend Externo (OBRIGATÓRIO)
-# Backend em Render: https://habilitadev-backend.onrender.com
-NEXT_PUBLIC_BACKEND_URL="https://habilitadev-backend.onrender.com"
+# Backend em Render: https://habilitadev-backendd.onrender.com (OpenAPI: /api/v1/docs/swagger-ui)
+NEXT_PUBLIC_BACKEND_URL="https://habilitadev-backendd.onrender.com"
 
 # Ou use BACKEND_URL apenas no servidor (alternativa)
-# BACKEND_URL="https://habilitadev-backend.onrender.com"
+# BACKEND_URL="https://habilitadev-backendd.onrender.com"
 
 # Timeout das requisições (milissegundos)
 # Não é necessário configurar (padrão: 30000)
@@ -779,7 +779,7 @@ Verifica o status do backend externo e banco local.
     },
     "backend": {
       "status": "healthy",
-      "url": "https://habilitadev-backend.onrender.com",
+      "url": "https://habilitadev-backendd.onrender.com",
       "lastChecked": "2024-01-01T00:00:00.000Z"
     },
     "database": {

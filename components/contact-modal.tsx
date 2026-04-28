@@ -69,34 +69,29 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
     }
 
     try {
-      // Criar o link mailto com todos os dados
-      const emailBody = `
-Nome: ${name}
-Email: ${email}
-Tipo: ${contactTypes[type as keyof typeof contactTypes]}
-Assunto: ${subject}
+      // Enviar contato para a API
+      const { apiService } = await import("@/lib/api");
 
-Mensagem:
-${message}
+      const result = await apiService.createContact({
+        name: name.trim(),
+        email: email.trim(),
+        contact_type: type as any,
+        subject: subject.trim(),
+        message: message.trim(),
+      });
 
----
-Enviado através do HabilitaDev
-      `.trim();
-
-      const mailtoLink = `mailto:bianca.alvessdasilva@gmail.com?subject=${encodeURIComponent(
-        `[HabilitaDev] ${subject}`
-      )}&body=${encodeURIComponent(emailBody)}`;
-
-      // Abrir o cliente de email
-      window.open(mailtoLink, "_blank");
-
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        handleClose();
-      }, 2000);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+          handleClose();
+        }, 3000);
+      } else {
+        setError(result.message || "Erro ao enviar contato. Tente novamente.");
+      }
     } catch (err) {
-      setError("Erro ao abrir o cliente de email. Tente novamente.");
+      console.error("Erro ao enviar contato:", err);
+      setError("Erro ao enviar contato. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -146,10 +141,11 @@ Enviado através do HabilitaDev
                   <Mail className="h-10 w-10 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-green-400 mb-2">
-                  Redirecionando para o seu cliente de email...
+                  Contato Enviado com Sucesso!
                 </h3>
                 <p className="text-white/70">
-                  Obrigado pelo seu contato! Responderemos em breve.
+                  Obrigado pelo seu contato! Recebemos sua mensagem e
+                  responderemos em breve.
                 </p>
               </div>
             ) : (
@@ -283,7 +279,7 @@ Enviado através do HabilitaDev
                     ) : (
                       <>
                         <Send className="mr-2 h-5 w-5" />
-                        Enviar Email
+                        Enviar
                       </>
                     )}
                   </Button>

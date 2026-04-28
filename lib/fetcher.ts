@@ -70,10 +70,22 @@ export const fetcher = async (url: string) => {
     // Handle different response formats
     if (Array.isArray(data)) {
       return data;
-    } else if (data.success && data.data) {
+    }
+    if (data.success && data.data) {
       return data.data;
-    } else if (data.data) {
+    }
+    if (data.data) {
       return data.data;
+    }
+    // Spring Data Page / paginação comum
+    if (Array.isArray(data.content)) {
+      return data.content;
+    }
+    if (Array.isArray(data.items)) {
+      return data.items;
+    }
+    if (Array.isArray(data.results)) {
+      return data.results;
     }
 
     return data;

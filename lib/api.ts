@@ -50,6 +50,20 @@ export interface Comment {
   created_at: string;
 }
 
+export interface Contact {
+  id: number;
+  name: string;
+  email: string;
+  contact_type: 'complaint' | 'suggestion' | 'bug' | 'feature' | 'other';
+  subject: string;
+  message: string;
+  status: 'pending' | 'read' | 'in_progress' | 'resolved' | 'archived';
+  admin_notes?: string;
+  created_at: string;
+  updated_at: string;
+  resolved_at?: string;
+}
+
 export interface Feedback {
   id: number;
   question_id: number;
@@ -92,8 +106,17 @@ class ApiService {
       }
       
       // Usar AbortController para melhor controle do timeout
+      // Timeout maior para operações de criação (POST/PUT)
+      const isWriteOperation = options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH';
+      const timeoutDuration = isWriteOperation ? config.api.timeout * 2 : config.api.timeout; // 60s para escrita, 30s para leitura
+      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
+      const timeoutId = setTimeout(() => {
+        if (isDevelopment()) {
+          console.warn(`⏱️ Timeout atingido após ${timeoutDuration}ms para ${options.method || 'GET'} ${url}`);
+        }
+        controller.abort();
+      }, timeoutDuration);
       
       let response: Response;
       try {
@@ -104,6 +127,21 @@ class ApiService {
         clearTimeout(timeoutId);
       } catch (fetchError) {
         clearTimeout(timeoutId);
+        
+        // Melhor tratamento de erro de abort
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          const timeoutMessage = `A requisição demorou mais de ${timeoutDuration / 1000} segundos para responder.`;
+          if (isDevelopment()) {
+            console.error('❌ Request aborted:', {
+              url,
+              method: options.method || 'GET',
+              timeout: timeoutDuration,
+              error: fetchError.message
+            });
+          }
+          throw new Error(timeoutMessage + ' Verifique se o backend está rodando e tente novamente.');
+        }
+        
         throw fetchError;
       }
       
@@ -162,8 +200,38 @@ class ApiService {
         let rawResponseText: string = '';
         
         try {
+          // Verificar Content-Type antes de processar
+          const contentType = response.headers.get('content-type') || '';
+          const isHTML = contentType.includes('text/html') || contentType.includes('application/xhtml');
+          
           // Ler o corpo da resposta como texto primeiro para poder fazer parse depois
           rawResponseText = await response.text();
+          
+          // Se a resposta for HTML (página de erro), tratar especialmente
+          if (isHTML || rawResponseText.trim().startsWith('<!DOCTYPE') || rawResponseText.trim().startsWith('<html')) {
+            console.error('❌ Backend retornou página HTML de erro em vez de JSON');
+            if (response.status === 502) {
+              errorMessage = 'O backend retornou uma página HTML de erro (502 Bad Gateway). O servidor pode estar offline ou com problemas. Se estiver usando Render, verifique os logs do serviço.';
+            } else {
+              errorMessage = `O backend retornou uma página HTML de erro (${response.status}). O servidor pode estar offline ou com problemas.`;
+            }
+            throw new Error(errorMessage);
+          }
+          
+          // Tratamento especial para 502 Bad Gateway
+          if (response.status === 502) {
+            try {
+              const errorData = JSON.parse(rawResponseText);
+              if (errorData.message) {
+                errorMessage = errorData.message;
+              }
+              errorDetails = errorData.details;
+            } catch {
+              // Se não for JSON, usar mensagem padrão
+              errorMessage = `O backend não está respondendo corretamente (502 Bad Gateway). Verifique se o servidor está rodando.`;
+            }
+            throw new Error(errorMessage);
+          }
           
           if (rawResponseText) {
             try {
@@ -250,12 +318,18 @@ class ApiService {
         console.log('✅ API Response:', data);
       }
       
-      // Processar resposta
+      // Processar resposta (arrays diretos, envelope { success, data }, Spring Page { content }, etc.)
       let processedData: T;
       if (Array.isArray(data)) {
         processedData = data as T;
-      } else if (data.success && data.data) {
-        processedData = data.data;
+      } else if (data && typeof data === 'object' && 'success' in data && (data as any).success && (data as any).data !== undefined) {
+        processedData = (data as any).data;
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).content)) {
+        processedData = (data as any).content as T;
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).items)) {
+        processedData = (data as any).items as T;
+      } else if (data && typeof data === 'object' && (data as any).data !== undefined && !('success' in (data as any))) {
+        processedData = (data as any).data;
       } else {
         processedData = data;
       }
@@ -274,10 +348,31 @@ class ApiService {
         }
       }
       
-      // Melhorar mensagens de erro para timeouts
+      // Melhorar mensagens de erro para timeouts e conexão
       if (error instanceof Error) {
+        // Erro de abort/timeout
         if (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('aborted')) {
-          throw new Error('A requisição demorou muito para responder. Verifique sua conexão e tente novamente.');
+          const timeoutMsg = error.message.includes('segundos') 
+            ? error.message 
+            : 'A requisição demorou muito para responder. Verifique se o backend está rodando e tente novamente.';
+          throw new Error(timeoutMsg);
+        }
+        
+        // Erro de conexão recusada (backend não está rodando)
+        if (error.message.includes('ERR_CONNECTION_REFUSED') || 
+            error.message.includes('ECONNREFUSED') ||
+            error.message.includes('Connection refused')) {
+          const backendUrl = config.api.backendUrl || 'o backend';
+          throw new Error(`Não foi possível conectar ao backend em ${backendUrl}. Verifique se o servidor está rodando na porta 8080.`);
+        }
+        
+        // Erro de rede/conexão genérico
+        if (error.message.includes('Failed to fetch') || 
+            error.message.includes('NetworkError') || 
+            error.message.includes('ERR_') ||
+            error.message.includes('Network request failed')) {
+          const backendUrl = config.api.backendUrl || 'o servidor';
+          throw new Error(`Não foi possível conectar ao servidor (${backendUrl}). Verifique se o backend está rodando e acessível.`);
         }
       }
       
@@ -287,7 +382,7 @@ class ApiService {
 
   // Questions endpoints - ✅ Usando rewrites (proxy automático, mais eficiente)
   async getQuestions(): Promise<ApiResponse<Question[]>> {
-    return this.request<Question[]>('/proxy/questions');
+    return this.request<Question[]>('/proxy/questions?limit=500&page=1');
   }
 
   async getQuestion(id: number): Promise<ApiResponse<Question>> {
@@ -346,6 +441,14 @@ class ApiService {
     return this.request<Feedback>(`/proxy/questions/${questionId}/feedback`, {
       method: 'POST',
       body: JSON.stringify(feedback),
+    });
+  }
+
+  // Contact endpoints
+  async createContact(contact: Omit<Contact, 'id' | 'status' | 'created_at' | 'updated_at' | 'resolved_at' | 'admin_notes'>): Promise<ApiResponse<Contact>> {
+    return this.request<Contact>('/proxy/contacts', {
+      method: 'POST',
+      body: JSON.stringify(contact),
     });
   }
 

@@ -39,8 +39,10 @@ const commentTypeLabels = {
 
 export function CommentList({ questionId }: CommentListProps) {
   // Usar SWR para buscar comentários
-  const { data: comments = [], error, isLoading, mutate } = useSWR<Comment[]>(
-    questionId ? `${API_BASE_URL}/proxy/questions/${questionId}/comments` : null,
+  const { data, error, isLoading, mutate } = useSWR<Comment[]>(
+    questionId
+      ? `${API_BASE_URL}/proxy/questions/${questionId}/comments`
+      : null,
     fetcher,
     {
       revalidateOnFocus: true,
@@ -50,16 +52,19 @@ export function CommentList({ questionId }: CommentListProps) {
     }
   );
 
+  // Garantir que comments seja sempre um array
+  const comments = Array.isArray(data) ? data : [];
+
   // Ouvir eventos de criação de comentários para revalidação imediata
   useEffect(() => {
     const handleCommentCreated = () => {
       mutate(); // Recarregar comentários quando um novo for criado
     };
 
-    window.addEventListener('comment-created', handleCommentCreated);
-    
+    window.addEventListener("comment-created", handleCommentCreated);
+
     return () => {
-      window.removeEventListener('comment-created', handleCommentCreated);
+      window.removeEventListener("comment-created", handleCommentCreated);
     };
   }, [mutate]);
 
@@ -91,7 +96,7 @@ export function CommentList({ questionId }: CommentListProps) {
           <MessageSquare className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-400">Erro ao carregar comentários</p>
           <p className="text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : 'Erro desconhecido'}
+            {error instanceof Error ? error.message : "Erro desconhecido"}
           </p>
         </CardContent>
       </Card>
@@ -122,7 +127,10 @@ export function CommentList({ questionId }: CommentListProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {comments.map((comment, index) => {
-          const Icon = commentTypeIcons[comment.comment_type as keyof typeof commentTypeIcons];
+          const Icon =
+            commentTypeIcons[
+              comment.comment_type as keyof typeof commentTypeIcons
+            ];
           return (
             <div key={comment.id}>
               <div className="space-y-3">
@@ -130,11 +138,17 @@ export function CommentList({ questionId }: CommentListProps) {
                   <div className="flex items-center gap-2">
                     <Icon
                       className={`h-4 w-4 ${
-                        commentTypeColors[comment.comment_type as keyof typeof commentTypeColors]
+                        commentTypeColors[
+                          comment.comment_type as keyof typeof commentTypeColors
+                        ]
                       }`}
                     />
                     <span className="text-sm font-medium">
-                      {commentTypeLabels[comment.comment_type as keyof typeof commentTypeLabels]}
+                      {
+                        commentTypeLabels[
+                          comment.comment_type as keyof typeof commentTypeLabels
+                        ]
+                      }
                     </span>
                     <Badge variant="outline" className="text-xs">
                       {comment.comment_type === "correction"

@@ -29,7 +29,7 @@ export interface Feedback {
   id: number
   question_id: number
   user_id?: number
-  feedback_type: "correction" | "suggestion" | "improvement"
+  feedback_type: "correction" | "suggestion" | "improvement" | "deletion"
   content: string
   status: "pending" | "reviewed" | "implemented"
   created_at: string
@@ -68,3 +68,17 @@ export const CATEGORY_LABELS = {
   backend: "Backend",
   devops: "DevOps",
 } as const
+
+export interface Contact {
+  id: number
+  name: string
+  email: string
+  contact_type: "complaint" | "suggestion" | "bug" | "feature" | "other"
+  subject: string
+  message: string
+  status: "pending" | "read" | "in_progress" | "resolved" | "archived"
+  admin_notes?: string
+  created_at: string
+  updated_at: string
+  resolved_at?: string
+}

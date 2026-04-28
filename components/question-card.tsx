@@ -25,28 +25,29 @@ export const QuestionCard = memo(function QuestionCard({
   };
 
   return (
-    <Card className="group hover:bg-accent/50 transition-colors cursor-pointer border-border/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+    <Card className="group hover:bg-accent/50 transition-all duration-200 cursor-pointer border-border/50 hover:shadow-md">
+      <CardHeader className="pb-0">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="font-bold text-lg sm:text-xl text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight flex-1 pr-2">
             {question.title}
           </h3>
           <Badge
             variant="outline"
             className={`${
               DIFFICULTY_COLORS[question.difficulty]
-            } shrink-0 capitalize`}
+            } shrink-0 capitalize font-semibold`}
           >
             {question.difficulty}
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
-          {question.description}
-        </p>
-
+      <CardContent className="pt-16 pb-4">
+        <div className="mb-4">
+          <p className="text-muted-foreground text-[0.5rem] sm:text-[0.625rem] leading-relaxed line-clamp-3 whitespace-pre-wrap break-words font-normal">
+            {question.description}
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2 mb-4">
           <Badge variant="secondary" className="text-xs">
             <Tag className="w-3 h-3 mr-1" />
@@ -65,8 +66,15 @@ export const QuestionCard = memo(function QuestionCard({
           <div className="flex items-center gap-3 sm:gap-4 text-xs text-muted-foreground flex-wrap">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              <span className="hidden sm:inline">{formatDate(question.created_at)}</span>
-              <span className="sm:hidden">{new Date(question.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+              <span className="hidden sm:inline">
+                {formatDate(question.created_at)}
+              </span>
+              <span className="sm:hidden">
+                {new Date(question.created_at).toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                })}
+              </span>
             </div>
             <div className="flex items-center gap-1">
               <MessageSquare className="w-3 h-3" />

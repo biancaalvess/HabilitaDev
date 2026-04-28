@@ -2,65 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { config } from '@/lib/config-simple';
 
 const BACKEND_URL = config.api.backendUrl;
-const AI_VALIDATION_URL = process.env.AI_VALIDATION_URL || 'http://localhost:5000';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log(`[AI VALIDATION] Iniciando validação por IA para question ${params.id}`);
+    console.log(`[VALIDAÇÃO] Iniciando validação para questão ${params.id}`);
     
     const body = await request.json();
-    console.log('[AI VALIDATION] Dados recebidos:', body);
+    console.log('[VALIDAÇÃO] Dados recebidos:', body);
 
-    // Tentar usar a IA primeiro
-    try {
-      console.log(`[AI VALIDATION] Enviando para IA: ${AI_VALIDATION_URL}/validate`);
-      
-      const aiResponse = await fetch(`${AI_VALIDATION_URL}/validate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_answer: body.user_answer,
-          question_id: params.id,
-          correct_answer: body.correct_answer || '',
-          question_context: body.question_context || ''
-        }),
-        signal: AbortSignal.timeout(30000), // Timeout de 30 segundos para IA
-      });
-
-      if (aiResponse.ok) {
-        const aiResult = await aiResponse.json();
-        console.log('[AI VALIDATION] Resultado da IA:', aiResult);
-
-        return NextResponse.json({
-          success: true,
-          data: {
-            is_correct: aiResult.is_correct || false,
-            score: aiResult.score || 0,
-            feedback: aiResult.feedback || 'Feedback da IA',
-            details: aiResult.details || [],
-            validation_method: 'ai',
-            ai_confidence: aiResult.confidence || 0.8
-          },
-          message: 'Validação realizada por IA'
-        }, {
-          status: 200,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          },
-        });
-      }
-    } catch (aiError) {
-      console.log('[AI VALIDATION] IA indisponível, usando validação local:', aiError);
-    }
-
-    // Fallback: usar backend tradicional
+    // O backend é a única fonte da verdade
+    // Ele decide se usa IA ou validação simples internamente
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -79,13 +33,16 @@ export async function POST(
       );
     }
 
-    console.log(`[AI VALIDATION] Tentando backend tradicional: ${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`);
+    // Apontando para a rota de validação dedicada no grupo 'validation'
+    // O backend gerencia internamente: tenta IA primeiro, se falhar usa validação simples
+    const url = `${BACKEND_URL}/api/v1/validation/${params.id}/validate-answer`;
+    console.log(`[VALIDAÇÃO] Enviando para backend: ${url}`);
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), config.api.timeout);
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/v1/questions/${params.id}/verify-answer`, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,15 +56,13 @@ export async function POST(
 
       if (response.ok) {
         const data = await response.json();
-        console.log('[AI VALIDATION] Resultado do backend:', data);
+        console.log('[VALIDAÇÃO] Resultado recebido do backend:', data);
 
+        // O backend já retorna o método de validação usado (ai, backend, etc)
         return NextResponse.json({
           success: true,
-          data: {
-            ...data,
-            validation_method: 'backend'
-          },
-          message: 'Validação realizada pelo backend'
+          data: data,
+          message: 'Validação realizada com sucesso'
         }, {
           status: 200,
           headers: {
@@ -146,13 +101,13 @@ export async function POST(
       
       console.error(`❌ Backend unavailable: ${errorMessage}`);
       
-      // Fallback final: Erro - IA e Backend indisponíveis
+      // Erro: Backend indisponível
       return NextResponse.json({
         success: false,
         error: 'Service Unavailable',
         message: isTimeout 
-          ? 'Backend timeout. Tente novamente mais tarde.' 
-          : 'Não foi possível validar a resposta. IA e Backend estão indisponíveis.',
+          ? 'Timeout ao validar resposta. Tente novamente mais tarde.' 
+          : 'Serviço de validação indisponível. Tente novamente mais tarde.',
         details: errorMessage,
       }, {
         status: 503,
@@ -165,13 +120,13 @@ export async function POST(
     }
 
   } catch (error) {
-    console.error('[AI VALIDATION] Erro geral:', error);
+    console.error('[VALIDAÇÃO] Erro ao processar requisição:', error);
     
     return NextResponse.json({
       success: false,
       error: 'Erro ao processar validação',
       message: error instanceof Error ? error.message : 'Erro desconhecido',
-      details: 'Todos os serviços de validação estão indisponíveis. Tente novamente mais tarde.'
+      details: 'Não foi possível processar a validação. Tente novamente mais tarde.'
     }, {
       status: 503,
       headers: {

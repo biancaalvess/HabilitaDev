@@ -32,6 +32,7 @@ const CATEGORIAS = [
 export default function ContribuirPage() {
   const [formData, setFormData] = useState({
     nome: "",
+    titulo: "",
     questao: "",
     resposta: "",
     nivel: "",
@@ -60,6 +61,7 @@ export default function ContribuirPage() {
     // Validação básica
     if (
       !formData.nome ||
+      !formData.titulo ||
       !formData.questao ||
       !formData.resposta ||
       !formData.nivel ||
@@ -80,24 +82,27 @@ export default function ContribuirPage() {
       // Enviar para API real
       const { apiService } = await import("@/lib/api");
 
-      // Preparar dados da questão - apenas os campos necessários: nome, questão, resposta, nível, categoria, fonte
-      // Nota: email não é armazenado, apenas nome, questão, resposta, nível, categoria e fonte
+      // Preparar dados da questão - apenas os campos necessários: nome, título, questão, resposta, nível, categoria, fonte
+      // Nota: email não é armazenado, apenas nome, título, questão, resposta, nível, categoria e fonte
       const questionData: any = {
-        title: formData.questao,
+        title: formData.titulo,
         description: formData.questao,
         answer: formData.resposta,
         difficulty: formData.nivel,
         category: formData.categoria,
         company: formData.fonte || undefined,
         tags: formData.referencia ? [formData.referencia] : [],
-        approved: false,
+        approved: true, // Aprovação automática - questões são publicadas imediatamente
         // Incluir nome do autor (campo extra que o backend pode aceitar)
         author_name: formData.nome || undefined,
       };
 
       // Log dos dados sendo enviados (apenas em desenvolvimento)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📤 Enviando questão:', JSON.stringify(questionData, null, 2));
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "📤 Enviando questão:",
+          JSON.stringify(questionData, null, 2)
+        );
       }
 
       const result = await apiService.createQuestion(questionData);
@@ -105,15 +110,16 @@ export default function ContribuirPage() {
       if (result.success) {
         // Feedback de sucesso
         alert(
-          "Questão enviada com sucesso! Obrigado pela contribuição. Ela será revisada antes de ser publicada."
+          "Questão enviada e publicada com sucesso! Obrigado pela contribuição."
         );
-        
+
         // Disparar evento para recarregar questões
-        window.dispatchEvent(new CustomEvent('question-created'));
-        
+        window.dispatchEvent(new CustomEvent("question-created"));
+
         // Limpar formulário após sucesso
         setFormData({
           nome: "",
+          titulo: "",
           questao: "",
           resposta: "",
           nivel: "",
@@ -124,7 +130,8 @@ export default function ContribuirPage() {
           isAI: false,
         });
       } else {
-        const errorMsg = result.message || "Erro ao enviar questão. Tente novamente.";
+        const errorMsg =
+          result.message || "Erro ao enviar questão. Tente novamente.";
         alert(errorMsg);
       }
     } catch (error) {
@@ -134,7 +141,7 @@ export default function ContribuirPage() {
       if (error instanceof Error) {
         errorMessage = error.message || errorMessage;
         // Se a mensagem contém detalhes, mostrar
-        if (errorMessage.includes('Detalhes:')) {
+        if (errorMessage.includes("Detalhes:")) {
           console.error("📋 Detalhes do erro:", errorMessage);
         }
       }
@@ -184,6 +191,12 @@ export default function ContribuirPage() {
                   Ajude a comunidade compartilhando suas questões técnicas e
                   soluções.
                 </p>
+                <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4">
+                  <p className="text-blue-200 text-sm">
+                    Sua questão será publicada automaticamente após o envio.
+                    Obrigada pela contribuição!
+                  </p>
+                </div>
               </div>
 
               {/* Form */}
@@ -212,10 +225,27 @@ export default function ContribuirPage() {
                       />
                     </div>
 
+                    {/* Título */}
+                    <div className="space-y-2">
+                      <Label htmlFor="titulo" className="text-white">
+                        Título da Questão *
+                      </Label>
+                      <Input
+                        id="titulo"
+                        value={formData.titulo}
+                        onChange={(e) =>
+                          handleInputChange("titulo", e.target.value)
+                        }
+                        placeholder="Ex: Implementar uma função de busca binária"
+                        className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/60"
+                        required
+                      />
+                    </div>
+
                     {/* Questão */}
                     <div className="space-y-2">
                       <Label htmlFor="questao" className="text-white">
-                        Questão *
+                        Descrição da Questão *
                       </Label>
                       <Textarea
                         id="questao"

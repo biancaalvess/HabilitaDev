@@ -51,7 +51,22 @@ export async function GET(
         const data = await response.json();
         console.log('✅ Successfully fetched comments from backend');
         
-        return NextResponse.json(data, {
+        // Garantir que sempre retornamos um array
+        const comments = Array.isArray(data) ? data : [];
+        
+        return NextResponse.json(comments, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'X-Data-Source': 'backend',
+          },
+        });
+      } else if (response.status === 404) {
+        // 404 significa que não há comentários ainda - retornar array vazio
+        console.log('ℹ️ No comments found (404) - returning empty array');
+        return NextResponse.json([], {
           status: 200,
           headers: {
             'Access-Control-Allow-Origin': '*',
@@ -61,7 +76,7 @@ export async function GET(
           },
         });
       } else {
-        // Repassar status e mensagem do backend
+        // Repassar status e mensagem do backend para outros erros
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         
