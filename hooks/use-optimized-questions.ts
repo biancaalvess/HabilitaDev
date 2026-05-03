@@ -17,7 +17,7 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
   // SWR configuration
   // Lista paginada no backend (default ~50): pedir até 500 (máx. documentado) para o filtro local continuar completo
   const { data, error, isLoading, mutate } = useSWR<Question[]>(
-    `${API_BASE_URL}/proxy/questions?limit=500&page=1`,
+    `${API_BASE_URL}/proxy/questions?page=1&limit=500`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -114,9 +114,15 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
     
     const status = (error as any)?.status;
     if (status === 503) {
-      return 'Backend indisponível. Verifique se o BACKEND_URL está configurado ou se o backend está rodando.';
+      return 'Backend indisponível. Defina BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.';
     }
-    
+    if (status === 502) {
+      return 'O proxy não conseguiu falar com o Java (502). Verifique se o Spring está acessível a partir do Next.';
+    }
+    if (status === 400) {
+      return error.message || 'Pedido inválido ao carregar questões.';
+    }
+
     return error.message || 'Erro ao carregar questões';
   }, [error]);
 

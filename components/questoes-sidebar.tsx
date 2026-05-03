@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Home,
@@ -24,6 +23,8 @@ interface QuestoesSidebarProps {
   onCategorySelect: (category: string | undefined) => void;
   isMinimized?: boolean;
   onToggleMinimize?: () => void;
+  /** Chamado após navegar para /questoes (ex.: fechar Sheet no mobile). */
+  onCategoryNavigate?: () => void;
 }
 
 /* ids alinhados a Question.category (API) */
@@ -43,18 +44,35 @@ export function QuestoesSidebar({
   onCategorySelect,
   isMinimized = false,
   onToggleMinimize,
+  onCategoryNavigate,
 }: QuestoesSidebarProps) {
   const router = useRouter();
+
+  const handleCategoryClick = (categoryId: string) => {
+    const value = categoryId === "all" ? undefined : categoryId;
+    onCategorySelect(value);
+    if (value) {
+      router.push(`/questoes?category=${encodeURIComponent(value)}`);
+    } else {
+      router.push("/questoes");
+    }
+    onCategoryNavigate?.();
+  };
+
   return (
     <div
-      className={`${
-        isMinimized ? "w-16 sm:w-18 lg:w-20" : "w-full md:w-56 lg:w-64 xl:w-72"
-      } bg-slate-900/80 backdrop-blur-sm md:border-r border-blue-400/20 md:min-h-screen transition-all duration-300`}
+      className={`relative flex h-full min-h-0 w-full flex-col overflow-hidden md:max-h-dvh ${
+        isMinimized ? "w-16 sm:w-20 md:w-20" : "md:w-56 lg:w-64 xl:w-72"
+      } bg-slate-900/80 backdrop-blur-sm md:border-r border-blue-400/20 transition-all duration-300`}
     >
-      <div className={`${isMinimized ? "p-4 sm:p-5" : "p-3 sm:p-4 lg:p-6"}`}>
+      <div
+        className={`flex h-full min-h-0 flex-1 flex-col overflow-hidden ${
+          isMinimized ? "p-4 sm:p-5" : "p-3 sm:p-4 lg:p-6"
+        }`}
+      >
         {/* Header com botão de toggle */}
         <div
-          className={`flex items-center ${
+          className={`flex shrink-0 items-center ${
             isMinimized
               ? "justify-center mb-6 sm:mb-8"
               : "justify-between mb-4 sm:mb-6 lg:mb-8"
@@ -119,7 +137,7 @@ export function QuestoesSidebar({
 
         {/* Navigation */}
         <nav
-          className={`${
+          className={`shrink-0 ${
             isMinimized ? "space-y-3 sm:space-y-4" : "space-y-1 sm:space-y-2"
           } mb-4 sm:mb-6 lg:mb-8`}
         >
@@ -184,11 +202,11 @@ export function QuestoesSidebar({
 
         {/* Categories */}
         {!isMinimized && (
-          <div className="mb-4 sm:mb-6">
-            <h3 className="text-xs sm:text-sm font-semibold text-blue-300 uppercase tracking-wider mb-2 sm:mb-4">
+          <div className="mb-4 flex min-h-0 flex-1 flex-col overflow-hidden sm:mb-6">
+            <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-blue-300 sm:mb-4 sm:text-sm">
               Categorias
             </h3>
-            <div className="space-y-0.5 sm:space-y-1">
+            <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden sm:space-y-1">
               {categories.map((category) => {
                 const Icon = category.icon;
                 const isSelected =
@@ -199,11 +217,7 @@ export function QuestoesSidebar({
                   <Button
                     key={category.id}
                     variant="ghost"
-                    onClick={() =>
-                      onCategorySelect(
-                        category.id === "all" ? undefined : category.id
-                      )
-                    }
+                    onClick={() => handleCategoryClick(category.id)}
                     className={`w-full justify-start text-xs sm:text-sm h-7 sm:h-8 lg:h-9 ${
                       isSelected
                         ? "bg-blue-500/20 text-white border-l-2 border-blue-400"
@@ -221,7 +235,7 @@ export function QuestoesSidebar({
 
         {/* Categories minimizadas */}
         {isMinimized && (
-          <div className="space-y-2 sm:space-y-3">
+          <div className="min-h-0 flex-1 space-y-2 overflow-hidden sm:space-y-3">
             {categories.map((category) => {
               const Icon = category.icon;
               const isSelected =
@@ -232,11 +246,7 @@ export function QuestoesSidebar({
                 <Button
                   key={category.id}
                   variant="ghost"
-                  onClick={() =>
-                    onCategorySelect(
-                      category.id === "all" ? undefined : category.id
-                    )
-                  }
+                  onClick={() => handleCategoryClick(category.id)}
                   className={`w-full justify-center px-2 sm:px-3 h-9 sm:h-10 ${
                     isSelected
                       ? "bg-blue-500/20 text-white"

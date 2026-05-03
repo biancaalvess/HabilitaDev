@@ -15,10 +15,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Send, Trash2 } from "lucide-react";
+import { Plus, Send, Trash2, Menu, Filter } from "lucide-react";
 import Image from "next/image";
 import type { Question } from "@/lib/api";
+import { formatModerationAlertText } from "@/lib/moderation-feedback";
+import { CATEGORY_LABELS } from "@/lib/types";
 
 const OPTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
 const MIN_OPTIONS = 4;
@@ -41,16 +50,6 @@ function buildDescriptionWithAlternatives(
     pairs.map((p) => `**${p.letter})** ${p.text}`).join("\n\n");
   return `${trimmed}${block}`;
 }
-
-const CATEGORIAS = [
-  { id: "algorithms", name: "Algoritmos" },
-  { id: "data_structures", name: "Estruturas de Dados" },
-  { id: "system_design", name: "Design de Sistema" },
-  { id: "databases", name: "Bancos de Dados" },
-  { id: "frontend", name: "Frontend" },
-  { id: "backend", name: "Backend" },
-  { id: "devops", name: "DevOps" },
-];
 
 export default function ContribuirPage() {
   const [formData, setFormData] = useState({
@@ -75,11 +74,20 @@ export default function ContribuirPage() {
     string | undefined
   >();
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
+    }));
+  };
+
+  const handleCategorySelect = (category: string | undefined) => {
+    setSelectedCategory(category);
+    setFormData((prev) => ({
+      ...prev,
+      categoria: category ?? "",
     }));
   };
 
@@ -138,8 +146,10 @@ export default function ContribuirPage() {
       const result = await apiService.createQuestion(questionData);
 
       if (result.success) {
+        const created = result.data as Question;
+        const moderationText = formatModerationAlertText(created);
         alert(
-          "Recebemos a sua questão. Está a ser analisada pela nossa moderação automática e deverá ficar disponível em instantes, se for aprovada. Obrigada pela contribuição!"
+          `${moderationText}\n\nObrigada pela contribuição!`
         );
 
         // Lista pública só mostra questões já visíveis; o refetch ajuda quem estiver noutro separador.
@@ -181,28 +191,75 @@ export default function ContribuirPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 md:h-dvh md:max-h-dvh md:overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
 
       {/* Floating Elements */}
-      <div className="absolute top-20 left-10 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60" />
-      <div className="absolute top-40 right-20 w-1 h-1 bg-white rounded-full animate-ping opacity-40" />
-      <div className="absolute bottom-40 left-20 w-2 h-2 bg-blue-300 rounded-full animate-pulse opacity-50" />
-      <div className="absolute bottom-20 right-10 w-1 h-1 bg-white rounded-full animate-ping opacity-30" />
+      <div className="pointer-events-none absolute top-20 left-10 z-0 h-2 w-2 rounded-full bg-blue-400 opacity-60 animate-pulse" />
+      <div className="pointer-events-none absolute top-40 right-20 z-0 h-1 w-1 rounded-full bg-white opacity-40 animate-ping" />
+      <div className="pointer-events-none absolute bottom-40 left-20 z-0 h-2 w-2 rounded-full bg-blue-300 opacity-50 animate-pulse" />
+      <div className="pointer-events-none absolute bottom-20 right-10 z-0 h-1 w-1 rounded-full bg-white opacity-30 animate-ping" />
 
-      <div className="relative z-10 flex">
-        <QuestoesSidebar
-          selectedCategory={selectedCategory}
-          onCategorySelect={setSelectedCategory}
-          isMinimized={isSidebarMinimized}
-          onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
-        />
+      <div className="relative z-20 flex min-h-0 flex-1 flex-col md:flex-row md:overflow-hidden">
+        <div className="hidden h-full min-h-0 shrink-0 overflow-hidden md:flex md:max-h-dvh">
+          <QuestoesSidebar
+            selectedCategory={selectedCategory}
+            onCategorySelect={handleCategorySelect}
+            isMinimized={isSidebarMinimized}
+            onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
+          />
+        </div>
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden md:w-auto">
           <QuestoesHeader />
 
-          <main className="flex-1 p-6">
+          <div className="flex items-center justify-between px-4 pt-4 md:hidden">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-400/20 bg-slate-800/50 text-white"
+                >
+                  <Menu className="mr-2 h-4 w-4" />
+                  <Filter className="mr-2 h-4 w-4" />
+                  Categorias
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="w-72 border-blue-400/20 bg-slate-900/95 p-0 backdrop-blur-sm"
+              >
+                <SheetHeader className="border-b border-blue-400/20 p-6 pb-4">
+                  <SheetTitle className="text-lg text-white">
+                    Categorias
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="overflow-y-auto">
+                  <QuestoesSidebar
+                    selectedCategory={selectedCategory}
+                    onCategorySelect={handleCategorySelect}
+                    onCategoryNavigate={() => setMobileMenuOpen(false)}
+                    isMinimized={false}
+                    onToggleMinimize={() => {}}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+            {selectedCategory && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleCategorySelect(undefined)}
+                className="text-white/80 hover:text-white"
+              >
+                Limpar filtro
+              </Button>
+            )}
+          </div>
+
+          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">
             <div className="max-w-4xl mx-auto">
               {/* Header */}
               <div className="mb-8">
@@ -406,19 +463,22 @@ export default function ContribuirPage() {
                       />
                     </div>
 
-                    {/* Nível e Categoria */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Nível + Categoria (Select no formulário; «Categorias» na lateral abre /questoes) */}
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="nivel" className="text-white">
                           Nível de Dificuldade *
                         </Label>
                         <Select
-                          value={formData.nivel}
+                          value={formData.nivel || undefined}
                           onValueChange={(value) =>
                             handleInputChange("nivel", value)
                           }
                         >
-                          <SelectTrigger className="bg-slate-700/50 border-blue-400/30 text-white">
+                          <SelectTrigger
+                            id="nivel"
+                            className="h-auto min-h-9 w-full bg-slate-700/50 border-blue-400/30 text-white"
+                          >
                             <SelectValue placeholder="Selecione o nível" />
                           </SelectTrigger>
                           <SelectContent>
@@ -430,28 +490,39 @@ export default function ContribuirPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="categoria" className="text-white">
-                          Categoria *
+                          Categoria da questão *
                         </Label>
                         <Select
-                          value={formData.categoria}
-                          onValueChange={(value) =>
-                            handleInputChange("categoria", value)
-                          }
+                          value={formData.categoria || undefined}
+                          onValueChange={(value) => {
+                            handleInputChange("categoria", value);
+                            setSelectedCategory(value);
+                          }}
                         >
-                          <SelectTrigger className="bg-slate-700/50 border-blue-400/30 text-white">
+                          <SelectTrigger
+                            id="categoria"
+                            className="h-auto min-h-9 w-full bg-slate-700/50 border-blue-400/30 text-white"
+                          >
                             <SelectValue placeholder="Selecione a categoria" />
                           </SelectTrigger>
                           <SelectContent>
-                            {CATEGORIAS.map((categoria) => (
-                              <SelectItem
-                                key={categoria.id}
-                                value={categoria.id}
-                              >
-                                {categoria.name}
+                            {(
+                              Object.entries(CATEGORY_LABELS) as [
+                                keyof typeof CATEGORY_LABELS,
+                                string,
+                              ][]
+                            ).map(([id, name]) => (
+                              <SelectItem key={id} value={id}>
+                                {name}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                        <p className="text-xs text-white/45">
+                          Os botões «Categorias» na lateral levam à página de
+                          questões filtrada; escolha a categoria da sua submissão
+                          aqui.
+                        </p>
                       </div>
                     </div>
 

@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "clean:next": "node scripts/clean-next.cjs",
     "dev": "next dev --port 3001 --hostname 0.0.0.0",
-    "dev-local": "next dev --port 3000 --hostname localhost",
+    "dev:clean": "node scripts/clean-next.cjs && next dev --port 3001 --hostname 0.0.0.0",
+    "dev-local": "next dev --port 3001 --hostname localhost",
+    "dev-local:clean": "node scripts/clean-next.cjs && next dev --port 3001 --hostname localhost",
     "lint": "next lint",
     "start": "next start",
     "check-deps": "node scripts/check-unused-deps.js",

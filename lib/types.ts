@@ -12,6 +12,9 @@ export interface Question {
   /** Moderação / visibilidade quando o backend enviar. */
   status?: string
   author_name?: string
+  moderation_status?: "approved" | "rejected" | "pending" | "human_review" | string
+  moderation_motivo?: string | null
+  moderation_ajuste_sugerido?: string | null
 }
 
 export interface QuestionFilter {

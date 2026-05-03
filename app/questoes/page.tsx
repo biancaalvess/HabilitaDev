@@ -194,17 +194,19 @@ function QuestoesPageContent() {
 
   if (selectedQuestion) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <QuestoesHeader />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-          <QuestionDetail question={selectedQuestion} onBack={handleBack} />
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="container mx-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+            <QuestionDetail question={selectedQuestion} onBack={handleBack} />
+          </div>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
+    <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 md:h-dvh md:max-h-dvh md:overflow-hidden">
       {/* Particles Background */}
       <ParticlesBackground
         particleCount={40}
@@ -221,9 +223,9 @@ function QuestoesPageContent() {
       <div className="absolute bottom-40 left-20 w-2 h-2 bg-blue-300 rounded-full animate-pulse opacity-50 z-10" />
       <div className="absolute bottom-20 right-10 w-1 h-1 bg-white rounded-full animate-ping opacity-30 z-10" />
 
-      <div className="relative z-20 flex">
-        {/* Sidebar - Hidden on mobile, visible on desktop */}
-        <div className="hidden md:block">
+      <div className="relative z-20 flex min-h-0 flex-1 flex-col md:flex-row md:overflow-hidden">
+        {/* Sidebar — desktop: altura do ecrã, sem scroll próprio */}
+        <div className="hidden h-full min-h-0 shrink-0 overflow-hidden md:flex md:max-h-dvh">
           <QuestoesSidebar
             selectedCategory={selectedCategory}
             onCategorySelect={setSelectedCategory}
@@ -232,7 +234,7 @@ function QuestoesPageContent() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col w-full md:w-auto">
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden md:w-auto">
           <QuestoesHeader />
 
           {/* Mobile Menu Button */}
@@ -261,10 +263,8 @@ function QuestoesPageContent() {
                 <div className="overflow-y-auto">
                   <QuestoesSidebar
                     selectedCategory={selectedCategory}
-                    onCategorySelect={(cat) => {
-                      setSelectedCategory(cat);
-                      setMobileMenuOpen(false);
-                    }}
+                    onCategorySelect={setSelectedCategory}
+                    onCategoryNavigate={() => setMobileMenuOpen(false)}
                     isMinimized={false}
                     onToggleMinimize={() => {}}
                   />
@@ -283,7 +283,7 @@ function QuestoesPageContent() {
             )}
           </div>
 
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
             <div className="mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 leading-tight">
                 {categoryTitle
@@ -292,7 +292,7 @@ function QuestoesPageContent() {
               </h2>
               <p className="text-blue-300/80 text-base sm:text-lg md:text-xl max-w-3xl">
                 Questões reais de empresas como Itaú, Meta, X (Twitter) e outras
-                grandes techs.
+                 techs.
               </p>
             </div>
 

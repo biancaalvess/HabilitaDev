@@ -7,6 +7,20 @@ import { config } from './config-simple';
 
 const API_BASE_URL = config.api.baseUrl;
 
+/** Base para fetch: no browser é relativa (`/api`); no Node é absoluta com `NEXT_PUBLIC_APP_URL`. */
+function resolveFetchBase(baseURL: string): string {
+  if (typeof window !== 'undefined') {
+    return baseURL;
+  }
+  const origin = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    config.development.appUrl ||
+    ''
+  ).replace(/\/+$/, '');
+  if (!origin) return baseURL;
+  return `${origin}${baseURL.startsWith('/') ? baseURL : `/${baseURL}`}`;
+}
+
 // Helper para verificar se estamos em desenvolvimento
 const isDevelopment = () => {
   if (typeof window === 'undefined') {
@@ -38,6 +52,10 @@ export interface Question {
   /** Ex.: pendente, visivel — quando o backend expuser o estado de moderação. */
   status?: string;
   author_name?: string;
+  /** Resposta do POST /api/v1/questions (moderação IA). */
+  moderation_status?: 'approved' | 'rejected' | 'pending' | 'human_review' | string;
+  moderation_motivo?: string | null;
+  moderation_ajuste_sugerido?: string | null;
 }
 
 export interface Answer {
@@ -82,6 +100,34 @@ export interface Feedback {
   created_at: string;
 }
 
+/** POST /api/v1/correction-requests (wire snake_case). */
+export interface CorrectionRequestBody {
+  question_id?: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+/** Resposta típica do Spring após criar pedido de correção. */
+export interface CorrectionRequestResponse {
+  contact?: string;
+  ai_prioridade?: string | null;
+  ai_resumo?: string | null;
+  ai_notas_para_equipa?: string | null;
+  [key: string]: unknown;
+}
+
+export type ListQuestionsParams = {
+  page?: number;
+  limit?: number;
+  category?: string;
+  difficulty?: string;
+  search?: string;
+  /** Alguns backends usam `q` em vez de `search`. */
+  q?: string;
+};
+
 class ApiService {
   private baseURL: string;
 
@@ -93,7 +139,7 @@ class ApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = `${resolveFetchBase(this.baseURL)}${endpoint}`;
     
     const defaultHeaders = {
       'Content-Type': 'application/json',
@@ -188,17 +234,22 @@ class ApiService {
         }
         
         if (response.status === 404) {
-          // 404: Endpoint não encontrado - pode ser backend offline ou endpoint não existe
-          const errorMessage = 'Serviço temporariamente indisponível. O backend pode estar offline ou o endpoint não está disponível.';
+          const isQuestionById =
+            /\/proxy\/questions\/\d+(\?|$)/.test(endpoint) &&
+            !/\/answers|\/comments|\/feedback|\/validate-answer/.test(endpoint);
+          const errorMessage = isQuestionById
+            ? 'Questão não encontrada. Verifique o ID ou se a questão está aprovada na listagem pública.'
+            : 'Recurso não encontrado (404). O backend pode não expor este endpoint ou o URL está incorreto.';
           if (isDevelopment()) {
-            console.error('❌ 404 - Endpoint não encontrado. Verifique se o backend está rodando e se o endpoint existe.');
+            console.error('❌ 404:', endpoint, errorMessage);
           }
           throw new Error(errorMessage);
         }
         
         if (response.status === 503) {
-          // 503: Service Unavailable - Backend não configurado ou offline
-          throw new Error('Backend indisponível. Verifique se o servidor está rodando e se NEXT_PUBLIC_API_URL (Java) ou NEXT_PUBLIC_BACKEND_URL está configurado.');
+          throw new Error(
+            'Backend indisponível. Configure BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.'
+          );
         }
         
         // Clonar response antes de ler para poder usar depois se necessário
@@ -388,9 +439,23 @@ class ApiService {
     }
   }
 
-  // Questions endpoints - ✅ Usando rewrites (proxy automático, mais eficiente)
+  // Questions → proxy Next → GET/POST Spring /api/v1/questions
+  async listQuestions(
+    params: ListQuestionsParams = {}
+  ): Promise<ApiResponse<Question[]>> {
+    const sp = new URLSearchParams();
+    sp.set('page', String(params.page ?? 1));
+    sp.set('limit', String(params.limit ?? 50));
+    if (params.category) sp.set('category', params.category);
+    if (params.difficulty) sp.set('difficulty', params.difficulty);
+    if (params.search) sp.set('search', params.search);
+    if (params.q) sp.set('q', params.q);
+    const qs = sp.toString();
+    return this.request<Question[]>(`/proxy/questions?${qs}`);
+  }
+
   async getQuestions(): Promise<ApiResponse<Question[]>> {
-    return this.request<Question[]>('/proxy/questions?limit=500&page=1');
+    return this.listQuestions({ page: 1, limit: 500 });
   }
 
   async getQuestion(id: number): Promise<ApiResponse<Question>> {
@@ -400,9 +465,25 @@ class ApiService {
   async createQuestion(
     question: Omit<Question, 'id' | 'created_at'>
   ): Promise<ApiResponse<Question>> {
+    const payload: Record<string, unknown> = {
+      title: question.title,
+      description: question.description,
+      answer: question.answer,
+      difficulty: question.difficulty,
+      category: question.category,
+    };
+    if (question.company != null && String(question.company).trim() !== '') {
+      payload.company = question.company;
+    }
+    if (question.tags?.length) {
+      payload.tags = question.tags;
+    }
+    if (question.author_name?.trim()) {
+      payload.author_name = question.author_name.trim();
+    }
     return this.request<Question>('/proxy/questions', {
       method: 'POST',
-      body: JSON.stringify(question),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -451,6 +532,16 @@ class ApiService {
     return this.request<Feedback>(`/proxy/questions/${questionId}/feedback`, {
       method: 'POST',
       body: JSON.stringify(feedback),
+    });
+  }
+
+  /** Pedido de correção / contacto (Spring POST /api/v1/correction-requests). */
+  async createCorrectionRequest(
+    body: CorrectionRequestBody
+  ): Promise<ApiResponse<CorrectionRequestResponse>> {
+    return this.request<CorrectionRequestResponse>('/proxy/correction-requests', {
+      method: 'POST',
+      body: JSON.stringify(body),
     });
   }
 

@@ -15,10 +15,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Send, AlertCircle, Trash2, Loader2 } from "lucide-react";
+import { Send, AlertCircle, Trash2, Loader2, Menu, Filter } from "lucide-react";
 import Image from "next/image";
 import { apiService } from "@/lib/api";
+import type { CorrectionRequestResponse } from "@/lib/api";
 import type { Question } from "@/lib/types";
 
 export default function SolicitarCorrecaoPage() {
@@ -26,6 +34,8 @@ export default function SolicitarCorrecaoPage() {
     questionId: "",
     tipoSolicitacao: "",
     motivo: "",
+    nome: "",
+    email: "",
   });
 
   const [question, setQuestion] = useState<Question | null>(null);
@@ -33,8 +43,11 @@ export default function SolicitarCorrecaoPage() {
   const [loadingQuestion, setLoadingQuestion] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [correctionMeta, setCorrectionMeta] =
+    useState<CorrectionRequestResponse | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -68,7 +81,9 @@ export default function SolicitarCorrecaoPage() {
         setError("Questão não encontrada. Verifique o ID informado.");
       }
     } catch (err) {
-      setError("Erro ao buscar questão. Verifique o ID e tente novamente.");
+      const msg =
+        err instanceof Error ? err.message : "Erro ao buscar questão.";
+      setError(msg);
       console.error("Erro ao buscar questão:", err);
     } finally {
       setLoadingQuestion(false);
@@ -97,6 +112,16 @@ export default function SolicitarCorrecaoPage() {
       return;
     }
 
+    if (!formData.nome.trim()) {
+      setError("Por favor, informe o seu nome.");
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError("Por favor, informe o seu e-mail.");
+      return;
+    }
+
     if (!formData.motivo.trim()) {
       setError("Por favor, informe o motivo/justificativa para a solicitação.");
       return;
@@ -110,31 +135,36 @@ export default function SolicitarCorrecaoPage() {
     setLoading(true);
 
     try {
-      // Usar o sistema de feedback existente
-      // Mapear "exclusao" para "deletion" (tipo suportado pelo backend)
-      const feedbackType = formData.tipoSolicitacao === "exclusao" 
-        ? "deletion"
-        : formData.tipoSolicitacao;
+      const tipoLabel =
+        formData.tipoSolicitacao === "exclusao" ? "Exclusão" : "Correção";
+      const subject = question
+        ? `${tipoLabel} — «${question.title.slice(0, 120)}» (#${questionId})`
+        : `${tipoLabel} — questão #${questionId}`;
 
-      const result = await apiService.createFeedback(questionId, {
-        feedback_type: feedbackType as any,
-        content: `[${formData.tipoSolicitacao.toUpperCase()}] ${formData.motivo.trim()}`,
-        status: "pending" as any,
+      const result = await apiService.createCorrectionRequest({
+        question_id: questionId,
+        name: formData.nome.trim(),
+        email: formData.email.trim(),
+        subject,
+        message: formData.motivo.trim(),
       });
 
       if (result.success) {
+        setCorrectionMeta(result.data ?? null);
         setSuccess(true);
         setFormData({
           questionId: "",
           tipoSolicitacao: "",
           motivo: "",
+          nome: "",
+          email: "",
         });
         setQuestion(null);
-        
-        // Limpar sucesso após 5 segundos
+
         setTimeout(() => {
           setSuccess(false);
-        }, 5000);
+          setCorrectionMeta(null);
+        }, 12000);
       } else {
         setError(result.message || "Erro ao enviar solicitação. Tente novamente.");
       }
@@ -148,28 +178,75 @@ export default function SolicitarCorrecaoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 md:h-dvh md:max-h-dvh md:overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
 
       {/* Floating Elements */}
-      <div className="absolute top-20 left-10 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60" />
-      <div className="absolute top-40 right-20 w-1 h-1 bg-white rounded-full animate-ping opacity-40" />
-      <div className="absolute bottom-40 left-20 w-2 h-2 bg-blue-300 rounded-full animate-pulse opacity-50" />
-      <div className="absolute bottom-20 right-10 w-1 h-1 bg-white rounded-full animate-ping opacity-30" />
+      <div className="pointer-events-none absolute top-20 left-10 z-0 h-2 w-2 rounded-full bg-blue-400 opacity-60 animate-pulse" />
+      <div className="pointer-events-none absolute top-40 right-20 z-0 h-1 w-1 rounded-full bg-white opacity-40 animate-ping" />
+      <div className="pointer-events-none absolute bottom-40 left-20 z-0 h-2 w-2 rounded-full bg-blue-300 opacity-50 animate-pulse" />
+      <div className="pointer-events-none absolute bottom-20 right-10 z-0 h-1 w-1 rounded-full bg-white opacity-30 animate-ping" />
 
-      <div className="relative z-10 flex">
-        <QuestoesSidebar
-          selectedCategory={selectedCategory}
-          onCategorySelect={setSelectedCategory}
-          isMinimized={isSidebarMinimized}
-          onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
-        />
+      <div className="relative z-20 flex min-h-0 flex-1 flex-col md:flex-row md:overflow-hidden">
+        <div className="hidden h-full min-h-0 shrink-0 overflow-hidden md:flex md:max-h-dvh">
+          <QuestoesSidebar
+            selectedCategory={selectedCategory}
+            onCategorySelect={setSelectedCategory}
+            isMinimized={isSidebarMinimized}
+            onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
+          />
+        </div>
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden md:w-auto">
           <QuestoesHeader />
 
-          <main className="flex-1 p-6">
+          <div className="flex items-center justify-between px-4 pt-4 md:hidden">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-400/20 bg-slate-800/50 text-white"
+                >
+                  <Menu className="mr-2 h-4 w-4" />
+                  <Filter className="mr-2 h-4 w-4" />
+                  Categorias
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="w-72 border-blue-400/20 bg-slate-900/95 p-0 backdrop-blur-sm"
+              >
+                <SheetHeader className="border-b border-blue-400/20 p-6 pb-4">
+                  <SheetTitle className="text-lg text-white">
+                    Categorias
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="overflow-y-auto">
+                  <QuestoesSidebar
+                    selectedCategory={selectedCategory}
+                    onCategorySelect={setSelectedCategory}
+                    onCategoryNavigate={() => setMobileMenuOpen(false)}
+                    isMinimized={false}
+                    onToggleMinimize={() => {}}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+            {selectedCategory && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedCategory(undefined)}
+                className="text-white/80 hover:text-white"
+              >
+                Limpar filtro
+              </Button>
+            )}
+          </div>
+
+          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">
             <div className="max-w-4xl mx-auto">
               {/* Header */}
               <div className="mb-8">
@@ -278,6 +355,39 @@ export default function SolicitarCorrecaoPage() {
                       </Select>
                     </div>
 
+                    <div className="space-y-2">
+                      <Label htmlFor="nome" className="text-white">
+                        Nome *
+                      </Label>
+                      <Input
+                        id="nome"
+                        value={formData.nome}
+                        onChange={(e) =>
+                          handleInputChange("nome", e.target.value)
+                        }
+                        placeholder="O seu nome"
+                        className="border-blue-400/30 bg-slate-700/50 text-white placeholder:text-white/60"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-white">
+                        E-mail *
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) =>
+                          handleInputChange("email", e.target.value)
+                        }
+                        placeholder="email@exemplo.com"
+                        className="border-blue-400/30 bg-slate-700/50 text-white placeholder:text-white/60"
+                        required
+                      />
+                    </div>
+
                     {/* Motivo/Justificativa */}
                     <div className="space-y-2">
                       <Label htmlFor="motivo" className="text-white">
@@ -315,9 +425,34 @@ export default function SolicitarCorrecaoPage() {
 
                     {success && (
                       <Alert className="border-green-500/20 bg-green-500/10">
-                        <AlertDescription className="text-green-400">
-                          Solicitação enviada com sucesso! Em até 48h ela será
-                          analisada pela equipe.
+                        <AlertDescription className="space-y-2 text-green-400">
+                          <p>
+                            Solicitação enviada com sucesso. A equipa irá
+                            analisar o pedido.
+                          </p>
+                          {correctionMeta?.ai_resumo && (
+                            <p className="text-sm text-green-300/90">
+                              <strong>Resumo (IA):</strong>{" "}
+                              {String(correctionMeta.ai_resumo)}
+                            </p>
+                          )}
+                          {correctionMeta?.ai_prioridade && (
+                            <p className="text-xs text-green-300/70">
+                              Prioridade:{" "}
+                              {String(correctionMeta.ai_prioridade)}
+                            </p>
+                          )}
+                          {correctionMeta?.contact && (
+                            <p className="text-xs text-green-300/70">
+                              Contacto: {String(correctionMeta.contact)}
+                            </p>
+                          )}
+                          {correctionMeta?.ai_notas_para_equipa && (
+                            <p className="text-xs text-green-200/80">
+                              Notas internas:{" "}
+                              {String(correctionMeta.ai_notas_para_equipa)}
+                            </p>
+                          )}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -326,7 +461,15 @@ export default function SolicitarCorrecaoPage() {
                     <div className="flex justify-end pt-4">
                       <Button
                         type="submit"
-                        disabled={loading || !formData.questionId || !formData.tipoSolicitacao || !formData.motivo.trim() || formData.motivo.trim().length < 20}
+                        disabled={
+                          loading ||
+                          !formData.questionId ||
+                          !formData.tipoSolicitacao ||
+                          !formData.nome.trim() ||
+                          !formData.email.trim() ||
+                          !formData.motivo.trim() ||
+                          formData.motivo.trim().length < 20
+                        }
                         className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-2"
                       >
                         {loading ? (
