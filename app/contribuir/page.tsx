@@ -16,8 +16,31 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send } from "lucide-react";
+import { Plus, Send, Trash2 } from "lucide-react";
 import Image from "next/image";
+import type { Question } from "@/lib/api";
+
+const OPTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
+const MIN_OPTIONS = 4;
+const MAX_OPTIONS = OPTION_LETTERS.length;
+
+function buildDescriptionWithAlternatives(
+  description: string,
+  optionTexts: string[]
+): string {
+  const trimmed = description.trim();
+  const pairs = optionTexts
+    .map((text, i) => ({
+      letter: OPTION_LETTERS[i] ?? String(i + 1),
+      text: text.trim(),
+    }))
+    .filter((p) => p.text.length > 0);
+  if (pairs.length === 0) return trimmed;
+  const block =
+    "\n\n---\n**Alternativas**\n\n" +
+    pairs.map((p) => `**${p.letter})** ${p.text}`).join("\n\n");
+  return `${trimmed}${block}`;
+}
 
 const CATEGORIAS = [
   { id: "algorithms", name: "Algoritmos" },
@@ -42,6 +65,11 @@ export default function ContribuirPage() {
     isOriginal: false,
     isAI: false,
   });
+
+  const [alternativasAtivas, setAlternativasAtivas] = useState(false);
+  const [alternativas, setAlternativas] = useState<string[]>(() =>
+    Array(MIN_OPTIONS).fill("")
+  );
 
   const [selectedCategory, setSelectedCategory] = useState<
     string | undefined
@@ -84,16 +112,18 @@ export default function ContribuirPage() {
 
       // Preparar dados da questão - apenas os campos necessários: nome, título, questão, resposta, nível, categoria, fonte
       // Nota: email não é armazenado, apenas nome, título, questão, resposta, nível, categoria e fonte
-      const questionData: any = {
+      const descriptionFinal = alternativasAtivas
+        ? buildDescriptionWithAlternatives(formData.questao, alternativas)
+        : formData.questao.trim();
+
+      const questionData: Omit<Question, "id" | "created_at"> = {
         title: formData.titulo,
-        description: formData.questao,
+        description: descriptionFinal,
         answer: formData.resposta,
-        difficulty: formData.nivel,
-        category: formData.categoria,
+        difficulty: formData.nivel as Question["difficulty"],
+        category: formData.categoria as Question["category"],
         company: formData.fonte || undefined,
         tags: formData.referencia ? [formData.referencia] : [],
-        approved: true, // Aprovação automática - questões são publicadas imediatamente
-        // Incluir nome do autor (campo extra que o backend pode aceitar)
         author_name: formData.nome || undefined,
       };
 
@@ -108,12 +138,11 @@ export default function ContribuirPage() {
       const result = await apiService.createQuestion(questionData);
 
       if (result.success) {
-        // Feedback de sucesso
         alert(
-          "Questão enviada e publicada com sucesso! Obrigado pela contribuição."
+          "Recebemos a sua questão. Está a ser analisada pela nossa moderação automática e deverá ficar disponível em instantes, se for aprovada. Obrigada pela contribuição!"
         );
 
-        // Disparar evento para recarregar questões
+        // Lista pública só mostra questões já visíveis; o refetch ajuda quem estiver noutro separador.
         window.dispatchEvent(new CustomEvent("question-created"));
 
         // Limpar formulário após sucesso
@@ -129,6 +158,8 @@ export default function ContribuirPage() {
           isOriginal: false,
           isAI: false,
         });
+        setAlternativasAtivas(false);
+        setAlternativas(Array(MIN_OPTIONS).fill(""));
       } else {
         const errorMsg =
           result.message || "Erro ao enviar questão. Tente novamente.";
@@ -191,10 +222,18 @@ export default function ContribuirPage() {
                   Ajude a comunidade compartilhando suas questões técnicas e
                   soluções.
                 </p>
-                <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4">
-                  <p className="text-blue-200 text-sm">
-                    Sua questão será publicada automaticamente após o envio.
-                    Obrigada pela contribuição!
+                <div className="space-y-2 rounded-lg border border-blue-400/30 bg-blue-500/10 p-4">
+                  <p className="text-sm text-blue-200">
+                    Após o envio, a questão fica{" "}
+                    <strong className="text-blue-100">pendente</strong> até a
+                    moderação automática (IA) avaliar conteúdo técnico, coerência
+                    e spam. Em geral leva apenas alguns segundos.
+                  </p>
+                  <p className="text-xs text-blue-300/80">
+                    Se for aprovada, passa a{" "}
+                    <strong className="text-blue-200/90">visível</strong> na
+                    lista pública. Se for reprovada, pode não aparecer ou ficar
+                    para revisão humana, conforme a configuração do servidor.
                   </p>
                 </div>
               </div>
@@ -257,6 +296,97 @@ export default function ContribuirPage() {
                         className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/60 min-h-[120px]"
                         required
                       />
+                    </div>
+
+                    <div className="space-y-3 rounded-lg border border-blue-400/20 bg-slate-900/40 p-4">
+                      <div className="flex items-start space-x-2">
+                        <Checkbox
+                          id="alternativasAtivas"
+                          checked={alternativasAtivas}
+                          onCheckedChange={(checked) => {
+                            const on = Boolean(checked);
+                            setAlternativasAtivas(on);
+                            if (!on) {
+                              setAlternativas(Array(MIN_OPTIONS).fill(""));
+                            }
+                          }}
+                        />
+                        <div className="space-y-1">
+                          <Label
+                            htmlFor="alternativasAtivas"
+                            className="cursor-pointer text-white text-sm font-medium leading-tight"
+                          >
+                            Incluir alternativas (A, B, C, D…) — opcional
+                          </Label>
+                          <p className="text-xs text-blue-200/70">
+                            Útil para múltipla escolha. As alternativas são
+                            anexadas à descrição ao enviar. Indique qual é a
+                            correta na resposta abaixo.
+                          </p>
+                        </div>
+                      </div>
+
+                      {alternativasAtivas ? (
+                        <div className="space-y-3 pl-6">
+                          {alternativas.map((text, index) => (
+                            <div key={index} className="space-y-1.5">
+                              <Label
+                                htmlFor={`alt-${index}`}
+                                className="text-xs text-white/80"
+                              >
+                                Alternativa {OPTION_LETTERS[index]}
+                              </Label>
+                              <Input
+                                id={`alt-${index}`}
+                                value={text}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  setAlternativas((prev) => {
+                                    const next = [...prev];
+                                    next[index] = v;
+                                    return next;
+                                  });
+                                }}
+                                placeholder={`Texto da opção ${OPTION_LETTERS[index]} (deixe vazio para omitir)`}
+                                className="bg-slate-700/50 border-blue-400/30 text-white placeholder:text-white/50"
+                              />
+                            </div>
+                          ))}
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {alternativas.length < MAX_OPTIONS ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="border-blue-400/40 bg-slate-800/60 text-white hover:bg-slate-700/80"
+                                onClick={() =>
+                                  setAlternativas((prev) => [...prev, ""])
+                                }
+                              >
+                                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                Alternativa{" "}
+                                {OPTION_LETTERS[alternativas.length] ?? ""}
+                              </Button>
+                            ) : null}
+                            {alternativas.length > MIN_OPTIONS ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-white/70 hover:bg-white/10 hover:text-white"
+                                onClick={() =>
+                                  setAlternativas((prev) =>
+                                    prev.slice(0, -1)
+                                  )
+                                }
+                              >
+                                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                                Remover última
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
 
                     {/* Resposta */}

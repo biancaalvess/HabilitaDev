@@ -33,7 +33,11 @@ export interface Question {
   company?: string;
   tags?: string[];
   created_at: string;
-  approved: boolean;
+  /** Presente nas respostas GET; no POST o backend pode ignorar e usar moderação (pendente → visível). */
+  approved?: boolean;
+  /** Ex.: pendente, visivel — quando o backend expuser o estado de moderação. */
+  status?: string;
+  author_name?: string;
 }
 
 export interface Answer {
@@ -393,7 +397,9 @@ class ApiService {
     return this.request<Question>(`/proxy/questions/${id}`);
   }
 
-  async createQuestion(question: Omit<Question, 'id' | 'created_at'>): Promise<ApiResponse<Question>> {
+  async createQuestion(
+    question: Omit<Question, 'id' | 'created_at'>
+  ): Promise<ApiResponse<Question>> {
     return this.request<Question>('/proxy/questions', {
       method: 'POST',
       body: JSON.stringify(question),

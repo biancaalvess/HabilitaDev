@@ -171,6 +171,24 @@ const config = {
             boxShadow: "0 0 15px rgba(59, 130, 246, 0.8)",
           },
         },
+        radioEqBar: {
+          "0%, 100%": { transform: "scaleY(0.25)" },
+          "50%": { transform: "scaleY(1)" },
+        },
+        auroraBlob: {
+          "0%, 100%": {
+            transform: "translate(0%, 0%) scale(1)",
+            opacity: "0.45",
+          },
+          "33%": {
+            transform: "translate(8%, -6%) scale(1.08)",
+            opacity: "0.65",
+          },
+          "66%": {
+            transform: "translate(-6%, 4%) scale(0.95)",
+            opacity: "0.5",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -186,6 +204,8 @@ const config = {
         "wire-float": "wireFloat 3s ease-in-out infinite",
         "shimmer-jacket": "shimmerJacket 4s ease-in-out infinite",
         "neon-pulse": "neonPulse 3s ease-in-out infinite",
+        "radio-eq-bar": "radioEqBar 0.55s ease-in-out infinite",
+        "aurora-blob": "auroraBlob 18s ease-in-out infinite",
       },
     },
   },

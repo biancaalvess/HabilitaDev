@@ -8,7 +8,10 @@ export interface Question {
   company?: string
   tags?: string[]
   created_at: string
-  approved: boolean
+  approved?: boolean
+  /** Moderação / visibilidade quando o backend enviar. */
+  status?: string
+  author_name?: string
 }
 
 export interface QuestionFilter {
