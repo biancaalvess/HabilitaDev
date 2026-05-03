@@ -2,7 +2,9 @@
 
 import type React from "react";
 import { useState } from "react";
-import { MessageSquare, Send, Loader2 } from "lucide-react";
+import { MessageSquare, Send, Loader2, Star } from "lucide-react";
+import { encodeRatingContent } from "@/lib/feedback-rating";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -50,6 +52,8 @@ export function FeedbackForm({
     Feedback["feedback_type"] | ""
   >("");
   const [content, setContent] = useState("");
+  const [stars, setStars] = useState(0);
+  const [hoverStar, setHoverStar] = useState(0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -58,15 +62,21 @@ export function FeedbackForm({
     e.preventDefault();
     setError("");
 
-    if (!feedbackType || !content.trim()) {
-      setError("Por favor, preencha todos os campos.");
+    if (!feedbackType) {
+      setError("Selecione o tipo de feedback.");
       return;
     }
 
-    if (content.trim().length < 10) {
-      setError("O feedback deve ter pelo menos 10 caracteres.");
+    const text = content.trim();
+    if (stars < 1 && text.length < 10) {
+      setError(
+        "Escreva pelo menos 10 caracteres no feedback ou escolha uma nota de 1 a 5 estrelas."
+      );
       return;
     }
+
+    const payloadContent =
+      stars >= 1 ? encodeRatingContent(stars, text) : text;
 
     setLoading(true);
     try {
@@ -74,13 +84,15 @@ export function FeedbackForm({
 
       const result = await apiService.createFeedback(questionId, {
         feedback_type: feedbackType as any,
-        content: content.trim(),
+        content: payloadContent,
         status: "pending" as any,
       });
 
       if (result.success) {
         setSuccess(true);
         setContent("");
+        setStars(0);
+        setHoverStar(0);
         setFeedbackType("");
         
         // Disparar evento customizado para recarregar feedbacks
@@ -94,7 +106,11 @@ export function FeedbackForm({
         setError("Erro ao enviar feedback. Tente novamente.");
       }
     } catch (err) {
-      setError("Erro ao enviar feedback. Tente novamente.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao enviar feedback. Tente novamente."
+      );
       console.error("Error sending feedback:", err);
     } finally {
       setLoading(false);
@@ -104,6 +120,8 @@ export function FeedbackForm({
   const handleClose = () => {
     if (!loading) {
       setContent("");
+      setStars(0);
+      setHoverStar(0);
       setFeedbackType("");
       setError("");
       setSuccess(false);
@@ -111,51 +129,58 @@ export function FeedbackForm({
     }
   };
 
+  const starDisplay = hoverStar || stars;
+  const canSubmit =
+    Boolean(feedbackType) &&
+    (stars >= 1 || content.trim().length >= 10);
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-full max-w-lg mx-auto">
-        <DialogHeader className="space-y-3">
-          <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <MessageSquare className="h-5 w-5 text-green-500" />
+      <DialogContent className="max-h-[90vh] w-full max-w-md gap-0 overflow-y-auto p-4 sm:p-5">
+        <DialogHeader className="space-y-1.5 pb-3 text-left">
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold leading-tight">
+            <div className="rounded-md bg-green-500/10 p-1">
+              <MessageSquare className="h-4 w-4 text-green-500" />
             </div>
             Enviar Feedback
           </DialogTitle>
-          <DialogDescription className="text-base leading-relaxed">
-            Ajude-nos a melhorar esta questão com seu feedback. Sua contribuição
-            é valiosa para a comunidade.
+          <DialogDescription className="text-xs leading-snug text-muted-foreground sm:text-sm">
+            Ajude-nos a melhorar esta questão. Sua contribuição é valiosa para a
+            comunidade.
           </DialogDescription>
         </DialogHeader>
 
         <div className="w-full">
           {success ? (
-            <Alert className="border-green-500/20 bg-green-500/10">
-              <AlertDescription className="text-green-400">
+            <Alert className="border-green-500/20 bg-green-500/10 py-2">
+              <AlertDescription className="text-sm text-green-400">
                 Feedback enviado com sucesso! Obrigado pela contribuição.
               </AlertDescription>
             </Alert>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               {error && (
                 <Alert
                   variant="destructive"
-                  className="border-red-500/20 bg-red-500/10"
+                  className="border-red-500/20 bg-red-500/10 py-2"
                 >
-                  <AlertDescription className="text-red-400 font-medium">
+                  <AlertDescription className="text-sm font-medium text-red-400">
                     {error}
                   </AlertDescription>
                 </Alert>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="feedbackType">Tipo de Feedback</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="feedbackType" className="text-sm">
+                  Tipo de Feedback
+                </Label>
                 <Select
                   value={feedbackType}
                   onValueChange={(value) => setFeedbackType(value as Feedback["feedback_type"])}
                   disabled={loading}
                   required
                 >
-                  <SelectTrigger id="feedbackType">
+                  <SelectTrigger id="feedbackType" className="h-9 text-sm">
                     <SelectValue placeholder="Selecione o tipo..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -168,8 +193,47 @@ export function FeedbackForm({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="content">Conteúdo</Label>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium leading-tight">
+                  Estrelas{" "}
+                  <span className="font-normal text-muted-foreground">
+                    (opcional, média da questão)
+                  </span>
+                </Label>
+                <div
+                  className="inline-flex max-w-full flex-wrap items-center gap-0.5"
+                  onMouseLeave={() => setHoverStar(0)}
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onMouseEnter={() => setHoverStar(n)}
+                      onClick={() => setStars(n)}
+                      disabled={loading}
+                      className="rounded p-0.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-400/60 disabled:opacity-50"
+                      aria-label={`${n} estrela${n > 1 ? "s" : ""}`}
+                    >
+                      <Star
+                        className={cn(
+                          "h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]",
+                          n <= starDisplay
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-muted-foreground/35"
+                        )}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-1 text-xs text-muted-foreground tabular-nums">
+                    {stars > 0 ? `${stars}/5` : "—"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="content" className="text-sm">
+                  Conteúdo
+                </Label>
                 <div className="relative">
                   <Textarea
                     id="content"
@@ -177,32 +241,38 @@ export function FeedbackForm({
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     disabled={loading}
-                    rows={4}
+                    rows={3}
                     required
-                    minLength={10}
                     maxLength={500}
-                    className="pr-20"
+                    className="min-h-[4.5rem] resize-none pr-14 text-sm"
                   />
-                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                  <div className="absolute bottom-1.5 right-2 text-[10px] text-muted-foreground">
                     {content.length}/500
                   </div>
                 </div>
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  {stars >= 1
+                    ? "Com estrelas o texto pode ser curto; sem estrelas, mín. 10 caracteres."
+                    : "Mín. 10 caracteres, salvo se marcar estrelas."}
+                </p>
               </div>
 
-              <div className="flex gap-3 sm:flex-row flex-col">
+              <div className="flex gap-2 pt-1 sm:flex-row">
                 <Button
                   type="button"
                   variant="outline"
+                  size="sm"
                   onClick={handleClose}
                   disabled={loading}
-                  className="flex-1"
+                  className="h-9 flex-1"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
-                  disabled={loading || !feedbackType || !content.trim()}
-                  className="flex-1"
+                  size="sm"
+                  disabled={loading || !canSubmit}
+                  className="h-9 flex-1"
                 >
                   {loading ? (
                     <>
