@@ -57,8 +57,8 @@ function tryParseMcLine(trimmed: string): { letter: string; text: string } | nul
   return null;
 }
 
-/** Bloco de alternativas `A) …` … `H) …` (mín. 2). Aceita listas, `A.`, linhas em branco entre itens. */
-export function parseMultipleChoiceFromDescription(
+/** Bloco de alternativas linha a linha. */
+function parseMultipleChoiceFromLines(
   description: string
 ): ParsedMultipleChoice | null {
   if (!description?.trim()) return null;
@@ -89,6 +89,46 @@ export function parseMultipleChoiceFromDescription(
     firstIdx > 0 ? lines.slice(0, firstIdx).join("\n").trim() : "";
 
   return { stem, options };
+}
+
+/**
+ * Fallback: enunciado e alternativas na mesma linha ou `\n` mínimo entre `A)` e `B)`.
+ * Parte no espaço antes de `B)`, `C)`… quando o modo linha-a-linha falhou.
+ */
+function parseMultipleChoiceFromSplitFallback(
+  description: string
+): ParsedMultipleChoice | null {
+  const norm = description.replace(/\r\n/g, "\n").trim();
+  if (!/\b[A-H]\)\s/i.test(norm)) return null;
+  const chunks = norm.split(/\s+(?=[A-H]\)\s)/i);
+  const options: McOption[] = [];
+  const stemParts: string[] = [];
+
+  for (const chunk of chunks) {
+    const t = chunk.trim();
+    if (!t) continue;
+    const parsed = tryParseMcLine(t);
+    if (parsed) {
+      options.push(parsed);
+    } else {
+      stemParts.push(t);
+    }
+  }
+
+  if (options.length < 2) return null;
+  const stem = stemParts.join("\n\n").trim();
+  return { stem, options };
+}
+
+/** `A) …` … `H) …` (mín. 2). Linhas, listas, `A.`, espaços entre alternativas na mesma linha. */
+export function parseMultipleChoiceFromDescription(
+  description: string
+): ParsedMultipleChoice | null {
+  if (!description?.trim()) return null;
+  return (
+    parseMultipleChoiceFromLines(description) ??
+    parseMultipleChoiceFromSplitFallback(description)
+  );
 }
 
 /**

@@ -51,7 +51,9 @@ export function InlineAnswerForm({
   const [showValidation, setShowValidation] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
   const [selectedLetter, setSelectedLetter] = useState("");
-  const [mcResult, setMcResult] = useState<"correct" | "incorrect" | null>(null);
+  const [mcResult, setMcResult] = useState<
+    "correct" | "incorrect" | "recorded" | null
+  >(null);
 
   const multipleChoice = useMemo(
     () =>
@@ -61,16 +63,16 @@ export function InlineAnswerForm({
     [questionDescription]
   );
 
+  const hasGabarito = Boolean(correctAnswer?.trim());
+
   const isMcq = Boolean(
-    multipleChoice &&
-      multipleChoice.options.length >= 2 &&
-      correctAnswer &&
-      correctAnswer.trim().length > 0
+    multipleChoice && multipleChoice.options.length >= 2
   );
 
   useEffect(() => {
     if (!mcResult) return;
-    const delay = mcResult === "correct" ? 1400 : 2400;
+    const delay =
+      mcResult === "incorrect" ? 2400 : mcResult === "recorded" ? 1100 : 1400;
     const id = window.setTimeout(() => {
       onSuccess?.();
     }, delay);
@@ -92,14 +94,7 @@ export function InlineAnswerForm({
       setError("Selecione uma alternativa (A, B, C…).");
       return;
     }
-    if (!multipleChoice || !correctAnswer) return;
-
-    const ok = quizSelectionIsCorrect(
-      selectedLetter,
-      correctAnswer,
-      multipleChoice.options
-    );
-    setMcResult(ok ? "correct" : "incorrect");
+    if (!multipleChoice) return;
 
     const opt = multipleChoice.options.find(
       (o) => o.letter === selectedLetter.toUpperCase()
@@ -115,8 +110,18 @@ export function InlineAnswerForm({
           is_solution: false,
         });
         window.dispatchEvent(new CustomEvent("answer-created"));
+        if (!correctAnswer?.trim()) {
+          setMcResult("recorded");
+          return;
+        }
+        const ok = quizSelectionIsCorrect(
+          selectedLetter,
+          correctAnswer,
+          multipleChoice.options
+        );
+        setMcResult(ok ? "correct" : "incorrect");
       } catch {
-        /* validação já foi no cliente */
+        setError("Não foi possível enviar a resposta. Tente de novo.");
       }
     })();
   };
@@ -197,6 +202,22 @@ export function InlineAnswerForm({
   };
 
   if (mcResult) {
+    if (mcResult === "recorded") {
+      return (
+        <Card className="border-2 border-blue-500/40 bg-blue-500/5">
+          <CardContent className="space-y-3 py-8 text-center">
+            <CheckCircle className="mx-auto h-14 w-14 text-blue-400" />
+            <p className="text-xl font-semibold text-blue-200">
+              Alternativa registada
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Esta questão ainda não tem gabarito no sistema para correção
+              imediata. A solução oficial será mostrada em seguida.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
     return (
       <Card
         className={
@@ -270,8 +291,9 @@ export function InlineAnswerForm({
             Sua resposta (múltipla escolha)
           </CardTitle>
           <p className="text-muted-foreground">
-            Escolha a alternativa correta. A validação é feita de imediato neste
-            dispositivo.
+            {hasGabarito
+              ? "Escolha a alternativa correta. A validação é feita de imediato neste dispositivo."
+              : "Escolha a alternativa. A sua escolha será registada; a marcação imediata (certo/errado) só aparece quando o gabarito existir na base."}
           </p>
           {multipleChoice.stem ? (
             <p className="text-sm text-muted-foreground line-clamp-6 whitespace-pre-wrap">
