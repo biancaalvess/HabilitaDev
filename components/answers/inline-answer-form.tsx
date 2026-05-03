@@ -120,8 +120,12 @@ export function InlineAnswerForm({
           multipleChoice.options
         );
         setMcResult(ok ? "correct" : "incorrect");
-      } catch {
-        setError("Não foi possível enviar a resposta. Tente de novo.");
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Não foi possível enviar a resposta. Tente de novo."
+        );
       }
     })();
   };

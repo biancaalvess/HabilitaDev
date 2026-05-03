@@ -21,6 +21,19 @@ function resolveFetchBase(baseURL: string): string {
   return `${origin}${baseURL.startsWith('/') ? baseURL : `/${baseURL}`}`;
 }
 
+/**
+ * Backends (ex.: Spring + validação) frequentemente exigem `content` com tamanho mínimo.
+ * Respostas de múltipla escolha enviam só uma linha curta (`B) texto`); garante comprimento mínimo.
+ */
+function normalizeAnswerContentForBackend(content: string): string {
+  const c = String(content ?? "").trim();
+  if (c.length >= 10) return c;
+  if (c.length === 0) return c;
+  const suffix = "\n(Seleção de múltipla escolha — HabilitaDev)";
+  const out = `${c}${suffix}`;
+  return out.length > 5000 ? out.slice(0, 5000) : out;
+}
+
 // Helper para verificar se estamos em desenvolvimento
 const isDevelopment = () => {
   if (typeof window === 'undefined') {
@@ -493,11 +506,10 @@ class ApiService {
   }
 
   async createAnswer(questionId: number, answer: Omit<Answer, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Answer>> {
-    // ✅ CORREÇÃO: Garantir que todos os campos obrigatórios estão presentes
     const answerData = {
-      author_name: answer.author_name || '',
-      content: answer.content || '',
-      is_solution: answer.is_solution || false,
+      author_name: String(answer.author_name ?? "").trim(),
+      content: normalizeAnswerContentForBackend(String(answer.content ?? "")),
+      is_solution: Boolean(answer.is_solution),
     };
     
     // Log apenas em desenvolvimento
