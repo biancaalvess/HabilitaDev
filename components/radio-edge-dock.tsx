@@ -22,6 +22,7 @@ import { Slider } from "@/components/ui/slider";
 import {
   fetchRadioRockStations,
   pickRandomStationDifferent,
+  isAudioUrlAllowedOnPage,
   streamUrl,
   type RadioStation,
 } from "@/lib/radio-browser";
@@ -99,9 +100,28 @@ export function RadioEdgeDock() {
   }, [loading]);
 
   const validStations = useMemo(
-    () => stations.filter((s) => s.lastcheckok === 1 && streamUrl(s)),
+    () =>
+      stations.filter((s) => {
+        if (s.lastcheckok !== 1) return false;
+        const u = streamUrl(s);
+        return Boolean(u && isAudioUrlAllowedOnPage(u));
+      }),
     [stations]
   );
+
+  useEffect(() => {
+    if (
+      !loading &&
+      stations.length > 0 &&
+      validStations.length === 0 &&
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:"
+    ) {
+      setError(
+        "Nenhuma estação com stream HTTPS — o browser bloqueia áudio HTTP nesta página."
+      );
+    }
+  }, [loading, stations.length, validStations.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,6 +181,10 @@ export function RadioEdgeDock() {
     const url = streamUrl(current);
     if (!url) {
       setPlayHint("Stream indisponível.");
+      return;
+    }
+    if (!isAudioUrlAllowedOnPage(url)) {
+      setPlayHint("Stream bloqueado nesta página (HTTPS exige áudio HTTPS).");
       return;
     }
     syncAudioSrc(el, url);

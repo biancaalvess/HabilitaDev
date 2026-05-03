@@ -40,6 +40,27 @@ export function streamUrl(s: RadioStation): string {
   return (s.url_resolved || s.url || "").trim();
 }
 
+/**
+ * Em páginas HTTPS o browser bloqueia áudio `http:` (mixed content).
+ * Em HTTP local, aceita qualquer URL válida.
+ */
+export function isAudioUrlAllowedOnPage(url: string): boolean {
+  const u = url.trim();
+  if (!u) return false;
+  try {
+    const parsed = new URL(u);
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:"
+    ) {
+      return parsed.protocol === "https:";
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Nomes comuns de estações FM citadas como referência de mix. */
 const NAME_BRAND_RE =
   /\b(surf|kiss|mix|89\s*fm|^89\b|\b89\.|radio\s*89)\b/i;

@@ -40,7 +40,7 @@ export function QuestionGeneralRating({ questionId }: QuestionGeneralRatingProps
   const submit = async () => {
     setMsg("");
     if (stars < 1 || stars > 5) {
-      setMsg("Escolhe de 1 a 5 estrelas.");
+      setMsg("Escolha de 1 a 5 estrelas.");
       return;
     }
     setLoading(true);
@@ -60,12 +60,12 @@ export function QuestionGeneralRating({ questionId }: QuestionGeneralRatingProps
         }
         setAlreadySent(true);
         window.dispatchEvent(new CustomEvent("feedback-created"));
-        setMsg("Obrigado — a tua avaliação foi registada.");
+        setMsg("Obrigado — sua avaliação foi registrada.");
       } else {
-        setMsg("Não foi possível enviar. Tenta de novo.");
+        setMsg("Não foi possível enviar. Tente novamente.");
       }
     } catch {
-      setMsg("Erro de rede. Tenta de novo.");
+      setMsg("Erro de rede. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export function QuestionGeneralRating({ questionId }: QuestionGeneralRatingProps
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Já recebemos a tua avaliação desta questão. Obrigado por ajudares a
+            Já registramos sua avaliação desta questão. Obrigado por ajudar a
             comunidade.
           </p>
         </CardContent>
@@ -100,8 +100,8 @@ export function QuestionGeneralRating({ questionId }: QuestionGeneralRatingProps
           Avaliar esta questão
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Quão útil achaste o enunciado e o formato? A nota é pública na secção
-          de feedbacks (estrelas).
+          Quão útil você achou o enunciado e o formato? A nota aparece com
+          estrelas na lista de feedbacks abaixo.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -165,7 +165,7 @@ export function QuestionGeneralRating({ questionId }: QuestionGeneralRatingProps
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              A enviar…
+              Enviando…
             </>
           ) : (
             "Enviar avaliação"

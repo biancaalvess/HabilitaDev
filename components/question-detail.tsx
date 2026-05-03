@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackForm } from "./feedback/feedback-form";
+import { FeedbackList } from "./feedback/feedback-list";
+import { QuestionGeneralRating } from "./feedback/question-general-rating";
 import { InlineAnswerForm } from "./answers/inline-answer-form";
 import { type Question, DIFFICULTY_COLORS, CATEGORY_LABELS } from "@/lib/types";
 
@@ -392,6 +394,12 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
             </CardContent>
           </Card>
         )}
+
+        {userHasAnswered ? (
+          <QuestionGeneralRating questionId={question.id} />
+        ) : null}
+
+        <FeedbackList questionId={question.id} />
 
         <div className="flex justify-center">
           <Button

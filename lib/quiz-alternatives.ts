@@ -13,6 +13,18 @@ const NORM = (s: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+function firstLine(s: string): string {
+  return s.trim().split(/\r?\n/)[0]?.trim() ?? "";
+}
+
+/** Remove markdown comum no início da resposta (ex.: **B)**). */
+function stripLeadingNoise(s: string): string {
+  return s
+    .trim()
+    .replace(/^[\s`*_#]+/g, "")
+    .trim();
+}
+
 /** Linhas do tipo `A) texto` … `H) texto` (mín. 2 alternativas). */
 export function parseMultipleChoiceFromDescription(
   description: string
@@ -41,41 +53,60 @@ export function parseMultipleChoiceFromDescription(
   return { stem, options };
 }
 
-/** Descobre a letra correta a partir do campo `answer` da API. */
+/**
+ * Descobre a letra correta a partir do campo `answer` da API.
+ * Ordem: formatos explícitos na 1.ª linha → etiquetas tipo "Gabarito: B" →
+ * igualdade com texto da opção → maior sobreposição de texto (evita
+ * devolver a primeira alternativa por engano).
+ */
 export function extractExpectedLetter(
   correctAnswer: string,
   options: McOption[]
 ): string | null {
-  const t = correctAnswer.trim();
-  if (!t) return null;
+  const raw = correctAnswer.trim();
+  if (!raw) return null;
 
-  const one = t.match(/^([A-H])(?:\)|\.|\s)?$/i);
-  if (one) return one[1].toUpperCase();
+  const fl = stripLeadingNoise(firstLine(raw));
 
-  const lead = t.match(/^([A-H])\)\s*/i);
-  if (lead) return lead[1].toUpperCase();
+  if (/^[A-H]$/i.test(fl)) return fl.toUpperCase();
+  if (/^[A-H][\)\.]$/i.test(fl)) return fl[0].toUpperCase();
 
-  const verbal = t.match(
-    /(?:^|[\s,;])(?:letra|alternativa|opcao|opção|resposta)\s*[:\-]?\s*([A-H])\b/i
+  const leadParen = fl.match(/^([A-H])\)\s*/i);
+  if (leadParen) return leadParen[1].toUpperCase();
+
+  const verbal = raw.match(
+    /(?:^|[\n\r])(?:gabarito|resposta\s+correta|alternativa\s+correta|op[cç][aã]o\s+correta|correta)\s*[:\-]\s*([A-H])\b/i
   );
   if (verbal) return verbal[1].toUpperCase();
 
-  const nt = NORM(t);
+  const verbal2 = raw.match(
+    /\b(?:letra|alternativa|opcao|opção)\s*[:\-]?\s*([A-H])\b(?![a-z])/i
+  );
+  if (verbal2) return verbal2[1].toUpperCase();
+
+  const nt = NORM(raw);
+  const exact: { letter: string; len: number }[] = [];
   for (const o of options) {
     const line = NORM(`${o.letter}) ${o.text}`);
-    if (nt === line || nt === NORM(o.text)) return o.letter;
-    if (nt.length >= 8 && (nt.includes(NORM(o.text)) || NORM(o.text).includes(nt)))
-      return o.letter;
-  }
-
-  let best: { letter: string; len: number } | null = null;
-  for (const o of options) {
-    const ot = NORM(o.text);
-    if (ot.length >= 6 && nt.includes(ot)) {
-      if (!best || ot.length > best.len) best = { letter: o.letter, len: ot.length };
+    if (nt === line || nt === NORM(o.text)) {
+      exact.push({ letter: o.letter, len: Math.max(line.length, NORM(o.text).length) });
     }
   }
-  return best?.letter ?? null;
+  if (exact.length === 1) return exact[0].letter;
+  if (exact.length > 1) {
+    exact.sort((a, b) => b.len - a.len);
+    return exact[0].letter;
+  }
+
+  const partial: { letter: string; len: number }[] = [];
+  for (const o of options) {
+    const ot = NORM(o.text);
+    if (ot.length < 4) continue;
+    if (nt.includes(ot)) partial.push({ letter: o.letter, len: ot.length });
+  }
+  if (partial.length === 0) return null;
+  partial.sort((a, b) => b.len - a.len);
+  return partial[0].letter;
 }
 
 /** Compara a letra escolhida com `answer` (vários formatos da API). */
@@ -86,15 +117,27 @@ export function quizSelectionIsCorrect(
 ): boolean {
   const letter = selectedLetter.trim().toUpperCase();
   if (!letter) return false;
-  const expected = extractExpectedLetter(correctAnswer, options);
-  if (expected) return letter === expected;
+
   const sel = options.find((o) => o.letter === letter);
   if (!sel) return false;
+
+  const expected = extractExpectedLetter(correctAnswer, options);
+  if (expected) return letter === expected;
+
   const nt = NORM(correctAnswer);
   const line = NORM(`${sel.letter}) ${sel.text}`);
-  return (
-    nt === line ||
-    nt === NORM(sel.text) ||
-    (nt.length > 8 && nt.includes(NORM(sel.text)))
-  );
+  if (nt === line || nt === NORM(sel.text)) return true;
+
+  if (nt.length >= 10 && nt.includes(NORM(sel.text)) && NORM(sel.text).length >= 6) {
+    const overlaps = options
+      .map((o) => ({
+        letter: o.letter,
+        len: nt.includes(NORM(o.text)) && NORM(o.text).length >= 6 ? NORM(o.text).length : 0,
+      }))
+      .filter((x) => x.len > 0)
+      .sort((a, b) => b.len - a.len);
+    if (overlaps.length && overlaps[0].letter === letter) return true;
+  }
+
+  return false;
 }
