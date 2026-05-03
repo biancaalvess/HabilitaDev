@@ -80,6 +80,14 @@ export interface Answer {
   is_solution: boolean;
 }
 
+/** Corpo do POST de resposta; `mcq_choice` é exigido pelo Spring para múltipla escolha (ex.: `"B"`). */
+export type AnswerCreatePayload = Omit<
+  Answer,
+  "id" | "question_id" | "created_at"
+> & {
+  mcq_choice?: string;
+};
+
 export interface Comment {
   id: number;
   question_id: number;
@@ -505,20 +513,37 @@ class ApiService {
     return this.request<Answer[]>(`/proxy/questions/${questionId}/answers`);
   }
 
-  async createAnswer(questionId: number, answer: Omit<Answer, 'id' | 'question_id' | 'created_at'>): Promise<ApiResponse<Answer>> {
-    const answerData = {
+  async createAnswer(
+    questionId: number,
+    answer: AnswerCreatePayload
+  ): Promise<ApiResponse<Answer>> {
+    const mcqChoice = String(answer.mcq_choice ?? "")
+      .trim()
+      .toUpperCase()
+      .slice(0, 1);
+    const rawContent = String(answer.content ?? "").trim();
+    /** Com `mcq_choice`, o backend valida a letra; não acrescentar sufixo ao `content` (quebrava a regra A–D). */
+    const content =
+      mcqChoice.length > 0
+        ? rawContent
+        : normalizeAnswerContentForBackend(rawContent);
+
+    const answerData: Record<string, unknown> = {
       author_name: String(answer.author_name ?? "").trim(),
-      content: normalizeAnswerContentForBackend(String(answer.content ?? "")),
+      content,
       is_solution: Boolean(answer.is_solution),
     };
-    
+    if (mcqChoice.length > 0) {
+      answerData.mcq_choice = mcqChoice;
+    }
+
     // Log apenas em desenvolvimento
     if (isDevelopment()) {
-      console.log('🔍 Enviando resposta:', answerData);
+      console.log("🔍 Enviando resposta:", answerData);
     }
-    
+
     return this.request<Answer>(`/proxy/questions/${questionId}/answers`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(answerData),
     });
   }

@@ -108,6 +108,7 @@ export function InlineAnswerForm({
           author_name: authorName.trim(),
           content: line,
           is_solution: false,
+          mcq_choice: selectedLetter.toUpperCase().slice(0, 1),
         });
         window.dispatchEvent(new CustomEvent("answer-created"));
         if (!correctAnswer?.trim()) {
