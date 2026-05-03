@@ -25,7 +25,39 @@ function stripLeadingNoise(s: string): string {
     .trim();
 }
 
-/** Linhas do tipo `A) texto` … `H) texto` (mín. 2 alternativas). */
+/** Remove prefixos de lista markdown / numerada no início da linha. */
+function stripMcqLinePrefix(line: string): string {
+  let s = line.trim().replace(/^\uFEFF/, "");
+  s = s.replace(/^(?:[-*+]\s+)+/, "");
+  s = s.replace(/^\d{1,2}\s*[.)]\s+/, "");
+  s = s.replace(/^\*\*?|\*\*?$/g, "").trim();
+  return s;
+}
+
+/**
+ * Tenta ler uma linha de alternativa: A) B) A. A: A - texto …
+ */
+function tryParseMcLine(trimmed: string): { letter: string; text: string } | null {
+  const s = stripMcqLinePrefix(trimmed);
+  if (!s) return null;
+
+  const patterns: RegExp[] = [
+    /^\*{0,2}([A-H])\s*\)\s*\*{0,2}\s*(.+)$/i,
+    /^([A-H])\s*\.\s+(.+)$/i,
+    /^([A-H])\s*:\s*(.+)$/i,
+    /^([A-H])\s*[-–—]\s*(.+)$/i,
+  ];
+
+  for (const re of patterns) {
+    const m = s.match(re);
+    if (m && m[2].trim().length > 0) {
+      return { letter: m[1].toUpperCase(), text: m[2].trim() };
+    }
+  }
+  return null;
+}
+
+/** Bloco de alternativas `A) …` … `H) …` (mín. 2). Aceita listas, `A.`, linhas em branco entre itens. */
 export function parseMultipleChoiceFromDescription(
   description: string
 ): ParsedMultipleChoice | null {
@@ -36,12 +68,18 @@ export function parseMultipleChoiceFromDescription(
 
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
-    const m = trimmed.match(/^([A-H])\)\s*(.+)$/i);
-    if (m && m[2].trim().length > 0) {
-      if (firstIdx < 0) firstIdx = i;
-      options.push({ letter: m[1].toUpperCase(), text: m[2].trim() });
+    if (trimmed.length === 0) {
+      if (options.length > 0) continue;
       continue;
     }
+
+    const parsed = tryParseMcLine(trimmed);
+    if (parsed) {
+      if (firstIdx < 0) firstIdx = i;
+      options.push({ letter: parsed.letter, text: parsed.text });
+      continue;
+    }
+
     if (options.length > 0) break;
   }
 
@@ -87,9 +125,13 @@ export function extractExpectedLetter(
   const nt = NORM(raw);
   const exact: { letter: string; len: number }[] = [];
   for (const o of options) {
-    const line = NORM(`${o.letter}) ${o.text}`);
-    if (nt === line || nt === NORM(o.text)) {
-      exact.push({ letter: o.letter, len: Math.max(line.length, NORM(o.text).length) });
+    const lineParen = NORM(`${o.letter}) ${o.text}`);
+    const lineDot = NORM(`${o.letter}. ${o.text}`);
+    if (nt === lineParen || nt === lineDot || nt === NORM(o.text)) {
+      exact.push({
+        letter: o.letter,
+        len: Math.max(lineParen.length, NORM(o.text).length),
+      });
     }
   }
   if (exact.length === 1) return exact[0].letter;
@@ -125,8 +167,9 @@ export function quizSelectionIsCorrect(
   if (expected) return letter === expected;
 
   const nt = NORM(correctAnswer);
-  const line = NORM(`${sel.letter}) ${sel.text}`);
-  if (nt === line || nt === NORM(sel.text)) return true;
+  const lineParen = NORM(`${sel.letter}) ${sel.text}`);
+  const lineDot = NORM(`${sel.letter}. ${sel.text}`);
+  if (nt === lineParen || nt === lineDot || nt === NORM(sel.text)) return true;
 
   if (nt.length >= 10 && nt.includes(NORM(sel.text)) && NORM(sel.text).length >= 6) {
     const overlaps = options

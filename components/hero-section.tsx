@@ -17,6 +17,7 @@ import {
 import Image from "next/image";
 
 import { ParticlesBackground } from "@/components/particles-background";
+import { RadioEdgeDock } from "@/components/radio-edge-dock";
 
 interface HeroSectionProps {
   onStartTraining: () => void;
@@ -246,6 +247,8 @@ export default function HeroSection(_props: HeroSectionProps) {
       <div className="absolute top-1/2 right-1/4 opacity-5">
         <div className="w-4 h-4 bg-blue-400 rounded-full animate-ping" />
       </div>
+
+      <RadioEdgeDock variant="floating" />
 
       {/* Footer */}
       <Footer />
