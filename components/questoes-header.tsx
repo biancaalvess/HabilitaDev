@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { RadioEdgeDock } from "@/components/radio-edge-dock";
 
 export function QuestoesHeader() {
   return (
     <header className="border-b border-blue-400/20 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 md:px-6 lg:px-8">
+      <div className="flex h-14 sm:h-16 items-center justify-between gap-2 px-3 sm:px-4 md:px-6 lg:px-8">
         <Link
           href="/"
           className="flex items-center gap-2 min-w-0 hover:opacity-90 transition-opacity"
@@ -23,19 +24,11 @@ export function QuestoesHeader() {
             HabilitaDev
           </span>
         </Link>
-        <nav className="flex items-center gap-2 sm:gap-3 text-sm shrink-0">
-          <Link
-            href="/questoes"
-            className="text-blue-300/90 hover:text-white font-medium"
-          >
-            Questões
-          </Link>
-          <Link
-            href="/contribuir"
-            className="text-white/70 hover:text-white hidden sm:inline"
-          >
-            Contribuir
-          </Link>
+        <nav
+          className="flex shrink-0 items-center"
+          aria-label="Rádio de estudo"
+        >
+          <RadioEdgeDock variant="header" />
         </nav>
       </div>
     </header>

@@ -7,7 +7,6 @@ import { Suspense } from "react";
 import { AuthProvider } from "@/lib/auth";
 import { ErrorBoundary } from "@/lib/error-boundary";
 import { NotificationContainer } from "@/components/ui/notification-container";
-import { RadioEdgeDock } from "@/components/radio-edge-dock";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -41,7 +40,6 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <Suspense fallback={null}>{children}</Suspense>
-            <RadioEdgeDock />
             <NotificationContainer />
           </AuthProvider>
         </ErrorBoundary>
