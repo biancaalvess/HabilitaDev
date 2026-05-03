@@ -440,6 +440,19 @@ export function RadioEdgeDock() {
               )}
             </Button>
 
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="mx-auto h-8 w-8 shrink-0 rounded-md text-white/60 hover:bg-white/[0.1] hover:text-white/90 disabled:opacity-35"
+              onClick={() => void shuffle()}
+              disabled={loading || validStations.length < 2}
+              aria-label="Mudar de rádio"
+              title="Mudar de rádio"
+            >
+              <Shuffle className="h-3.5 w-3.5" aria-hidden />
+            </Button>
+
             <button
               type="button"
               onClick={() => setOpen((o) => !o)}
