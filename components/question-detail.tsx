@@ -365,6 +365,7 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
           <InlineAnswerForm
             questionId={question.id}
             correctAnswer={question.answer}
+            questionDescription={question.description}
             onSuccess={() => setUserHasAnswered(true)}
           />
         )}

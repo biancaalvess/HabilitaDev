@@ -87,6 +87,7 @@ export function QuestoesSidebar({
                   width={20}
                   height={20}
                   className="w-full h-full object-contain"
+                  suppressHydrationWarning
                 />
               </div>
               <span className="text-sm sm:text-lg lg:text-xl font-bold text-white truncate">
@@ -102,6 +103,7 @@ export function QuestoesSidebar({
                 width={24}
                 height={24}
                 className="w-full h-full object-contain"
+                suppressHydrationWarning
               />
             </div>
           )}
