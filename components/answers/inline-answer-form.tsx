@@ -24,7 +24,77 @@ import { AnswerValidation } from "./answer-validation";
 import {
   parseMultipleChoiceFromDescription,
   quizSelectionIsCorrect,
+  extractExpectedLetter,
 } from "@/lib/quiz-alternatives";
+import type { McqCorrectionPayload } from "@/lib/types";
+
+/** Campos opcionais no JSON do POST de resposta (Spring / evoluções). */
+function parseMcqCreateResponse(payload: unknown): {
+  verdict: "correct" | "incorrect" | null;
+  expectedLetter?: string;
+  note?: string;
+} {
+  const visit = (o: unknown, depth = 0): {
+    verdict: "correct" | "incorrect" | null;
+    expectedLetter?: string;
+    note?: string;
+  } => {
+    if (depth > 8 || o == null || typeof o !== "object") {
+      return { verdict: null };
+    }
+    const r = o as Record<string, unknown>;
+    let verdict: "correct" | "incorrect" | null = null;
+    if (r.mcq_correct === true || r.is_correct === true || r.correct === true) {
+      verdict = "correct";
+    } else if (
+      r.mcq_correct === false ||
+      r.is_correct === false ||
+      r.correct === false
+    ) {
+      verdict = "incorrect";
+    }
+
+    let expectedLetter: string | undefined;
+    const letterKeys = [
+      "expected_mcq_letter",
+      "expectedLetter",
+      "expected_letter",
+      "correct_letter",
+      "correctLetter",
+      "correct_option",
+      "gabarito",
+    ];
+    for (const k of letterKeys) {
+      const v = r[k];
+      if (typeof v !== "string") continue;
+      const t = v.trim();
+      const one = t.toUpperCase().match(/^([A-H])$/);
+      if (one) {
+        expectedLetter = one[1];
+        break;
+      }
+      const anyL = t.match(/\b([A-H])\b/i);
+      if (anyL) {
+        expectedLetter = anyL[1].toUpperCase();
+        break;
+      }
+    }
+
+    const note =
+      typeof r.message === "string" && r.message.trim()
+        ? r.message.trim()
+        : typeof r.feedback === "string" && r.feedback.trim()
+          ? r.feedback.trim()
+          : undefined;
+
+    if (verdict || expectedLetter || note) {
+      return { verdict, expectedLetter, note };
+    }
+    if (r.data !== undefined) return visit(r.data, depth + 1);
+    return { verdict: null };
+  };
+  return visit(payload);
+}
 
 interface InlineAnswerFormProps {
   questionId: number;
@@ -33,6 +103,8 @@ interface InlineAnswerFormProps {
   questionDescription?: string;
   questionContext?: string;
   onSuccess?: () => void;
+  /** Chamado ao fechar o MCQ com o resultado (para o cartão «Correção»). */
+  onMcqGraded?: (payload: McqCorrectionPayload) => void;
 }
 
 export function InlineAnswerForm({
@@ -41,6 +113,7 @@ export function InlineAnswerForm({
   questionDescription,
   questionContext,
   onSuccess,
+  onMcqGraded,
 }: InlineAnswerFormProps) {
   const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
@@ -104,14 +177,36 @@ export function InlineAnswerForm({
     void (async () => {
       try {
         const { apiService } = await import("@/lib/api");
-        await apiService.createAnswer(questionId, {
+        const result = await apiService.createAnswer(questionId, {
           author_name: authorName.trim(),
           content: line,
           is_solution: false,
           mcq_choice: selectedLetter.toUpperCase().slice(0, 1),
         });
         window.dispatchEvent(new CustomEvent("answer-created"));
+        const letterU = selectedLetter.toUpperCase().slice(0, 1);
+        const meta = parseMcqCreateResponse(result.data ?? result);
+
+        const grade = (
+          verdict: McqCorrectionPayload["verdict"],
+          expected?: string
+        ) => {
+          onMcqGraded?.({
+            verdict,
+            selectedLetter: letterU,
+            chosenLine: line,
+            expectedLetter: expected ?? meta.expectedLetter,
+            note: meta.note,
+          });
+        };
+
+        if (meta.verdict) {
+          grade(meta.verdict, meta.expectedLetter);
+          setMcResult(meta.verdict);
+          return;
+        }
         if (!correctAnswer?.trim()) {
+          grade("recorded", meta.expectedLetter);
           setMcResult("recorded");
           return;
         }
@@ -120,6 +215,10 @@ export function InlineAnswerForm({
           correctAnswer,
           multipleChoice.options
         );
+        const expectedClient =
+          extractExpectedLetter(correctAnswer, multipleChoice.options) ??
+          undefined;
+        grade(ok ? "correct" : "incorrect", expectedClient);
         setMcResult(ok ? "correct" : "incorrect");
       } catch (err) {
         setError(
@@ -216,8 +315,10 @@ export function InlineAnswerForm({
               Alternativa registada
             </p>
             <p className="text-muted-foreground text-sm">
-              Esta questão ainda não tem gabarito no sistema para correção
-              imediata. A solução oficial será mostrada em seguida.
+              A alternativa foi registada com{" "}
+              <code className="rounded bg-muted px-1">mcq_choice</code>. O
+              servidor não indicou certo/errado nesta resposta — veja abaixo a
+              explicação da questão, se existir no JSON.
             </p>
           </CardContent>
         </Card>
@@ -297,8 +398,8 @@ export function InlineAnswerForm({
           </CardTitle>
           <p className="text-muted-foreground">
             {hasGabarito
-              ? "Escolha a alternativa correta. A validação é feita de imediato neste dispositivo."
-              : "Escolha a alternativa. A sua escolha será registada; a marcação imediata (certo/errado) só aparece quando o gabarito existir na base."}
+              ? "Escolha a alternativa correta. A validação imediata usa o texto vindo no JSON (explicação ou gabarito, conforme o backend)."
+              : "Escolha a alternativa. O envio usa mcq_choice; certo/errado imediato depende do corpo da resposta do POST ou de texto útil em answer (explicação MCQ na API pública)."}
           </p>
           {multipleChoice.stem ? (
             <p className="text-sm text-muted-foreground line-clamp-6 whitespace-pre-wrap">

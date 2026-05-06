@@ -9,8 +9,11 @@ import {
   MessageSquare,
   Copy,
   Check,
+  CheckCircle,
+  XCircle,
+  Info,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +21,29 @@ import { FeedbackForm } from "./feedback/feedback-form";
 import { FeedbackList } from "./feedback/feedback-list";
 import { QuestionGeneralRating } from "./feedback/question-general-rating";
 import { InlineAnswerForm } from "./answers/inline-answer-form";
-import { type Question, DIFFICULTY_COLORS, CATEGORY_LABELS } from "@/lib/types";
+import {
+  type Question,
+  type McqCorrectionPayload,
+  DIFFICULTY_COLORS,
+  CATEGORY_LABELS,
+} from "@/lib/types";
+import {
+  mergeQuestionWireFields,
+  isMcqPublicAnswerEmpty,
+} from "@/lib/normalize-question";
+
+function mcqCorrectionToPlainText(p: McqCorrectionPayload): string {
+  const lines: string[] = [];
+  if (p.verdict === "correct") lines.push("Correção: resposta correta.");
+  else if (p.verdict === "incorrect") lines.push("Correção: resposta incorreta.");
+  else lines.push("Correção: resposta registada.");
+  lines.push(`A sua escolha: ${p.selectedLetter}`);
+  if (p.chosenLine) lines.push(p.chosenLine);
+  if (p.expectedLetter)
+    lines.push(`Alternativa correta (oficial): ${p.expectedLetter}`);
+  if (p.note) lines.push(p.note);
+  return lines.join("\n");
+}
 
 interface QuestionDetailProps {
   question: Question;
@@ -29,6 +54,67 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
   const [copied, setCopied] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [userHasAnswered, setUserHasAnswered] = useState(false);
+  const [answerFromOfficialReply, setAnswerFromOfficialReply] = useState("");
+  const [mcqCorrection, setMcqCorrection] = useState<McqCorrectionPayload | null>(
+    null
+  );
+
+  const handleMcqGraded = useCallback((payload: McqCorrectionPayload) => {
+    setMcqCorrection(payload);
+  }, []);
+
+  const handleAnswerSuccess = useCallback(() => {
+    setUserHasAnswered(true);
+  }, []);
+
+  const mergedQuestion = useMemo(
+    () => mergeQuestionWireFields(question),
+    [question]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (mergedQuestion.answer?.trim()) {
+      setAnswerFromOfficialReply("");
+    } else {
+      void (async () => {
+        try {
+          const { apiService } = await import("@/lib/api");
+          const res = await apiService.getAnswers(question.id);
+          if (!res.success || !Array.isArray(res.data) || cancelled) return;
+          for (const row of res.data) {
+            const r = row as unknown as Record<string, unknown>;
+            const isSol = r.is_solution === true || r.isSolution === true;
+            if (!isSol) continue;
+            const c = String(r.content ?? "").trim();
+            if (c && !cancelled) setAnswerFromOfficialReply(c);
+            return;
+          }
+        } catch {
+          /* API opcional */
+        }
+      })();
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [question.id, mergedQuestion.answer]);
+
+  useEffect(() => {
+    setUserHasAnswered(false);
+    setMcqCorrection(null);
+  }, [question.id]);
+
+  const solutionText = (
+    mergedQuestion.answer ||
+    answerFromOfficialReply ||
+    ""
+  ).trim();
+
+  const copyableText = (
+    solutionText ||
+    (mcqCorrection ? mcqCorrectionToPlainText(mcqCorrection) : "")
+  ).trim();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -42,7 +128,7 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(question.answer);
+      await navigator.clipboard.writeText(copyableText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -338,12 +424,13 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Check className="h-5 w-5" />
-                  Solução
+                  {solutionText ? "Solução" : mcqCorrection ? "Correção" : "Solução"}
                 </CardTitle>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={copyToClipboard}
+                  disabled={!copyableText}
                   className="text-xs sm:text-sm"
                 >
                   {copied ? (
@@ -356,19 +443,90 @@ export function QuestionDetail({ question, onBack }: QuestionDetailProps) {
               </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="bg-muted/50 rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm overflow-x-auto">
-                <pre className="whitespace-pre-wrap text-foreground break-words">
-                  {question.answer}
-                </pre>
+              <div
+                className={`bg-muted/50 rounded-lg p-3 sm:p-4 text-xs sm:text-sm overflow-x-auto ${
+                  solutionText ? "font-mono" : "font-sans"
+                }`}
+              >
+                {solutionText ? (
+                  <pre className="whitespace-pre-wrap text-foreground break-words">
+                    {solutionText}
+                  </pre>
+                ) : mcqCorrection ? (
+                  <div className="space-y-4 leading-relaxed">
+                    {mcqCorrection.verdict === "correct" ? (
+                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold text-base">
+                        <CheckCircle className="h-6 w-6 shrink-0" />
+                        Resposta correta
+                      </div>
+                    ) : mcqCorrection.verdict === "incorrect" ? (
+                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold text-base">
+                        <XCircle className="h-6 w-6 shrink-0" />
+                        Resposta incorreta
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-blue-500 dark:text-blue-300 font-semibold text-base">
+                        <Info className="h-6 w-6 shrink-0" />
+                        Resposta registada
+                      </div>
+                    )}
+                    <p className="text-muted-foreground">
+                      <span className="text-foreground font-medium">
+                        A sua escolha:
+                      </span>{" "}
+                      {mcqCorrection.selectedLetter}
+                      {mcqCorrection.chosenLine
+                        ? ` — ${mcqCorrection.chosenLine}`
+                        : null}
+                    </p>
+                    {mcqCorrection.expectedLetter ? (
+                      <p className="text-foreground">
+                        <span className="font-medium">Alternativa correta:</span>{" "}
+                        {mcqCorrection.expectedLetter}
+                      </p>
+                    ) : null}
+                    {mcqCorrection.note ? (
+                      <p className="text-muted-foreground whitespace-pre-wrap border-t border-border/40 pt-3">
+                        {mcqCorrection.note}
+                      </p>
+                    ) : null}
+                    {mcqCorrection.verdict === "recorded" &&
+                    !mcqCorrection.expectedLetter ? (
+                      <div className="flex gap-2 text-muted-foreground text-xs sm:text-sm border-t border-border/40 pt-3">
+                        <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span>
+                          O servidor não devolveu nesta resposta se acertou ou
+                          qual a letra oficial. A escolha foi guardada; quando a API
+                          incluir a correção, aparecerá aqui automaticamente.
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : isMcqPublicAnswerEmpty(mergedQuestion) ? (
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Questão de{" "}
+                    <span className="text-foreground/90">múltipla escolha</span>{" "}
+                    sem texto de explicação no campo público{" "}
+                    <code className="rounded bg-muted px-1">answer</code> (p.ex.
+                    só gabarito na base). Envie a alternativa acima para ver a
+                    correção imediata ou complete a explicação na questão.
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Não há texto de solução disponível para esta questão (dados em
+                    falta ou resposta oficial ainda não associada).
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
         ) : (
           <InlineAnswerForm
             questionId={question.id}
-            correctAnswer={question.answer}
+            correctAnswer={solutionText}
             questionDescription={question.description}
-            onSuccess={() => setUserHasAnswered(true)}
+            onSuccess={handleAnswerSuccess}
+            onMcqGraded={handleMcqGraded}
           />
         )}
 

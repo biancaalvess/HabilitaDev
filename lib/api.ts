@@ -56,6 +56,8 @@ export interface Question {
   moderation_status?: 'approved' | 'rejected' | 'pending' | 'human_review' | string;
   moderation_motivo?: string | null;
   moderation_ajuste_sugerido?: string | null;
+  /** Spring: ex. `multiple_choice`; `answer` pode ser explicação pública (MCQ). */
+  question_format?: string;
 }
 
 export interface Answer {

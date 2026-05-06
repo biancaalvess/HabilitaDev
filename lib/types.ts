@@ -15,6 +15,8 @@ export interface Question {
   moderation_status?: "approved" | "rejected" | "pending" | "human_review" | string
   moderation_motivo?: string | null
   moderation_ajuste_sugerido?: string | null
+  /** Spring `QuestionResponse`: ex. `multiple_choice`; `answer` pode ser texto de explicação (sem linhas só de letra). */
+  question_format?: string
 }
 
 export interface QuestionFilter {
@@ -22,6 +24,15 @@ export interface QuestionFilter {
   category?: string
   company?: string
   search?: string
+}
+
+/** Resumo da correção MCQ após envio (para o cartão «Correção» / copiar). */
+export type McqCorrectionPayload = {
+  verdict: "correct" | "incorrect" | "recorded"
+  selectedLetter: string
+  chosenLine?: string
+  expectedLetter?: string
+  note?: string
 }
 
 export interface User {

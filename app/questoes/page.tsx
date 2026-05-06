@@ -8,6 +8,8 @@ import { QuestionCard } from "@/components/question-card";
 import { QuestionFilters } from "@/components/question-filters";
 import { QuestionDetail } from "@/components/question-detail";
 import { useOptimizedQuestions } from "@/hooks/use-optimized-questions";
+import { apiService } from "@/lib/api";
+import { mergeQuestionWireFields } from "@/lib/normalize-question";
 import type { QuestionFilter, Question } from "@/lib/types";
 import { CATEGORY_LABELS } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -105,9 +107,25 @@ function QuestoesPageContent() {
       return;
     }
     const question = questions.find((q) => q.id === id);
-    if (question) {
-      setSelectedQuestion(question);
+    if (!question) {
+      return;
     }
+    setSelectedQuestion(mergeQuestionWireFields(question));
+    void (async () => {
+      try {
+        const res = await apiService.getQuestion(id);
+        if (res.success && res.data) {
+          setSelectedQuestion(
+            mergeQuestionWireFields({
+              ...question,
+              ...res.data,
+            } as Question)
+          );
+        }
+      } catch (e) {
+        console.error("Falha ao carregar detalhe da questão:", e);
+      }
+    })();
   };
 
   const handleBack = () => {
