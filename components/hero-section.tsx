@@ -115,7 +115,7 @@ export default function HeroSection(_props: HeroSectionProps) {
           Um espaço para estudantes e profissionais praticarem, errarem sem
           pressão e se prepararem para{" "}
           <span className="text-blue-300 font-semibold">
-            entrevistas técnias
+            entrevistas técnicas
           </span>
           ,<span className="text-blue-300 font-semibold"> testes</span>
           <span className="text-blue-300 font-semibold"> e desafios </span> que
