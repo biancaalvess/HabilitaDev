@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { config } from '@/lib/config-simple';
-
-const BACKEND_URL = config.api.backendUrl;
+import { config, resolveJavaApiBaseUrl } from '@/lib/config-simple';
+import { noJavaBackendResponse } from '@/lib/proxy-http';
 
 const isDevelopment = () => {
   return process.env.NODE_ENV === 'development';
@@ -9,22 +8,10 @@ const isDevelopment = () => {
 
 export async function GET(request: NextRequest) {
   try {
+    const BACKEND_URL = resolveJavaApiBaseUrl();
     if (!BACKEND_URL) {
-      console.error('❌ BACKEND_URL não configurado');
-      return NextResponse.json(
-        { 
-          error: 'Service Unavailable',
-          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
-        },
-        { 
-          status: 503,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          },
-        }
-      );
+      console.error('JAVA backend URL missing (BACKEND_URL / NEXT_PUBLIC_BACKEND_URL / NEXT_PUBLIC_API_URL)');
+      return noJavaBackendResponse();
     }
 
     const { searchParams } = new URL(request.url);
@@ -194,22 +181,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const BACKEND_URL = resolveJavaApiBaseUrl();
     if (!BACKEND_URL) {
-      console.error('❌ BACKEND_URL não configurado');
-      return NextResponse.json(
-        { 
-          error: 'Service Unavailable',
-          message: 'Backend não está configurado. Configure BACKEND_URL no ambiente.',
-        },
-        { 
-          status: 503,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          },
-        }
-      );
+      console.error('JAVA backend URL missing (BACKEND_URL / NEXT_PUBLIC_BACKEND_URL / NEXT_PUBLIC_API_URL)');
+      return noJavaBackendResponse();
     }
 
     let body;

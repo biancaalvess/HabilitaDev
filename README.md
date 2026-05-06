@@ -56,7 +56,7 @@ A resolução da URL do Java está em `lib/config-simple.ts` (`resolveJavaApiBas
 ### Arquitetura
 
 1. **Browser**: pedidos a `{NEXT_PUBLIC_APP_API_BASE ou /api}/proxy/...` (BFF).
-2. **Route Handlers** (`app/api/proxy/**`): leem `config.api.backendUrl`, chamam o Spring em `/api/v1/...`, tratam erros e timeouts.
+2. **Route Handlers** (`app/api/proxy/**`): em cada pedido leem `resolveJavaApiBaseUrl()` (env), chamam o Spring em `/api/v1/...`, tratam erros e timeouts.
 3. **Spring Boot**: contrato JSON (frequentemente `snake_case`); tipos em `lib/api.ts` alinhados com isso.
 
 Autenticação: o ficheiro `lib/auth.tsx` define um contexto mínimo (sem utilizador); rotas de login OAuth descritas em documentação antiga podem não existir neste ramo. Valida `app/api` antes de assumir endpoints de auth.
@@ -75,6 +75,8 @@ Autenticação: o ficheiro `lib/auth.tsx` define um contexto mínimo (sem utiliz
 - Não inclua `.env`, `.env.local` nem segredos nos commits; apenas `.env.example` deve permanecer versionado.
 - Define `JWT_SECRET` forte em produção; o repositório inclui valores de exemplo apenas para desenvolvimento.
 - Para tráfego real, o backend Java deve estar em HTTPS e acessível a partir do ambiente onde corre o Next.
+
+**Vercel (503 no `/api/proxy/...`)**: em *Project Settings → Environment Variables*, define `BACKEND_URL` com a URL `https` do Spring (recomendado) ou `NEXT_PUBLIC_BACKEND_URL` / `NEXT_PUBLIC_API_URL` com URL absoluta. Ativa para *Production* (e *Preview* se precisares), guarda e faz **Redeploy**. Se `NEXT_PUBLIC_API_URL` for só um path (`/api`), o proxy não descobre o Java: precisas sempre de uma das variáveis com URL `http(s)://` do backend.
 
 ### Licença
 
@@ -134,7 +136,7 @@ Resolution logic lives in `lib/config-simple.ts` (`resolveJavaApiBaseUrl`, `reso
 ### Architecture
 
 1. **Browser**: requests to `{NEXT_PUBLIC_APP_API_BASE or /api}/proxy/...` (BFF).
-2. **Route Handlers** (`app/api/proxy/**`): read `config.api.backendUrl`, call Spring `/api/v1/...`, handle errors and timeouts.
+2. **Route Handlers** (`app/api/proxy/**`): read `resolveJavaApiBaseUrl()` per request, call Spring `/api/v1/...`, handle errors and timeouts.
 3. **Spring Boot**: JSON payloads (often `snake_case`); TypeScript types in `lib/api.ts` follow that shape.
 
 Authentication: `lib/auth.tsx` exposes a minimal context (no signed-in user). Do not assume OAuth or `/api/auth` routes exist without verifying `app/api`.
@@ -153,6 +155,8 @@ Authentication: `lib/auth.tsx` exposes a minimal context (no signed-in user). Do
 - Do not commit `.env`, `.env.local`, or secrets; only `.env.example` is meant to be tracked.
 - Set a strong `JWT_SECRET` in production; sample values are for local use only.
 - Production Java endpoints should use HTTPS and be reachable from the Next runtime.
+
+**Vercel (503 on `/api/proxy/...`)**: in *Project Settings → Environment Variables*, set `BACKEND_URL` to your Spring `https` origin (preferred), or `NEXT_PUBLIC_BACKEND_URL` / `NEXT_PUBLIC_API_URL` as a full `http(s)://` URL. Enable for *Production* (and *Preview* if needed), save, then **Redeploy**. If `NEXT_PUBLIC_API_URL` is only a path (e.g. `/api`), the proxy cannot infer the Java host; you still need one variable with the backend’s absolute URL.
 
 ### License
 

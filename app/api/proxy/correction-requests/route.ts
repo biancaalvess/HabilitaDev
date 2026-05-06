@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { config } from '@/lib/config-simple';
-
-const JAVA_BASE = config.api.backendUrl;
+import { config, resolveJavaApiBaseUrl } from '@/lib/config-simple';
+import { noJavaBackendResponse } from '@/lib/proxy-http';
 
 export async function POST(request: NextRequest) {
   try {
+    const JAVA_BASE = resolveJavaApiBaseUrl();
     if (!JAVA_BASE) {
-      return NextResponse.json(
-        {
-          error: 'Service Unavailable',
-          message:
-            'Backend não está configurado. Defina BACKEND_URL ou NEXT_PUBLIC_API_URL (URL do Java) no ambiente.',
-        },
-        { status: 503 }
-      );
+      return noJavaBackendResponse();
     }
 
     let body: unknown;

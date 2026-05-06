@@ -35,6 +35,17 @@ export function resolveNextClientApiBase(): string {
   return '/api'
 }
 
+/** Resposta JSON quando não há URL do Java (ex.: env em falta na Vercel). */
+export function missingJavaBackendJson() {
+  return {
+    error: 'Service Unavailable',
+    code: 'JAVA_BACKEND_URL_MISSING',
+    message: 'URL do backend Spring não está configurada neste ambiente.',
+    hint:
+      'Defina BACKEND_URL=https://… (recomendado, só no servidor) ou NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL com URL http(s) completa do Java. Na Vercel: Settings → Environment Variables → Production → Save → Redeploy.',
+  } as const
+}
+
 export const config = {
   auth: {
     jwtSecret: process.env.JWT_SECRET || 'xm9enPt2Gi3QYuiMalZ4CtlHB0p4rRtk6ThJt93CUcI=',

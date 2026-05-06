@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { config } from '@/lib/config-simple';
-
-const BACKEND_URL = config.api.backendUrl;
+import { resolveJavaApiBaseUrl } from '@/lib/config-simple';
 
 interface HealthStatus {
   frontend: {
@@ -20,6 +18,7 @@ interface HealthStatus {
 
 export async function GET(request: NextRequest) {
   try {
+    const BACKEND_URL = resolveJavaApiBaseUrl();
     const healthStatus: HealthStatus = {
       frontend: {
         status: 'healthy',
