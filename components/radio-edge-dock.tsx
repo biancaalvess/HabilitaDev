@@ -406,21 +406,7 @@ export function RadioEdgeDock({ variant = "floating" }: RadioEdgeDockProps) {
             <div
               className={`rounded bg-white/10 ${isHeader ? "h-1.5 w-8" : "h-2 w-10"}`}
             />
-            {isHeader ? (
-              <div className="h-2 w-full rounded-full bg-white/[0.07]" />
-            ) : (
-              <div className="mx-auto flex h-[6.5rem] w-5 items-center justify-center rounded-full bg-white/[0.07]" />
-            )}
-            {!isHeader ? (
-              <>
-                <div className="h-8 w-full rounded-md bg-white/[0.08]" />
-                <div className="flex justify-center gap-2 border-t border-white/[0.06] pt-2">
-                  <div className="h-7 w-7 rounded-full bg-white/[0.09]" />
-                  <div className="h-7 w-7 rounded-full bg-white/[0.07]" />
-                </div>
-                <div className="h-5 w-full rounded bg-white/[0.06]" />
-              </>
-            ) : null}
+            <div className="h-2 w-full rounded-full bg-white/[0.07]" />
           </div>
           {slowLoading ? (
             <div
@@ -488,54 +474,67 @@ export function RadioEdgeDock({ variant = "floating" }: RadioEdgeDockProps) {
       ) : null}
 
       {open && !loading && !isHeader ? (
-        <div className="relative flex min-h-0 flex-1 flex-col gap-2">
-          <div className="min-h-0 flex-1">
-            <p className="mb-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-white/35">
-              Volume
-            </p>
-            <div
-              className="flex h-[5.25rem] justify-center py-0.5 [&_[data-slot=slider-track]]:w-1 [&_[data-slot=slider-track]]:bg-white/[0.1] [&_[data-slot=slider-range]]:bg-white/[0.24] [&_[data-slot=slider-thumb]]:size-3 [&_[data-slot=slider-thumb]]:border-white/15 [&_[data-slot=slider-thumb]]:bg-zinc-200/90 [&_[data-slot=slider-thumb]]:shadow-none [&_[data-slot=slider-thumb]]:ring-0 [&_[data-slot=slider-thumb]]:hover:ring-2 [&_[data-slot=slider-thumb]]:hover:ring-white/10 [&_[data-slot=slider-thumb]]:focus-visible:ring-2 [&_[data-slot=slider-thumb]]:focus-visible:ring-white/15"
-            >
+        <div className="relative flex min-h-0 flex-col gap-2">
+          <div className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-2.5 py-2">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <span className="text-[8px] font-medium uppercase tracking-[0.12em] text-white/28">
+                Volume
+              </span>
+              <span className="text-[10px] font-normal tabular-nums text-white/38">
+                {muted ? "—" : `${Math.round(volume * 100)}%`}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Volume2
+                className="h-3.5 w-3.5 shrink-0 text-white/28"
+                aria-hidden
+              />
               <Slider
-                orientation="vertical"
                 min={0}
                 max={100}
                 step={1}
                 value={[Math.round(volume * 100)]}
                 onValueChange={onVolumeChange}
-                className="h-full min-h-[4.25rem] w-5"
+                className="min-w-0 flex-1 py-1 [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-track]]:rounded-full [&_[data-slot=slider-track]]:bg-white/[0.07] [&_[data-slot=slider-range]]:rounded-full [&_[data-slot=slider-range]]:bg-white/18 [&_[data-slot=slider-thumb]]:size-3 [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-white/55 [&_[data-slot=slider-thumb]]:shadow-none [&_[data-slot=slider-thumb]]:ring-0 [&_[data-slot=slider-thumb]]:focus-visible:ring-1 [&_[data-slot=slider-thumb]]:focus-visible:ring-white/25"
                 aria-label="Volume da rádio"
               />
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setMuted((m) => !m)}
-            className="h-8 shrink-0 justify-start gap-1.5 rounded-md px-2 text-white/60 hover:bg-white/[0.08] hover:text-white/85"
-            aria-label={muted ? "Ativar som" : "Silenciar"}
-          >
-            {muted ? (
-              <VolumeX className="h-3.5 w-3.5 text-white/45" />
-            ) : (
-              <Volume2 className="h-3.5 w-3.5 text-white/40" />
-            )}
-            <span className="text-[11px] font-normal">
-              {muted ? "Mudo" : "Som"}
-            </span>
-          </Button>
+          <div className="flex items-center gap-1.5 border-t border-white/[0.04] pt-1.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setMuted((m) => !m)}
+              className="h-8 w-8 shrink-0 rounded-md text-white/32 hover:bg-white/[0.05] hover:text-white/55"
+              aria-label={muted ? "Ativar som" : "Silenciar"}
+              title={muted ? "Som desligado" : "Som ligado"}
+            >
+              {muted ? (
+                <VolumeX className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <Volume2 className="h-3.5 w-3.5" aria-hidden />
+              )}
+            </Button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[8px] font-medium uppercase tracking-wide text-white/25">
+                Som
+              </p>
+              <p
+                className="truncate text-[10px] font-normal leading-snug text-white/45"
+                title={error || current?.name || undefined}
+              >
+                {error ? error : current?.name || "—"}
+              </p>
+            </div>
+          </div>
 
           {playHint ? (
-            <p className="text-center text-[9px] leading-snug text-amber-200/55">
+            <p className="text-center text-[8px] leading-snug text-amber-200/40">
               {playHint}
             </p>
           ) : null}
-
-          <p className="line-clamp-2 text-center text-[10px] leading-snug text-white/42">
-            {error ? error : current?.name || "—"}
-          </p>
         </div>
       ) : null}
     </>
@@ -587,9 +586,9 @@ export function RadioEdgeDock({ variant = "floating" }: RadioEdgeDockProps) {
       }}
     >
       <div
-        className={`pointer-events-auto relative flex flex-col items-stretch overflow-hidden rounded-xl border border-white/[0.06] shadow-[0_6px_20px_-10px_rgba(0,0,0,0.28)] transition-[width] duration-200 ease-out ${
+        className={`pointer-events-auto relative flex flex-col items-stretch overflow-hidden rounded-xl border border-white/[0.05] shadow-[0_4px_16px_-8px_rgba(0,0,0,0.35)] transition-[width] duration-200 ease-out ${
           open
-            ? "w-[9.5rem] max-w-[min(9.5rem,calc(100vw-1.5rem))]"
+            ? "w-[16.25rem] max-w-[min(16.25rem,calc(100vw-1.5rem))]"
             : "w-auto"
         }`}
       >
@@ -598,9 +597,9 @@ export function RadioEdgeDock({ variant = "floating" }: RadioEdgeDockProps) {
         <div className="relative z-[1] flex flex-col items-stretch">
           <div
             id="radio-dock-panel"
-            className={`flex flex-col overflow-hidden bg-zinc-950/30 backdrop-blur-md transition-[max-height,opacity,padding,border-color] duration-200 ease-out ${
+            className={`flex flex-col overflow-hidden bg-zinc-950/25 backdrop-blur-md transition-[max-height,opacity,padding,border-color] duration-200 ease-out ${
               open
-                ? "max-h-[min(28rem,calc(100vh-6rem))] border-b border-white/[0.06] px-2.5 py-2.5 opacity-100"
+                ? "max-h-[min(28rem,calc(100vh-6rem))] border-b border-white/[0.04] px-2 py-2 opacity-100"
                 : "max-h-0 border-b-0 px-0 py-0 opacity-0"
             }`}
             aria-hidden={!open}
