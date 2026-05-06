@@ -1,9 +1,11 @@
 /**
  * Cliente HTTP → rotas Next (`/api/proxy/...`), que fazem proxy ao Spring Boot em `/api/v1/...`.
+ * URL do Java (Spring): `BACKEND_URL` (só servidor, prioridade) → `NEXT_PUBLIC_API_URL` (http/https) → `NEXT_PUBLIC_BACKEND_URL`.
+ * O browser deve usar o BFF (`/api/proxy/...`); em Server Components podes usar `serverGetQuestions` para ir direto ao Java.
  * O backend serializa JSON em snake_case (Jackson); os tipos abaixo já usam created_at, author_name, etc.
  * Sem header Authorization nesta API. Content-Type: application/json em POST/PUT.
  */
-import { config } from './config-simple';
+import { config, resolveJavaApiBaseUrl } from './config-simple';
 
 const API_BASE_URL = config.api.baseUrl;
 
@@ -149,6 +151,79 @@ export type ListQuestionsParams = {
   q?: string;
 };
 
+/** Origem do Spring (sem barra final). Mesma ordem que nas API Routes: BACKEND_URL → NEXT_PUBLIC_API_URL → NEXT_PUBLIC_BACKEND_URL. */
+export function getServerJavaBackendOrigin(): string {
+  return resolveJavaApiBaseUrl();
+}
+
+function assertServerOnly(fnName: string): void {
+  if (typeof window !== 'undefined') {
+    throw new Error(`${fnName} só pode ser usado no servidor (Server Component, Route Handler, etc.).`);
+  }
+}
+
+export function buildListQuestionsQueryString(params: ListQuestionsParams = {}): string {
+  const sp = new URLSearchParams();
+  sp.set('page', String(params.page ?? 1));
+  sp.set('limit', String(params.limit ?? 50));
+  if (params.category) sp.set('category', params.category);
+  if (params.difficulty) sp.set('difficulty', params.difficulty);
+  if (params.search) sp.set('search', params.search);
+  if (params.q) sp.set('q', params.q);
+  return sp.toString();
+}
+
+function unwrapQuestionsListJson(data: unknown): Question[] {
+  if (Array.isArray(data)) {
+    return data as Question[];
+  }
+  if (data && typeof data === 'object') {
+    const o = data as Record<string, unknown>;
+    if (Array.isArray(o.content)) {
+      return o.content as Question[];
+    }
+    if (Array.isArray(o.items)) {
+      return o.items as Question[];
+    }
+    if (Array.isArray(o.data)) {
+      return o.data as Question[];
+    }
+  }
+  throw new Error('Formato de resposta inesperado ao listar questões.');
+}
+
+/**
+ * GET direto ao Spring `/api/v1/questions` (App Router, Route Handlers, etc.).
+ * Requer `BACKEND_URL` ou `NEXT_PUBLIC_BACKEND_URL` (ou `NEXT_PUBLIC_API_URL` com URL http(s) do Java).
+ */
+export async function serverGetQuestions(
+  params: ListQuestionsParams = {},
+  init?: RequestInit
+): Promise<Question[]> {
+  assertServerOnly('serverGetQuestions');
+  const origin = resolveJavaApiBaseUrl();
+  if (!origin) {
+    throw new Error(
+      'URL do backend em falta. Defina BACKEND_URL (recomendado no servidor), NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL (Java).'
+    );
+  }
+  const qs = buildListQuestionsQueryString(params);
+  const url = `${origin}/api/v1/questions?${qs}`;
+  const res = await fetch(url, {
+    cache: 'no-store',
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Erro ao buscar questões (${res.status})`);
+  }
+  const json: unknown = await res.json();
+  return unwrapQuestionsListJson(json);
+}
+
 class ApiService {
   private baseURL: string;
 
@@ -269,7 +344,7 @@ class ApiService {
         
         if (response.status === 503) {
           throw new Error(
-            'Backend indisponível. Configure BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.'
+            'Backend indisponível. Configure BACKEND_URL, NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.'
           );
         }
         
@@ -464,14 +539,7 @@ class ApiService {
   async listQuestions(
     params: ListQuestionsParams = {}
   ): Promise<ApiResponse<Question[]>> {
-    const sp = new URLSearchParams();
-    sp.set('page', String(params.page ?? 1));
-    sp.set('limit', String(params.limit ?? 50));
-    if (params.category) sp.set('category', params.category);
-    if (params.difficulty) sp.set('difficulty', params.difficulty);
-    if (params.search) sp.set('search', params.search);
-    if (params.q) sp.set('q', params.q);
-    const qs = sp.toString();
+    const qs = buildListQuestionsQueryString(params);
     return this.request<Question[]>(`/proxy/questions?${qs}`);
   }
 
@@ -598,3 +666,17 @@ class ApiService {
 
 export const apiService = new ApiService();
 export default apiService;
+
+/** Lista questões via BFF Next (browser ou servidor com origem absoluta). Útil com `useEffect` / actions no cliente. */
+export async function getQuestions(params: ListQuestionsParams = {}): Promise<Question[]> {
+  const { data } = await apiService.listQuestions(params);
+  return data;
+}
+
+/** Cria questão via BFF Next (POST → proxy → Spring). */
+export async function createQuestion(
+  question: Omit<Question, 'id' | 'created_at'>
+): Promise<Question> {
+  const { data } = await apiService.createQuestion(question);
+  return data;
+}

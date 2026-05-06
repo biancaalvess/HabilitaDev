@@ -114,7 +114,7 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
     
     const status = (error as any)?.status;
     if (status === 503) {
-      return 'Backend indisponível. Defina BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.';
+      return 'Backend indisponível. Defina BACKEND_URL, NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.';
     }
     if (status === 502) {
       return 'O proxy não conseguiu falar com o Java (502). Verifique se o Spring está acessível a partir do Next.';
