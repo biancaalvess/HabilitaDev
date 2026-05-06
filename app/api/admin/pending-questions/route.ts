@@ -6,7 +6,6 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    // Banco de dados removido - retornar array vazio
     return createSuccessResponse(
       [],
       'Questões pendentes obtidas com sucesso',

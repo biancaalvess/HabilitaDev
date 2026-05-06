@@ -13,9 +13,8 @@ interface UseOptimizedQuestionsOptions {
   cacheTimeout?: number;
 }
 
-export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}) {
-  // SWR configuration
-  // Lista paginada no backend (default ~50): pedir até 500 (máx. documentado) para o filtro local continuar completo
+export function useOptimizedQuestions(_options: UseOptimizedQuestionsOptions = {}) {
+  // page=1&limit=500: listagem completa para filtros no cliente
   const { data, error, isLoading, mutate } = useSWR<Question[]>(
     `${API_BASE_URL}/proxy/questions?page=1&limit=500`,
     fetcher,
@@ -30,18 +29,13 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
     }
   );
 
-  // Memoizar questões (SWR já faz cache, mas mantemos para compatibilidade)
   const questions = useMemo(() => {
-    // Garantir que sempre retornamos um array válido
     if (!data) {
       return [];
     }
-    // Verificar se data é um array
     if (Array.isArray(data)) {
       return data;
     }
-    // Se data não é um array, pode ser um objeto de resposta da API
-    // Verificar se tem uma propriedade 'data' ou 'questions' que seja um array
     if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as any).data)) {
       return (data as any).data;
     }
@@ -57,9 +51,7 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
     return [];
   }, [data]);
 
-  // Memoizar estatísticas
   const stats = useMemo(() => {
-    // Verificar se questions é um array válido antes de usar reduce
     if (!Array.isArray(questions) || questions.length === 0) {
       return {
         total: 0,
@@ -75,7 +67,7 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
       }
       return acc;
     }, {} as Record<string, number>);
-    
+
     const byCategory = questions.reduce((acc, q) => {
       if (q && q.category) {
         acc[q.category] = (acc[q.category] || 0) + 1;
@@ -90,28 +82,24 @@ export function useOptimizedQuestions(options: UseOptimizedQuestionsOptions = {}
     };
   }, [questions]);
 
-  // Função para forçar refresh (usando mutate do SWR)
   const refresh = () => {
     mutate();
   };
 
-  // Função para invalidar cache (usando mutate do SWR)
   const invalidateCache = () => {
     mutate(undefined, { revalidate: true });
   };
 
-  // Detectar se está offline ou backend indisponível
-  const isOffline = error?.message?.includes('Failed to fetch') || 
+  const isOffline = error?.message?.includes('Failed to fetch') ||
                    error?.message?.includes('NetworkError') ||
                    error?.message?.includes('network') ||
                    error?.message?.includes('Network request failed') ||
                    error?.message?.includes('Service Unavailable') ||
                    (error as any)?.status === 503;
 
-  // Mensagem de erro mais amigável
   const errorMessage = useMemo(() => {
     if (!error) return null;
-    
+
     const status = (error as any)?.status;
     if (status === 503) {
       return 'Backend indisponível. Defina BACKEND_URL, NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.';

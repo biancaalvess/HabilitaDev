@@ -8,7 +8,6 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verificar se BACKEND_URL está configurado
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -61,7 +60,6 @@ export async function GET(
           },
         });
       } else {
-        // Repassar status e mensagem do backend
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         
@@ -132,7 +130,6 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verificar se BACKEND_URL está configurado
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -187,7 +184,6 @@ export async function POST(
           },
         });
       } else {
-        // Repassar status e mensagem do backend
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         

@@ -1,5 +1,4 @@
-// Fetcher function for SWR
-// This function will be used by SWR to fetch data from the API
+// Fetcher SWR: normaliza vários formatos de resposta JSON.
 
 export const fetcher = async (url: string) => {
   try {
@@ -8,13 +7,11 @@ export const fetcher = async (url: string) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Include cookies for authentication
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      // Tratamento especial para erros de autenticação/autorização
       if (response.status === 401) {
-        // 401: Não Autorizado - Forçar logout
         if (typeof window !== 'undefined') {
           localStorage.removeItem('habilitadev_user_cache');
           const currentPath = window.location.pathname;
@@ -26,9 +23,8 @@ export const fetcher = async (url: string) => {
         (error as any).status = 401;
         throw error;
       }
-      
+
       if (response.status === 403) {
-        // 403: Proibido - Mostrar toast de permissão insuficiente
         if (typeof window !== 'undefined') {
           import('@/hooks/use-toast').then(({ toast }) => {
             toast({
@@ -44,30 +40,26 @@ export const fetcher = async (url: string) => {
         (error as any).status = 403;
         throw error;
       }
-      
-      // Try to parse error response first
+
       let errorMessage = response.statusText;
       let errorData: any = {};
-      
+
       try {
         errorData = await response.json();
         errorMessage = errorData.message || errorData.error?.message || errorData.error || response.statusText;
       } catch {
         errorData = { message: response.statusText };
       }
-      
-      // Create error with proper message
+
       const error = new Error(errorMessage);
-      // Attach extra info to the error object
       (error as any).status = response.status;
       (error as any).info = errorData;
-      
+
       throw error;
     }
 
     const data = await response.json();
 
-    // Handle different response formats
     if (Array.isArray(data)) {
       return data;
     }
@@ -77,7 +69,6 @@ export const fetcher = async (url: string) => {
     if (data.data) {
       return data.data;
     }
-    // Spring Data Page / paginação comum
     if (Array.isArray(data.content)) {
       return data.content;
     }
@@ -90,8 +81,6 @@ export const fetcher = async (url: string) => {
 
     return data;
   } catch (error) {
-    // Re-throw error to let SWR handle it
     throw error;
   }
 };
-

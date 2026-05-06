@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // 1. Verificar status do backend
     if (BACKEND_URL) {
       try {
         const backendUrl = `${BACKEND_URL}/health`;
@@ -84,7 +83,6 @@ export async function GET(request: NextRequest) {
       console.log('ℹ️ BACKEND_URL não configurado, pulando verificação de backend');
     }
 
-    // Determinar status geral
     const overallStatus = 
       healthStatus.backend.status === 'healthy' 
         ? 'healthy' 

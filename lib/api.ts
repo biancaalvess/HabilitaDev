@@ -1,15 +1,9 @@
-/**
- * Cliente HTTP → rotas Next (`/api/proxy/...`), que fazem proxy ao Spring Boot em `/api/v1/...`.
- * URL do Java (Spring): `BACKEND_URL` (só servidor, prioridade) → `NEXT_PUBLIC_API_URL` (http/https) → `NEXT_PUBLIC_BACKEND_URL`.
- * O browser deve usar o BFF (`/api/proxy/...`); em Server Components podes usar `serverGetQuestions` para ir direto ao Java.
- * O backend serializa JSON em snake_case (Jackson); os tipos abaixo já usam created_at, author_name, etc.
- * Sem header Authorization nesta API. Content-Type: application/json em POST/PUT.
- */
+// Cliente HTTP: browser → /api/proxy → Spring /api/v1 (JSON snake_case). POST/PUT com application/json.
 import { config, resolveJavaApiBaseUrl } from './config-simple';
 
 const API_BASE_URL = config.api.baseUrl;
 
-/** Base para fetch: no browser é relativa (`/api`); no Node é absoluta com `NEXT_PUBLIC_APP_URL`. */
+// No servidor, prefixa NEXT_PUBLIC_APP_URL para fetch absoluto ao BFF.
 function resolveFetchBase(baseURL: string): string {
   if (typeof window !== 'undefined') {
     return baseURL;
@@ -23,10 +17,7 @@ function resolveFetchBase(baseURL: string): string {
   return `${origin}${baseURL.startsWith('/') ? baseURL : `/${baseURL}`}`;
 }
 
-/**
- * Backends (ex.: Spring + validação) frequentemente exigem `content` com tamanho mínimo.
- * Respostas de múltipla escolha enviam só uma linha curta (`B) texto`); garante comprimento mínimo.
- */
+// Acrescenta texto ao content curto quando o backend exige tamanho mínimo (não usado com mcq_choice).
 function normalizeAnswerContentForBackend(content: string): string {
   const c = String(content ?? "").trim();
   if (c.length >= 10) return c;
@@ -36,13 +27,10 @@ function normalizeAnswerContentForBackend(content: string): string {
   return out.length > 5000 ? out.slice(0, 5000) : out;
 }
 
-// Helper para verificar se estamos em desenvolvimento
 const isDevelopment = () => {
   if (typeof window === 'undefined') {
-    // Server-side
     return process.env.NODE_ENV === 'development';
   }
-  // Client-side - verificar se estamos em localhost
   return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 };
 
@@ -62,12 +50,9 @@ export interface Question {
   company?: string;
   tags?: string[];
   created_at: string;
-  /** Presente nas respostas GET; no POST o backend pode ignorar e usar moderação (pendente → visível). */
   approved?: boolean;
-  /** Ex.: pendente, visivel — quando o backend expuser o estado de moderação. */
   status?: string;
   author_name?: string;
-  /** Resposta do POST /api/v1/questions (moderação IA). */
   moderation_status?: 'approved' | 'rejected' | 'pending' | 'human_review' | string;
   moderation_motivo?: string | null;
   moderation_ajuste_sugerido?: string | null;
@@ -82,7 +67,6 @@ export interface Answer {
   is_solution: boolean;
 }
 
-/** Corpo do POST de resposta; `mcq_choice` é exigido pelo Spring para múltipla escolha (ex.: `"B"`). */
 export type AnswerCreatePayload = Omit<
   Answer,
   "id" | "question_id" | "created_at"
@@ -123,7 +107,6 @@ export interface Feedback {
   created_at: string;
 }
 
-/** POST /api/v1/correction-requests (wire snake_case). */
 export interface CorrectionRequestBody {
   question_id?: number;
   name: string;
@@ -132,7 +115,6 @@ export interface CorrectionRequestBody {
   message: string;
 }
 
-/** Resposta típica do Spring após criar pedido de correção. */
 export interface CorrectionRequestResponse {
   contact?: string;
   ai_prioridade?: string | null;
@@ -147,11 +129,9 @@ export type ListQuestionsParams = {
   category?: string;
   difficulty?: string;
   search?: string;
-  /** Alguns backends usam `q` em vez de `search`. */
   q?: string;
 };
 
-/** Origem do Spring (sem barra final). Mesma ordem que nas API Routes: BACKEND_URL → NEXT_PUBLIC_API_URL → NEXT_PUBLIC_BACKEND_URL. */
 export function getServerJavaBackendOrigin(): string {
   return resolveJavaApiBaseUrl();
 }
@@ -192,10 +172,7 @@ function unwrapQuestionsListJson(data: unknown): Question[] {
   throw new Error('Formato de resposta inesperado ao listar questões.');
 }
 
-/**
- * GET direto ao Spring `/api/v1/questions` (App Router, Route Handlers, etc.).
- * Requer `BACKEND_URL` ou `NEXT_PUBLIC_BACKEND_URL` (ou `NEXT_PUBLIC_API_URL` com URL http(s) do Java).
- */
+// GET /api/v1/questions no Spring (apenas servidor; exige URL do Java nas env).
 export async function serverGetQuestions(
   params: ListQuestionsParams = {},
   init?: RequestInit
@@ -250,16 +227,13 @@ class ApiService {
     };
 
     try {
-      // Log apenas em desenvolvimento
       if (isDevelopment()) {
         console.log('🔍 Fetching from:', url);
       }
-      
-      // Usar AbortController para melhor controle do timeout
-      // Timeout maior para operações de criação (POST/PUT)
+
       const isWriteOperation = options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH';
-      const timeoutDuration = isWriteOperation ? config.api.timeout * 2 : config.api.timeout; // 60s para escrita, 30s para leitura
-      
+      const timeoutDuration = isWriteOperation ? config.api.timeout * 2 : config.api.timeout;
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         if (isDevelopment()) {
@@ -277,8 +251,7 @@ class ApiService {
         clearTimeout(timeoutId);
       } catch (fetchError) {
         clearTimeout(timeoutId);
-        
-        // Melhor tratamento de erro de abort
+
         if (fetchError instanceof Error && fetchError.name === 'AbortError') {
           const timeoutMessage = `A requisição demorou mais de ${timeoutDuration / 1000} segundos para responder.`;
           if (isDevelopment()) {
@@ -294,15 +267,11 @@ class ApiService {
         
         throw fetchError;
       }
-      
+
       if (!response.ok) {
-        // Tratamento especial para erros de autenticação/autorização
         if (response.status === 401) {
-          // 401: Não Autorizado - Forçar logout
           if (typeof window !== 'undefined') {
-            // Limpar cache local
             localStorage.removeItem('habilitadev_user_cache');
-            // Redirecionar para login ou recarregar página
             const currentPath = window.location.pathname;
             if (!currentPath.includes('/login') && !currentPath.includes('/auth')) {
               window.location.href = '/?error=session_expired';
@@ -310,11 +279,9 @@ class ApiService {
           }
           throw new Error('Sessão expirada. Por favor, faça login novamente.');
         }
-        
+
         if (response.status === 403) {
-          // 403: Proibido - Mostrar toast de permissão insuficiente
           if (typeof window !== 'undefined') {
-            // Importar toast dinamicamente para evitar problemas de SSR
             import('@/hooks/use-toast').then(({ toast }) => {
               toast({
                 title: 'Acesso Negado',
@@ -322,7 +289,6 @@ class ApiService {
                 variant: 'destructive',
               });
             }).catch(() => {
-              // Fallback se toast não estiver disponível
               console.warn('Permissão insuficiente para esta ação');
             });
           }
@@ -347,22 +313,17 @@ class ApiService {
             'Backend indisponível. Configure BACKEND_URL, NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.'
           );
         }
-        
-        // Clonar response antes de ler para poder usar depois se necessário
-        const responseClone = response.clone();
+
         let errorMessage = `HTTP error! status: ${response.status}`;
         let errorDetails: any = null;
         let rawResponseText: string = '';
         
         try {
-          // Verificar Content-Type antes de processar
           const contentType = response.headers.get('content-type') || '';
           const isHTML = contentType.includes('text/html') || contentType.includes('application/xhtml');
-          
-          // Ler o corpo da resposta como texto primeiro para poder fazer parse depois
+
           rawResponseText = await response.text();
-          
-          // Se a resposta for HTML (página de erro), tratar especialmente
+
           if (isHTML || rawResponseText.trim().startsWith('<!DOCTYPE') || rawResponseText.trim().startsWith('<html')) {
             console.error('❌ Backend retornou página HTML de erro em vez de JSON');
             if (response.status === 502) {
@@ -372,8 +333,7 @@ class ApiService {
             }
             throw new Error(errorMessage);
           }
-          
-          // Tratamento especial para 502 Bad Gateway
+
           if (response.status === 502) {
             try {
               const errorData = JSON.parse(rawResponseText);
@@ -382,7 +342,6 @@ class ApiService {
               }
               errorDetails = errorData.details;
             } catch {
-              // Se não for JSON, usar mensagem padrão
               errorMessage = `O backend não está respondendo corretamente (502 Bad Gateway). Verifique se o servidor está rodando.`;
             }
             throw new Error(errorMessage);
@@ -392,9 +351,7 @@ class ApiService {
             try {
               const errorData = JSON.parse(rawResponseText);
               errorDetails = errorData;
-              
-              // Extrair mensagem de erro de diferentes formatos possíveis
-              // Prioridade: message > error (string) > error (object) > msg > statusText
+
               if (errorData.message) {
                 errorMessage = typeof errorData.message === 'string' ? errorData.message : errorMessage;
               } else if (errorData.error) {
@@ -408,10 +365,8 @@ class ApiService {
               } else if (errorData.detail) {
                 errorMessage = typeof errorData.detail === 'string' ? errorData.detail : errorMessage;
                 }
-              
-              // Para erros 400, incluir detalhes de validação se disponíveis
+
               if (response.status === 400) {
-                // Tentar extrair detalhes de validação de diferentes formatos
                 const validationErrors = errorData.details || errorData.errors || errorData.validation_errors;
                 if (validationErrors) {
                   let detailsStr = '';
@@ -420,7 +375,6 @@ class ApiService {
                   } else if (Array.isArray(validationErrors)) {
                     detailsStr = validationErrors.join(', ');
                   } else if (typeof validationErrors === 'object') {
-                    // Formato de objeto com campos e mensagens
                     const errorFields = Object.keys(validationErrors).map(key => {
                       const value = validationErrors[key];
                       return `${key}: ${Array.isArray(value) ? value.join(', ') : value}`;
@@ -432,8 +386,7 @@ class ApiService {
                     errorMessage += `\n\nDetalhes: ${detailsStr}`;
                   }
                 }
-                
-                // Se ainda não temos uma mensagem específica, usar o texto completo
+
                 if (errorMessage === `HTTP error! status: ${response.status}` && rawResponseText) {
                   errorMessage = rawResponseText.length > 200 
                     ? rawResponseText.substring(0, 200) + '...' 
@@ -441,20 +394,15 @@ class ApiService {
                 }
               }
             } catch (parseError) {
-              // Se não for JSON válido, usar o texto diretamente
               errorMessage = rawResponseText || errorMessage;
             }
           }
         } catch (readError) {
-          // Se não conseguir ler o corpo, usar mensagem padrão
-          // Apenas logar em desenvolvimento
           if (isDevelopment()) {
             console.error('❌ Failed to read error response:', readError);
           }
         }
-        
-        // Log apenas erros críticos ou em desenvolvimento
-        // 503 (Service Unavailable) é esperado quando backend não está configurado
+
         if (response.status !== 503 && isDevelopment()) {
           console.error('❌ API Error:', response.status, errorMessage);
           if (errorDetails) {
@@ -468,12 +416,10 @@ class ApiService {
       }
 
       const data = await response.json();
-      // Log apenas em desenvolvimento
       if (isDevelopment()) {
         console.log('✅ API Response:', data);
       }
-      
-      // Processar resposta (arrays diretos, envelope { success, data }, Spring Page { content }, etc.)
+
       let processedData: T;
       if (Array.isArray(data)) {
         processedData = data as T;
@@ -495,33 +441,27 @@ class ApiService {
         message: 'Success'
       };
     } catch (error) {
-      // Log apenas em desenvolvimento ou para erros não esperados
       if (isDevelopment()) {
-        // Não logar erros 503 (Service Unavailable) - são esperados quando backend não está configurado
         if (!(error instanceof Error && error.message.includes('Service Unavailable'))) {
           console.error('❌ API request failed:', error);
         }
       }
-      
-      // Melhorar mensagens de erro para timeouts e conexão
+
       if (error instanceof Error) {
-        // Erro de abort/timeout
         if (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('aborted')) {
           const timeoutMsg = error.message.includes('segundos') 
             ? error.message 
             : 'A requisição demorou muito para responder. Verifique se o backend está rodando e tente novamente.';
           throw new Error(timeoutMsg);
         }
-        
-        // Erro de conexão recusada (backend não está rodando)
+
         if (error.message.includes('ERR_CONNECTION_REFUSED') || 
             error.message.includes('ECONNREFUSED') ||
             error.message.includes('Connection refused')) {
           const backendUrl = config.api.backendUrl || 'o backend';
           throw new Error(`Não foi possível conectar ao backend em ${backendUrl}. Verifique se o servidor está rodando na porta 8080.`);
         }
-        
-        // Erro de rede/conexão genérico
+
         if (error.message.includes('Failed to fetch') || 
             error.message.includes('NetworkError') || 
             error.message.includes('ERR_') ||
@@ -535,7 +475,6 @@ class ApiService {
     }
   }
 
-  // Questions → proxy Next → GET/POST Spring /api/v1/questions
   async listQuestions(
     params: ListQuestionsParams = {}
   ): Promise<ApiResponse<Question[]>> {
@@ -576,7 +515,6 @@ class ApiService {
     });
   }
 
-  // Answers endpoints - ✅ Usando rewrites (proxy automático)
   async getAnswers(questionId: number): Promise<ApiResponse<Answer[]>> {
     return this.request<Answer[]>(`/proxy/questions/${questionId}/answers`);
   }
@@ -590,7 +528,7 @@ class ApiService {
       .toUpperCase()
       .slice(0, 1);
     const rawContent = String(answer.content ?? "").trim();
-    /** Com `mcq_choice`, o backend valida a letra; não acrescentar sufixo ao `content` (quebrava a regra A–D). */
+    // Com mcq_choice o Spring valida a letra; não padronizar content.
     const content =
       mcqChoice.length > 0
         ? rawContent
@@ -605,7 +543,6 @@ class ApiService {
       answerData.mcq_choice = mcqChoice;
     }
 
-    // Log apenas em desenvolvimento
     if (isDevelopment()) {
       console.log("🔍 Enviando resposta:", answerData);
     }
@@ -616,7 +553,6 @@ class ApiService {
     });
   }
 
-  // Comments endpoints - ✅ Usando rewrites (proxy automático)
   async getComments(questionId: number): Promise<ApiResponse<Comment[]>> {
     return this.request<Comment[]>(`/proxy/questions/${questionId}/comments`);
   }
@@ -628,7 +564,6 @@ class ApiService {
     });
   }
 
-  // Feedback endpoints - ✅ Usando rewrites (proxy automático)
   async getFeedback(questionId: number): Promise<ApiResponse<Feedback[]>> {
     return this.request<Feedback[]>(`/proxy/questions/${questionId}/feedback`);
   }
@@ -640,7 +575,6 @@ class ApiService {
     });
   }
 
-  /** Pedido de correção / contacto (Spring POST /api/v1/correction-requests). */
   async createCorrectionRequest(
     body: CorrectionRequestBody
   ): Promise<ApiResponse<CorrectionRequestResponse>> {
@@ -650,7 +584,6 @@ class ApiService {
     });
   }
 
-  // Contact endpoints
   async createContact(contact: Omit<Contact, 'id' | 'status' | 'created_at' | 'updated_at' | 'resolved_at' | 'admin_notes'>): Promise<ApiResponse<Contact>> {
     return this.request<Contact>('/proxy/contacts', {
       method: 'POST',
@@ -658,7 +591,6 @@ class ApiService {
     });
   }
 
-  // Health check
   async healthCheck(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
     return this.request<{ status: string; timestamp: string }>('/proxy/health');
   }
@@ -667,13 +599,13 @@ class ApiService {
 export const apiService = new ApiService();
 export default apiService;
 
-/** Lista questões via BFF Next (browser ou servidor com origem absoluta). Útil com `useEffect` / actions no cliente. */
+// Lista questões via BFF (/api/proxy).
 export async function getQuestions(params: ListQuestionsParams = {}): Promise<Question[]> {
   const { data } = await apiService.listQuestions(params);
   return data;
 }
 
-/** Cria questão via BFF Next (POST → proxy → Spring). */
+// Cria questão via BFF.
 export async function createQuestion(
   question: Omit<Question, 'id' | 'created_at'>
 ): Promise<Question> {

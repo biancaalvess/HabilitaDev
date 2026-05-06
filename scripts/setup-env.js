@@ -1,161 +1,74 @@
 #!/usr/bin/env node
 
+/**
+ * Copies `.env.example` to `.env.local` for local development.
+ */
+
 const fs = require('fs');
 const path = require('path');
 
-const envFiles = {
-  development: 'env.local.example',
-  production: 'env.production.example',
-  test: 'env.test.example',
-};
-
-const configFiles = {
-  development: 'config/development.json',
-  production: 'config/production.json',
-  test: 'config/test.json',
-};
-
-function createEnvFile(environment) {
-  const envFile = envFiles[environment];
-  const configFile = configFiles[environment];
-  
-  if (!envFile || !fs.existsSync(envFile)) {
-    console.log(`❌ Arquivo de exemplo não encontrado: ${envFile}`);
-    return false;
-  }
-  
-  if (!configFile || !fs.existsSync(configFile)) {
-    console.log(`❌ Arquivo de configuração não encontrado: ${configFile}`);
-    return false;
-  }
-  
-  const targetEnvFile = `.env.${environment}`;
-  const targetLocalFile = environment === 'development' ? '.env.local' : `.env.${environment}`;
-  
-  try {
-    // Copiar arquivo de exemplo
-    fs.copyFileSync(envFile, targetEnvFile);
-    console.log(`✅ Criado ${targetEnvFile}`);
-    
-    // Para desenvolvimento, também criar .env.local
-    if (environment === 'development') {
-      fs.copyFileSync(envFile, targetLocalFile);
-      console.log(`✅ Criado ${targetLocalFile}`);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error(`❌ Erro ao criar arquivo de ambiente:`, error.message);
-    return false;
-  }
-}
-
-function validateEnvironment(environment) {
-  const envFile = `.env.${environment}`;
-  const localFile = environment === 'development' ? '.env.local' : envFile;
-  
-  if (!fs.existsSync(envFile) && !fs.existsSync(localFile)) {
-    console.log(`❌ Arquivo de ambiente não encontrado para ${environment}`);
-    return false;
-  }
-  
-  console.log(`✅ Ambiente ${environment} configurado corretamente`);
-  return true;
-}
+const root = process.cwd();
+const examplePath = path.join(root, '.env.example');
+const localPath = path.join(root, '.env.local');
 
 function showHelp() {
-  console.log(`
-🔧 Script de Configuração de Ambiente - HabilitaDev
+  console.log(`Environment helper
 
-Uso:
-  node scripts/setup-env.js <comando> [ambiente]
-
-Comandos:
-  init <ambiente>    - Inicializar configuração para ambiente específico
-  validate <ambiente> - Validar configuração do ambiente
-  list              - Listar ambientes disponíveis
-  help              - Mostrar esta ajuda
-
-Ambientes disponíveis:
-  development       - Ambiente de desenvolvimento
-  production        - Ambiente de produção
-  test             - Ambiente de testes
-
-Exemplos:
-  node scripts/setup-env.js init development
-  node scripts/setup-env.js validate production
-  node scripts/setup-env.js list
+Usage:
+  node scripts/setup-env.js init       Create .env.local from .env.example (skips if .env.local exists)
+  node scripts/setup-env.js validate   Verify .env.local or .env exists
+  node scripts/setup-env.js list        Show template and local file status
+  node scripts/setup-env.js help        This message
 `);
 }
 
-function listEnvironments() {
-  console.log('📋 Ambientes disponíveis:\n');
-  
-  Object.keys(envFiles).forEach(env => {
-    const envFile = envFiles[env];
-    const configFile = configFiles[env];
-    const envExists = fs.existsSync(envFile);
-    const configExists = fs.existsSync(configFile);
-    
-    console.log(`  ${env}:`);
-    console.log(`    📄 Exemplo: ${envFile} ${envExists ? '✅' : '❌'}`);
-    console.log(`    ⚙️  Config: ${configFile} ${configExists ? '✅' : '❌'}`);
-    console.log('');
-  });
+function cmdInit() {
+  if (!fs.existsSync(examplePath)) {
+    console.error('Missing .env.example in project root.');
+    process.exit(1);
+  }
+  if (fs.existsSync(localPath)) {
+    console.log('.env.local already exists; not overwriting.');
+    return;
+  }
+  fs.copyFileSync(examplePath, localPath);
+  console.log('Created .env.local from .env.example — edit values before running the app.');
 }
 
-// Main
-const command = process.argv[2];
-const environment = process.argv[3];
+function cmdValidate() {
+  const hasLocal = fs.existsSync(localPath);
+  const hasEnv = fs.existsSync(path.join(root, '.env'));
+  if (!hasLocal && !hasEnv) {
+    console.error('No .env.local or .env found. Run: npm run env:init');
+    process.exit(1);
+  }
+  console.log(hasLocal ? '.env.local present.' : '.env present.');
+}
+
+function cmdList() {
+  console.log(`Template: ${examplePath}  ${fs.existsSync(examplePath) ? 'ok' : 'missing'}`);
+  console.log(`Local:    ${localPath}  ${fs.existsSync(localPath) ? 'ok' : 'missing'}`);
+}
+
+const command = process.argv[2] || 'help';
 
 switch (command) {
   case 'init':
-    if (!environment) {
-      console.log('❌ Ambiente não especificado');
-      showHelp();
-      process.exit(1);
-    }
-    
-    if (!envFiles[environment]) {
-      console.log(`❌ Ambiente inválido: ${environment}`);
-      showHelp();
-      process.exit(1);
-    }
-    
-    console.log(`🚀 Inicializando ambiente ${environment}...`);
-    if (createEnvFile(environment)) {
-      console.log(`✅ Ambiente ${environment} inicializado com sucesso!`);
-      console.log(`\n📝 Próximos passos:`);
-      console.log(`   1. Edite o arquivo .env.${environment} com suas configurações`);
-      console.log(`   2. Execute: npm run dev`);
-    } else {
-      process.exit(1);
-    }
+    cmdInit();
     break;
-    
   case 'validate':
-    if (!environment) {
-      console.log('❌ Ambiente não especificado');
-      showHelp();
-      process.exit(1);
-    }
-    
-    console.log(`🔍 Validando ambiente ${environment}...`);
-    validateEnvironment(environment);
+    cmdValidate();
     break;
-    
   case 'list':
-    listEnvironments();
+    cmdList();
     break;
-    
   case 'help':
   case '--help':
   case '-h':
     showHelp();
     break;
-    
   default:
-    console.log('❌ Comando inválido');
+    console.error(`Unknown command: ${command}`);
     showHelp();
     process.exit(1);
 }

@@ -6,7 +6,6 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    // Banco de dados removido - retornar estatísticas vazias
     const stats = {
       totalUsers: 0,
       totalQuestions: 0,

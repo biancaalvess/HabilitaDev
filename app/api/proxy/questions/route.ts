@@ -3,14 +3,12 @@ import { config } from '@/lib/config-simple';
 
 const BACKEND_URL = config.api.backendUrl;
 
-// Helper para verificar se estamos em desenvolvimento
 const isDevelopment = () => {
   return process.env.NODE_ENV === 'development';
 };
 
 export async function GET(request: NextRequest) {
   try {
-    // Verificar se BACKEND_URL está configurado
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -53,8 +51,7 @@ export async function GET(request: NextRequest) {
       });
 
       clearTimeout(timeoutId);
-      
-      // Verificar se a resposta é um erro 502 (Bad Gateway)
+
       if (response.status === 502) {
         console.error('❌ 502 Bad Gateway - Backend não está respondendo corretamente');
         return NextResponse.json(
@@ -92,7 +89,6 @@ export async function GET(request: NextRequest) {
           },
         });
       } else {
-        // Repassar status e mensagem do backend
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         
@@ -198,7 +194,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar se BACKEND_URL está configurado
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -217,7 +212,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Tentar fazer parse do body com tratamento de erro
     let body;
     try {
       body = await request.json();
@@ -244,8 +238,7 @@ export async function POST(request: NextRequest) {
     console.log('🌐 Creating question on backend:', url);
     console.log('📦 Request body:', JSON.stringify(body, null, 2));
     console.log('⏱️ Timeout configurado:', config.api.timeout, 'ms');
-    
-    // Timeout maior para criação (60 segundos)
+
     const timeoutDuration = config.api.timeout * 2;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
@@ -268,16 +261,13 @@ export async function POST(request: NextRequest) {
 
       clearTimeout(timeoutId);
 
-      // Verificar Content-Type antes de processar
       const contentType = response.headers.get('content-type') || '';
       const isHTML = contentType.includes('text/html') || contentType.includes('application/xhtml');
-      
-      // Ler resposta como texto primeiro para verificar se é HTML
+
       const responseText = await response.text();
       const isHTMLResponse = isHTML || responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html');
 
       if (response.ok) {
-        // Se a resposta for HTML, algo está errado
         if (isHTMLResponse) {
           console.error('❌ Backend retornou HTML em vez de JSON. Backend pode estar offline ou com erro.');
           return NextResponse.json(
@@ -315,10 +305,8 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        // Repassar status e mensagem do backend
         let errorData: any = { error: response.statusText };
-        
-        // Se a resposta for HTML (página de erro), tratar especialmente
+
         if (isHTMLResponse) {
           console.error('❌ Backend retornou página HTML de erro:', response.status);
           errorData = {
@@ -336,12 +324,10 @@ export async function POST(request: NextRequest) {
         
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         console.error('📋 Backend error details:', JSON.stringify(errorData, null, 2));
-        
-        // Mensagem mais específica para diferentes status codes
+
         let errorMessage = 'Erro ao criar questão';
-        
+
         if (response.status === 400) {
-          // 400: Bad Request - geralmente erro de validação
           errorMessage = errorData.message || errorData.error || 'Dados inválidos. Verifique os campos preenchidos.';
           if (errorData.details) {
             errorMessage += ` Detalhes: ${JSON.stringify(errorData.details)}`;

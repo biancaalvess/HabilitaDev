@@ -8,7 +8,6 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verificar se BACKEND_URL está configurado
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -51,7 +50,6 @@ export async function GET(
         const data = await response.json();
         console.log('✅ Successfully fetched comments from backend');
         
-        // Garantir que sempre retornamos um array
         const comments = Array.isArray(data) ? data : [];
         
         return NextResponse.json(comments, {
@@ -64,7 +62,6 @@ export async function GET(
           },
         });
       } else if (response.status === 404) {
-        // 404 significa que não há comentários ainda - retornar array vazio
         console.log('ℹ️ No comments found (404) - returning empty array');
         return NextResponse.json([], {
           status: 200,
@@ -76,7 +73,6 @@ export async function GET(
           },
         });
       } else {
-        // Repassar status e mensagem do backend para outros erros
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         
@@ -147,7 +143,6 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verificar se BACKEND_URL está configurado
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -202,7 +197,6 @@ export async function POST(
           },
         });
       } else {
-        // Repassar status e mensagem do backend
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         

@@ -13,8 +13,6 @@ export async function POST(
     const body = await request.json();
     console.log('[VALIDAÇÃO] Dados recebidos:', body);
 
-    // O backend é a única fonte da verdade
-    // Ele decide se usa IA ou validação simples internamente
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -33,8 +31,6 @@ export async function POST(
       );
     }
 
-    // Apontando para a rota de validação dedicada no grupo 'validation'
-    // O backend gerencia internamente: tenta IA primeiro, se falhar usa validação simples
     const url = `${BACKEND_URL}/api/v1/validation/${params.id}/validate-answer`;
     console.log(`[VALIDAÇÃO] Enviando para backend: ${url}`);
     
@@ -58,7 +54,6 @@ export async function POST(
         const data = await response.json();
         console.log('[VALIDAÇÃO] Resultado recebido do backend:', data);
 
-        // O backend já retorna o método de validação usado (ai, backend, etc)
         return NextResponse.json({
           success: true,
           data: data,
@@ -73,7 +68,6 @@ export async function POST(
           },
         });
       } else {
-        // Repassar status e mensagem do backend
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         
@@ -100,8 +94,7 @@ export async function POST(
       const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('aborted');
       
       console.error(`❌ Backend unavailable: ${errorMessage}`);
-      
-      // Erro: Backend indisponível
+
       return NextResponse.json({
         success: false,
         error: 'Service Unavailable',

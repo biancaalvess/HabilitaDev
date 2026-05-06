@@ -5,7 +5,6 @@ const BACKEND_URL = config.api.backendUrl;
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar se BACKEND_URL está configurado
     if (!BACKEND_URL) {
       console.error('❌ BACKEND_URL não configurado');
       return NextResponse.json(
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Tentar fazer parse do body
     let body;
     try {
       body = await request.json();
@@ -84,7 +82,6 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        // Repassar status e mensagem do backend
         let errorData: any = { error: response.statusText };
         try {
           const responseText = await response.text();
@@ -102,7 +99,6 @@ export async function POST(request: NextRequest) {
         console.error(`❌ Backend returned ${response.status}: ${response.statusText}`);
         console.error('📋 Backend error details:', JSON.stringify(errorData, null, 2));
         
-        // Mensagem mais específica para diferentes status codes
         let errorMessage = 'Erro ao criar contato';
         
         if (response.status === 400) {
