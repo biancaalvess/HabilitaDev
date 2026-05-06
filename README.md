@@ -34,7 +34,7 @@ pnpm run env:init
 
 | Variável | Função |
 |----------|--------|
-| `NEXT_PUBLIC_BACKEND_URL` | URL base do Spring (`http://` ou `https://`, sem barra no fim). Usada no proxy e no bundle; única variável para o host Java. |
+| `NEXT_PUBLIC_BACKEND_URL` | URL base do Spring (sem barra no fim). Podes omitir `https://` em hosts remotos (o código prefixa `https://`; `localhost` usa `http://`). |
 | `NEXT_PUBLIC_APP_URL` | Origem da app Next (ex.: `http://localhost:3001`) para `fetch` absoluto a `/api/proxy/*` em SSR. |
 | `NEXT_PUBLIC_APP_API_BASE` | (Opcional) Prefixo das rotas BFF no cliente; por defeito `/api`. |
 
@@ -113,7 +113,7 @@ pnpm run env:init
 
 | Variable | Role |
 |----------|------|
-| `NEXT_PUBLIC_BACKEND_URL` | Spring base URL (`http://` or `https://`, no trailing slash). Single source for the Java host (proxy + client bundle). |
+| `NEXT_PUBLIC_BACKEND_URL` | Spring base URL (no trailing slash). You may omit `https://` for remote hosts (code prepends `https://`; `localhost` uses `http://`). |
 | `NEXT_PUBLIC_APP_URL` | Next app origin (e.g. `http://localhost:3001`) for absolute `fetch` to `/api/proxy/*` during SSR. |
 | `NEXT_PUBLIC_APP_API_BASE` | (Optional) BFF path prefix for the client; default `/api`. |
 

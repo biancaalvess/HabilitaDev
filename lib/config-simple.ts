@@ -5,9 +5,23 @@ function normalizeBackendBase(url: string): string {
   return url.replace(/\/+$/, '')
 }
 
+/** Aceita host sem esquema (ex. *.railway.app) e prefixa https://; localhost → http:// */
+function withHttpScheme(raw: string): string {
+  const t = raw.trim().replace(/^\/+/, '')
+  if (!t) return ''
+  if (/^https?:\/\//i.test(t)) return t
+  const hostOnly = t.split('/')[0] ?? ''
+  const local =
+    hostOnly === 'localhost' ||
+    hostOnly.startsWith('localhost:') ||
+    hostOnly === '127.0.0.1' ||
+    hostOnly.startsWith('127.0.0.1:')
+  return `${local ? 'http' : 'https'}://${t}`
+}
+
 /** URL base do Spring (sem barra final). Única fonte: NEXT_PUBLIC_BACKEND_URL. */
 export function resolveJavaApiBaseUrl(): string {
-  return normalizeBackendBase((process.env.NEXT_PUBLIC_BACKEND_URL || '').trim())
+  return normalizeBackendBase(withHttpScheme(process.env.NEXT_PUBLIC_BACKEND_URL || ''))
 }
 
 /** Prefixo das rotas Next usadas pelo cliente (ex. /api → /api/proxy/...). */
@@ -25,7 +39,7 @@ export function missingJavaBackendJson() {
     code: 'NEXT_PUBLIC_BACKEND_URL_MISSING',
     message: 'URL do backend Spring não está configurada neste ambiente.',
     hint:
-      'Defina NEXT_PUBLIC_BACKEND_URL=https://… (URL http(s) completa do Java, sem barra no fim). Na Vercel: Settings → Environment Variables → Production → Save → Redeploy.',
+      'Defina NEXT_PUBLIC_BACKEND_URL (ex.: https://… ou só o host; sem https o projeto assume https em produção). Vercel: Environment Variables → Production → Redeploy.',
   } as const
 }
 
