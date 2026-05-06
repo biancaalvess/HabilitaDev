@@ -77,9 +77,9 @@ export async function GET(request: NextRequest) {
         status: 'not_configured',
         url: '',
         lastChecked: new Date().toISOString(),
-        error: 'BACKEND_URL não configurado',
+        error: 'NEXT_PUBLIC_BACKEND_URL não configurado',
       };
-      console.log('ℹ️ BACKEND_URL não configurado, pulando verificação de backend');
+      console.log('ℹ️ NEXT_PUBLIC_BACKEND_URL não configurado, pulando verificação de backend');
     }
 
     const overallStatus = 

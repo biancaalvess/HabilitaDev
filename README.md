@@ -8,9 +8,9 @@ Front-end em Next.js (App Router) para prática de questões técnicas, integrad
 
 ### Visão geral
 
-O repositório contém a aplicação web. O domínio de negócio (questões, respostas, comentários, contactos, pedidos de correção) é servido por um backend externo em `/api/v1`. O Next.js expõe rotas em `/api/proxy/*` que fazem proxy para esse backend, evitando expor a origem do Java no browser quando usas apenas variáveis de servidor e o prefixo de API interno.
+O repositório contém a aplicação web. O domínio de negócio (questões, respostas, comentários, contactos, pedidos de correção) é servido por um backend externo em `/api/v1`. O Next.js expõe rotas em `/api/proxy/*` que fazem proxy para esse backend; a URL do Spring vem de `NEXT_PUBLIC_BACKEND_URL`.
 
-O módulo `lib/api.ts` concentra chamadas HTTP: no cliente e em Server Actions usa o BFF; em Server Components podes optar por `serverGetQuestions` (fetch direto ao Spring) quando as variáveis de ambiente do servidor estiverem definidas.
+O módulo `lib/api.ts` concentra chamadas HTTP: no cliente e em Server Actions usa o BFF; em Server Components podes usar `serverGetQuestions` (fetch direto ao Spring) com `NEXT_PUBLIC_BACKEND_URL` definida.
 
 ### Requisitos
 
@@ -32,14 +32,13 @@ pnpm run env:init
 
 ### Variáveis de ambiente
 
-| Variável | Onde é lida | Função |
-|----------|-------------|--------|
-| `BACKEND_URL` | Servidor (Route Handlers, RSC com fetch direto) | URL base do Spring; prioridade máxima; não entra no bundle do cliente. |
-| `NEXT_PUBLIC_API_URL` | Servidor e cliente | Se for `http(s)://`, trata-se da URL do Java (mesmo papel que `BACKEND_URL` / `NEXT_PUBLIC_BACKEND_URL` na resolução). Se for um path (ex.: `/api`), define o prefixo do BFF no cliente. |
-| `NEXT_PUBLIC_BACKEND_URL` | Servidor e cliente | URL pública do Java quando não usas `BACKEND_URL` / `NEXT_PUBLIC_API_URL` como URL absoluta. |
-| `NEXT_PUBLIC_APP_URL` | Servidor | Origem da app Next (ex.: `http://localhost:3001`) para `fetch` absoluto a `/api/proxy/*` em SSR. |
+| Variável | Função |
+|----------|--------|
+| `NEXT_PUBLIC_BACKEND_URL` | URL base do Spring (`http://` ou `https://`, sem barra no fim). Usada no proxy e no bundle; única variável para o host Java. |
+| `NEXT_PUBLIC_APP_URL` | Origem da app Next (ex.: `http://localhost:3001`) para `fetch` absoluto a `/api/proxy/*` em SSR. |
+| `NEXT_PUBLIC_APP_API_BASE` | (Opcional) Prefixo das rotas BFF no cliente; por defeito `/api`. |
 
-A resolução da URL do Java está em `lib/config-simple.ts` (`resolveJavaApiBaseUrl`, `resolveNextClientApiBase`). Em produção, o arranque valida HTTPS e ausência de localhost na URL do backend.
+A URL do Java resolve-se em `lib/config-simple.ts` (`resolveJavaApiBaseUrl` → só `NEXT_PUBLIC_BACKEND_URL`). Em produção, o arranque exige HTTPS e proíbe localhost nessa URL.
 
 ### Scripts
 
@@ -76,7 +75,7 @@ Autenticação: o ficheiro `lib/auth.tsx` define um contexto mínimo (sem utiliz
 - Define `JWT_SECRET` forte em produção; o repositório inclui valores de exemplo apenas para desenvolvimento.
 - Para tráfego real, o backend Java deve estar em HTTPS e acessível a partir do ambiente onde corre o Next.
 
-**Vercel (503 no `/api/proxy/...`)**: em *Project Settings → Environment Variables*, define `BACKEND_URL` com a URL `https` do Spring (recomendado) ou `NEXT_PUBLIC_BACKEND_URL` / `NEXT_PUBLIC_API_URL` com URL absoluta. Ativa para *Production* (e *Preview* se precisares), guarda e faz **Redeploy**. Se `NEXT_PUBLIC_API_URL` for só um path (`/api`), o proxy não descobre o Java: precisas sempre de uma das variáveis com URL `http(s)://` do backend.
+**Vercel (503 no `/api/proxy/...`)**: em *Settings → Environment Variables*, define `NEXT_PUBLIC_BACKEND_URL` com a URL `https://` do Spring (valor absoluto, não uses `localhost`). Marca *Production*, guarda e faz **Redeploy**.
 
 ### Licença
 
@@ -88,9 +87,9 @@ O campo `license` não está definido em `package.json`; o pacote está marcado 
 
 ### Overview
 
-This repository contains the web application. Business logic (questions, answers, comments, contacts, correction requests) is provided by an external Java (Spring Boot) REST API under `/api/v1`. Next.js exposes `/api/proxy/*` Route Handlers that proxy to the Java service so the browser does not need the Spring origin when you rely on server-only env vars and the internal API prefix.
+This repository contains the web application. Business logic (questions, answers, comments, contacts, correction requests) is provided by an external Java (Spring Boot) REST API under `/api/v1`. Next.js exposes `/api/proxy/*` Route Handlers that proxy to the Java service; the Spring base URL is read from `NEXT_PUBLIC_BACKEND_URL`.
 
-`lib/api.ts` centralizes HTTP: client code and Server Actions use the BFF; in Server Components you may use `serverGetQuestions` for a direct Spring `fetch` when server environment variables are set.
+`lib/api.ts` centralizes HTTP: client code and Server Actions use the BFF; in Server Components you may use `serverGetQuestions` for a direct Spring `fetch` when `NEXT_PUBLIC_BACKEND_URL` is set (server-side).
 
 ### Prerequisites
 
@@ -112,14 +111,13 @@ pnpm run env:init
 
 ### Environment variables
 
-| Variable | Scope | Role |
-|----------|-------|------|
-| `BACKEND_URL` | Server only | Spring base URL; highest priority; not shipped to the browser bundle. |
-| `NEXT_PUBLIC_API_URL` | Server and client | If it is `http(s)://`, it is treated as the Java URL. If it is a path (e.g. `/api`), it sets the client BFF prefix. |
-| `NEXT_PUBLIC_BACKEND_URL` | Server and client | Public Java URL when `BACKEND_URL` / `NEXT_PUBLIC_API_URL` are not set as an absolute Java URL. |
-| `NEXT_PUBLIC_APP_URL` | Server | Next app origin (e.g. `http://localhost:3001`) for absolute `fetch` to `/api/proxy/*` during SSR. |
+| Variable | Role |
+|----------|------|
+| `NEXT_PUBLIC_BACKEND_URL` | Spring base URL (`http://` or `https://`, no trailing slash). Single source for the Java host (proxy + client bundle). |
+| `NEXT_PUBLIC_APP_URL` | Next app origin (e.g. `http://localhost:3001`) for absolute `fetch` to `/api/proxy/*` during SSR. |
+| `NEXT_PUBLIC_APP_API_BASE` | (Optional) BFF path prefix for the client; default `/api`. |
 
-Resolution logic lives in `lib/config-simple.ts` (`resolveJavaApiBaseUrl`, `resolveNextClientApiBase`). Production startup checks HTTPS and disallows localhost for the Java base URL.
+Resolution lives in `lib/config-simple.ts` (`resolveJavaApiBaseUrl` reads only `NEXT_PUBLIC_BACKEND_URL`). Production startup enforces HTTPS and disallows localhost for that URL.
 
 ### NPM scripts
 
@@ -156,7 +154,7 @@ Authentication: `lib/auth.tsx` exposes a minimal context (no signed-in user). Do
 - Set a strong `JWT_SECRET` in production; sample values are for local use only.
 - Production Java endpoints should use HTTPS and be reachable from the Next runtime.
 
-**Vercel (503 on `/api/proxy/...`)**: in *Project Settings → Environment Variables*, set `BACKEND_URL` to your Spring `https` origin (preferred), or `NEXT_PUBLIC_BACKEND_URL` / `NEXT_PUBLIC_API_URL` as a full `http(s)://` URL. Enable for *Production* (and *Preview* if needed), save, then **Redeploy**. If `NEXT_PUBLIC_API_URL` is only a path (e.g. `/api`), the proxy cannot infer the Java host; you still need one variable with the backend’s absolute URL.
+**Vercel (503 on `/api/proxy/...`)**: under *Settings → Environment Variables*, set `NEXT_PUBLIC_BACKEND_URL` to your Spring `https` origin (absolute URL, not `localhost`). Enable for *Production*, save, then **Redeploy**.
 
 ### License
 

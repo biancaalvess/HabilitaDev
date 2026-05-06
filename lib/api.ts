@@ -172,7 +172,7 @@ function unwrapQuestionsListJson(data: unknown): Question[] {
   throw new Error('Formato de resposta inesperado ao listar questões.');
 }
 
-// GET /api/v1/questions no Spring (apenas servidor; exige URL do Java nas env).
+// GET /api/v1/questions no Spring (só servidor; usa NEXT_PUBLIC_BACKEND_URL).
 export async function serverGetQuestions(
   params: ListQuestionsParams = {},
   init?: RequestInit
@@ -181,7 +181,7 @@ export async function serverGetQuestions(
   const origin = resolveJavaApiBaseUrl();
   if (!origin) {
     throw new Error(
-      'URL do backend em falta. Defina BACKEND_URL (recomendado no servidor), NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL (Java).'
+      'URL do backend em falta. Defina NEXT_PUBLIC_BACKEND_URL (URL http(s) do Java).'
     );
   }
   const qs = buildListQuestionsQueryString(params);
@@ -310,7 +310,7 @@ class ApiService {
         
         if (response.status === 503) {
           throw new Error(
-            'Backend indisponível. Configure BACKEND_URL, NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL (Java) e confirme que o Spring está a correr.'
+            'Backend indisponível. Configure NEXT_PUBLIC_BACKEND_URL e confirme que o Spring está a correr.'
           );
         }
 

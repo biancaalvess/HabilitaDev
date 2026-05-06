@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const BACKEND_URL = resolveJavaApiBaseUrl();
     if (!BACKEND_URL) {
-      console.error('JAVA backend URL missing (BACKEND_URL / NEXT_PUBLIC_BACKEND_URL / NEXT_PUBLIC_API_URL)');
+      console.error('JAVA backend URL missing (NEXT_PUBLIC_BACKEND_URL)');
       return noJavaBackendResponse();
     }
 
@@ -103,11 +103,19 @@ export async function GET(request: NextRequest) {
       const isConnectionRefused = errorMessage.includes('ERR_CONNECTION_REFUSED') || 
                                   errorMessage.includes('ECONNREFUSED') ||
                                   errorMessage.includes('Connection refused');
-      const isNetworkError = errorMessage.includes('Failed to fetch') || 
-                            errorMessage.includes('NetworkError') || 
-                            errorMessage.includes('ENOTFOUND') ||
-                            errorMessage.includes('Network request failed');
-      
+      const isNetworkError =
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('NetworkError') ||
+        errorMessage.includes('ENOTFOUND') ||
+        errorMessage.includes('getaddrinfo') ||
+        errorMessage.includes('fetch failed') ||
+        errorMessage.includes('ECONNRESET') ||
+        errorMessage.includes('ETIMEDOUT') ||
+        errorMessage.includes('certificate') ||
+        errorMessage.includes('SSL') ||
+        errorMessage.includes('UNABLE_TO_VERIFY') ||
+        errorMessage.includes('Network request failed');
+
       console.error(`❌ Erro ao conectar com backend:`, {
         error: errorMessage,
         name: errorName,
@@ -117,38 +125,44 @@ export async function GET(request: NextRequest) {
         isConnectionRefused: isConnectionRefused,
         isNetworkError: isNetworkError
       });
-      
-      let userMessage = 'Backend indisponível. Verifique se o servidor está rodando.';
+
+      let userMessage = 'O Next não conseguiu contactar o Spring nesta URL.';
       let statusCode = 503;
-      
+
       if (isConnectionRefused) {
-        userMessage = `Não foi possível conectar ao backend em ${BACKEND_URL}. O servidor pode não estar rodando. Verifique se o backend está iniciado na porta 8080.`;
-        statusCode = 503; // Service Unavailable
+        userMessage = `Recusada ligação a ${BACKEND_URL} (ECONNREFUSED). O host não aceita tráfego ou a URL aponta para localhost a partir da Vercel.`;
+        statusCode = 503;
       } else if (isNetworkError) {
-        userMessage = `Não foi possível conectar ao backend em ${BACKEND_URL}. Verifique se o servidor está rodando e acessível.`;
-        statusCode = 502; // Bad Gateway
+        userMessage = `Erro de rede/TLS ao chamar ${BACKEND_URL}. Confirma DNS, HTTPS válido e que o serviço aceita pedidos da internet (não uses http://localhost na env de produção).`;
+        statusCode = 502;
       } else if (isTimeout) {
-        userMessage = `A requisição demorou mais de ${config.api.timeout / 1000} segundos. O backend pode estar sobrecarregado ou não está respondendo.`;
+        userMessage = `Timeout (${config.api.timeout / 1000}s) ao falar com ${BACKEND_URL}. Serviço a dormir (ex. Render free) ou sobrecarregado.`;
       }
-      
+
+      const hint =
+        'Na Vercel define NEXT_PUBLIC_BACKEND_URL com a URL pública https do Spring (ex. Render). Testa: curl -sS "' +
+        BACKEND_URL +
+        '/health" e "' +
+        BACKEND_URL +
+        '/api/v1/questions?page=1&limit=1" a partir da tua máquina.';
+
+      const onVercel = Boolean(process.env.VERCEL);
+      const diagnostic =
+        onVercel || isDevelopment()
+          ? { attemptedUrl: url, cause: errorMessage.slice(0, 280) }
+          : undefined;
+
       return NextResponse.json(
-        { 
+        {
           error: statusCode === 502 ? 'Bad Gateway' : 'Service Unavailable',
+          code: 'PROXY_FETCH_FAILED',
           message: userMessage,
-          details: isDevelopment() ? {
-            error: errorMessage,
-            errorName: errorName,
-            backendUrl: BACKEND_URL,
-            attemptedUrl: url,
-            troubleshooting: [
-              'Verifique se o backend está rodando: go run main.go',
-              `Verifique se a porta 8080 está acessível: curl http://localhost:8080/health`,
-              'Verifique a variável NEXT_PUBLIC_BACKEND_URL no arquivo .env.local',
-              'Se estiver usando Docker, verifique se os containers estão rodando: docker-compose ps'
-            ]
-          } : undefined,
+          hint,
+          ...((isDevelopment() || onVercel) && diagnostic
+            ? { details: { ...diagnostic, errorName, backendHost: BACKEND_URL } }
+            : {}),
         },
-        { 
+        {
           status: statusCode,
           headers: {
             'Access-Control-Allow-Origin': '*',
@@ -183,7 +197,7 @@ export async function POST(request: NextRequest) {
   try {
     const BACKEND_URL = resolveJavaApiBaseUrl();
     if (!BACKEND_URL) {
-      console.error('JAVA backend URL missing (BACKEND_URL / NEXT_PUBLIC_BACKEND_URL / NEXT_PUBLIC_API_URL)');
+      console.error('JAVA backend URL missing (NEXT_PUBLIC_BACKEND_URL)');
       return noJavaBackendResponse();
     }
 

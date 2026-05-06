@@ -1,33 +1,17 @@
-// Spring: BACKEND_URL → NEXT_PUBLIC_API_URL (http) → NEXT_PUBLIC_BACKEND_URL. Cliente: resolveNextClientApiBase + /proxy/...
+// Spring: NEXT_PUBLIC_BACKEND_URL. Prefixo BFF no cliente: NEXT_PUBLIC_APP_API_BASE ou /api.
 
 function normalizeBackendBase(url: string): string {
   if (!url) return ''
   return url.replace(/\/+$/, '')
 }
 
-function isRemoteHttpUrl(value: string | undefined): boolean {
-  return !!value && /^https?:\/\//i.test(value.trim())
-}
-
+/** URL base do Spring (sem barra final). Única fonte: NEXT_PUBLIC_BACKEND_URL. */
 export function resolveJavaApiBaseUrl(): string {
-  const serverOnly = process.env.BACKEND_URL?.trim()
-  if (serverOnly && isRemoteHttpUrl(serverOnly)) {
-    return normalizeBackendBase(serverOnly)
-  }
-  const pub = process.env.NEXT_PUBLIC_API_URL?.trim()
-  if (isRemoteHttpUrl(pub)) {
-    return normalizeBackendBase(pub!)
-  }
-  return normalizeBackendBase(
-    (process.env.NEXT_PUBLIC_BACKEND_URL || '').trim()
-  )
+  return normalizeBackendBase((process.env.NEXT_PUBLIC_BACKEND_URL || '').trim())
 }
 
+/** Prefixo das rotas Next usadas pelo cliente (ex. /api → /api/proxy/...). */
 export function resolveNextClientApiBase(): string {
-  const pub = process.env.NEXT_PUBLIC_API_URL?.trim()
-  if (pub && !isRemoteHttpUrl(pub)) {
-    return (pub.replace(/\/+$/, '') || '/api')
-  }
   const explicit = process.env.NEXT_PUBLIC_APP_API_BASE?.trim()
   if (explicit) {
     return explicit.replace(/\/+$/, '') || '/api'
@@ -35,14 +19,13 @@ export function resolveNextClientApiBase(): string {
   return '/api'
 }
 
-/** Resposta JSON quando não há URL do Java (ex.: env em falta na Vercel). */
 export function missingJavaBackendJson() {
   return {
     error: 'Service Unavailable',
-    code: 'JAVA_BACKEND_URL_MISSING',
+    code: 'NEXT_PUBLIC_BACKEND_URL_MISSING',
     message: 'URL do backend Spring não está configurada neste ambiente.',
     hint:
-      'Defina BACKEND_URL=https://… (recomendado, só no servidor) ou NEXT_PUBLIC_BACKEND_URL ou NEXT_PUBLIC_API_URL com URL http(s) completa do Java. Na Vercel: Settings → Environment Variables → Production → Save → Redeploy.',
+      'Defina NEXT_PUBLIC_BACKEND_URL=https://… (URL http(s) completa do Java, sem barra no fim). Na Vercel: Settings → Environment Variables → Production → Save → Redeploy.',
   } as const
 }
 
@@ -67,7 +50,7 @@ export const config = {
 
       if (!backendUrl) {
         console.error(
-          '❌ ERRO CRÍTICO: URL do backend Java em falta. Defina BACKEND_URL (servidor), NEXT_PUBLIC_API_URL (https://...) ou NEXT_PUBLIC_BACKEND_URL em produção.'
+          '❌ ERRO CRÍTICO: URL do backend Java em falta. Defina NEXT_PUBLIC_BACKEND_URL em produção.'
         );
         return false;
       }
@@ -144,7 +127,7 @@ export function validateConfig() {
     const isValid = config.validateProductionConfig();
     if (!isValid) {
       errors.push(
-        'Configuração de produção inválida — verifique BACKEND_URL, NEXT_PUBLIC_API_URL ou NEXT_PUBLIC_BACKEND_URL (Java)'
+        'Configuração de produção inválida — verifique NEXT_PUBLIC_BACKEND_URL (Java)'
       );
     }
   }
