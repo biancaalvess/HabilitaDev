@@ -212,9 +212,9 @@ function QuestoesPageContent() {
 
   if (selectedQuestion) {
     return (
-      <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 md:h-dvh md:max-h-dvh md:min-h-0 md:overflow-hidden">
         <QuestoesHeader />
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <main className="flex-1 md:min-h-0 md:overflow-y-auto md:overscroll-contain">
           <div className="container mx-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
             <QuestionDetail question={selectedQuestion} onBack={handleBack} />
           </div>
@@ -252,7 +252,7 @@ function QuestoesPageContent() {
           />
         </div>
 
-        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden md:w-auto">
+        <div className="flex w-full flex-1 flex-col md:min-h-0 md:w-auto md:overflow-hidden">
           <QuestoesHeader />
 
           {/* Mobile Menu Button */}
@@ -301,7 +301,7 @@ function QuestoesPageContent() {
             )}
           </div>
 
-          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 md:min-h-0 md:overflow-y-auto md:overscroll-contain">
             <div className="mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 leading-tight">
                 {categoryTitle

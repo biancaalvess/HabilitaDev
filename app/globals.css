@@ -514,9 +514,11 @@
     animation: gradient-shift 3s ease infinite;
   }
 
-  /* Smooth scrolling for all elements */
-  html {
-    scroll-behavior: smooth;
+  /* Smooth scroll no desktop; no mobile evita scroll travado no iOS/Android */
+  @media (hover: hover) and (pointer: fine) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   /* Custom scrollbar */

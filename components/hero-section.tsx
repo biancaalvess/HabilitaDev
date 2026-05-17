@@ -23,11 +23,24 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection(_props: HeroSectionProps) {
+  const scrollToAbout = () => {
+    const element = document.getElementById("sobre");
+    if (!element) return;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    element.scrollIntoView({
+      behavior:
+        prefersReducedMotion || isCoarsePointer ? "auto" : "smooth",
+      block: "start",
+    });
+  };
 
   return (
     <div
       id="inicio"
-      className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden scroll-smooth"
+      className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900"
     >
       {/* Particles Background */}
       <ParticlesBackground
@@ -35,10 +48,12 @@ export default function HeroSection(_props: HeroSectionProps) {
         speed={0.4}
         color="rgba(59, 130, 246, 0.4)"
       />
-      {/* Background Pattern */}
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
+      >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]" />
 
-      {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
         <div className="absolute top-40 right-32 w-1 h-1 bg-white rounded-full animate-ping" />
@@ -53,9 +68,19 @@ export default function HeroSection(_props: HeroSectionProps) {
         <TechParticles count={15} />
       </div>
 
-      {/* Wireframe Hands */}
       <div className="absolute inset-0 opacity-30">
         <WireframeHands />
+      </div>
+
+        <div className="absolute top-1/4 left-10 opacity-10">
+          <div className="w-8 h-8 border border-blue-400 rounded-lg rotate-45 animate-spin-slow" />
+        </div>
+        <div className="absolute bottom-1/4 right-10 opacity-10">
+          <div className="w-6 h-6 border border-white rounded-full animate-pulse" />
+        </div>
+        <div className="absolute top-1/2 right-1/4 opacity-5">
+          <div className="w-4 h-4 bg-blue-400 rounded-full animate-ping" />
+        </div>
       </div>
 
       {/* Navigation */}
@@ -91,7 +116,7 @@ export default function HeroSection(_props: HeroSectionProps) {
       </nav>
 
       {/* Main Content */}
-      <div className="relative z-20 flex flex-col items-center justify-center min-h-[calc(100vh-120px)] px-6 text-center">
+      <div className="relative z-20 flex flex-col items-center justify-center min-h-[calc(100dvh-120px)] px-6 text-center">
         {/* Category Label */}
         <div className="mb-4">
           <span className="text-sm font-medium text-blue-300 uppercase tracking-wider">
@@ -156,16 +181,8 @@ export default function HeroSection(_props: HeroSectionProps) {
             Conheça mais sobre nós
           </div>
           <button
-            onClick={() => {
-              const element = document.getElementById("sobre");
-              if (element) {
-                element.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                  inline: "nearest",
-                });
-              }
-            }}
+            type="button"
+            onClick={scrollToAbout}
             className="text-white/60 hover:text-white transition-all duration-300 hover:scale-110 animate-bounce"
           >
             <ChevronDown className="h-6 w-6" />
@@ -174,7 +191,7 @@ export default function HeroSection(_props: HeroSectionProps) {
       </div>
 
       {/* About Section */}
-      <div id="sobre" className="py-20 px-4 sm:px-6 lg:px-8">
+      <div id="sobre" className="relative z-20 scroll-mt-20 py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
@@ -236,19 +253,9 @@ export default function HeroSection(_props: HeroSectionProps) {
         </div>
       </div>
 
-      {/* Floating Tech Elements - Simplified */}
-      <div className="absolute top-1/4 left-10 opacity-10">
-        <div className="w-8 h-8 border border-blue-400 rounded-lg rotate-45 animate-spin-slow" />
+      <div className="relative z-20">
+        <Footer />
       </div>
-      <div className="absolute bottom-1/4 right-10 opacity-10">
-        <div className="w-6 h-6 border border-white rounded-full animate-pulse" />
-      </div>
-      <div className="absolute top-1/2 right-1/4 opacity-5">
-        <div className="w-4 h-4 bg-blue-400 rounded-full animate-ping" />
-      </div>
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }

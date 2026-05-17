@@ -174,8 +174,9 @@ export function WireframeHands({ className = "" }: WireframeHandsProps) {
   return (
     <canvas
       ref={canvasRef}
-      className={`absolute inset-0 w-full h-full ${className}`}
+      className={`pointer-events-none absolute inset-0 w-full h-full ${className}`}
       style={{ background: "transparent" }}
+      aria-hidden="true"
     />
   );
 }

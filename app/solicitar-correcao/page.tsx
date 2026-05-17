@@ -198,7 +198,7 @@ export default function SolicitarCorrecaoPage() {
           />
         </div>
 
-        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden md:w-auto">
+        <div className="flex w-full min-w-0 flex-1 flex-col md:min-h-0 md:w-auto md:overflow-hidden">
           <QuestoesHeader />
 
           <div className="flex items-center justify-between px-4 pt-4 md:hidden">
@@ -246,7 +246,7 @@ export default function SolicitarCorrecaoPage() {
             )}
           </div>
 
-          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">
+          <main className="flex-1 p-6 md:min-h-0 md:overflow-y-auto md:overscroll-contain">
             <div className="max-w-4xl mx-auto">
               {/* Header */}
               <div className="mb-8">
